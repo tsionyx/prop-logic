@@ -80,3 +80,8 @@
 #![cfg_attr(test, allow(clippy::wildcard_imports))]
 // ====
 // ==== The end of the lint lists.
+pub mod connective;
+pub mod formula;
+mod ops;
+
+pub use self::formula::{Formula, Var, Variable};
