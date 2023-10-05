@@ -2,19 +2,30 @@
 //! their operations and mutual dependencies.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
+mod and;
+mod converse_imply;
+mod converse_nimply;
 mod falsity;
 mod id;
+mod imply;
+mod nand;
 mod neg;
+mod nimply;
+mod nor;
+mod or;
 mod ordering;
 mod proj;
 mod truth;
 pub mod truth_table;
+mod xnor;
+mod xor;
 
 use std::{fmt, ops::Deref, sync::Arc};
 
 use crate::formula::Formula;
 
 pub use self::{
+    and::Conjunction,
     falsity::Falsity,
     id::LogicalIdentity,
     neg::Negation,

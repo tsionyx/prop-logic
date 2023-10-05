@@ -1,0 +1,42 @@
+//! The _converse nonimplication_
+//! is a logical operation that is the
+//! [negation][super::neg] of [converse implication][super::converse_imply]
+//! (equivalently, the [negation][super::neg]
+//! of the converse of [implication][super::imply]).
+//!
+//! <https://en.wikipedia.org/wiki/Converse_nonimplication>
+use crate::ops::Implies;
+
+use super::{Connective, Formula, FunctionNotation, TruthFunction};
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+/// Converse nonimplication is an operation on two logical values,
+/// typically the values of two propositions, that produces a value of `false`
+/// unless its first argument is `false` and its second argument is `true`.
+pub struct ConverseNonImplication;
+
+impl TruthFunction<2> for ConverseNonImplication {
+    fn eval([consequent, antecedent]: [bool; 2]) -> bool {
+        !consequent && antecedent
+    }
+
+    fn apply<T>([consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
+        !(antecedent.implies(consequent))
+    }
+}
+
+impl Connective for ConverseNonImplication {
+    const ARITY: usize = 2;
+
+    fn notation() -> FunctionNotation {
+        '↚'.into()
+    }
+
+    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+        Some(vec![
+            '⊄'.into(),
+            '<'.into(),
+            "Mpq".into(), // Polish notation
+        ])
+    }
+}
