@@ -144,3 +144,49 @@ impl<const N: usize> Deref for OperatorEvaluator<N> {
         &*self.closure
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::iter;
+
+    use itertools::Itertools as _;
+
+    use super::*;
+    use crate::formula::Valuation;
+
+    pub(super) fn apply_and_eval_is_equivalent<Op, const ARITY: usize>()
+    where
+        Op: TruthFunction<ARITY>,
+    {
+        let eval_variants = iter::repeat([false, true])
+            .take(ARITY)
+            .multi_cartesian_product()
+            .map(|assignment| {
+                let formulas = assignment
+                    .iter()
+                    .copied()
+                    .map(Formula::<()>::TruthValue)
+                    .collect_vec();
+                let formulas = formulas.try_into().expect(
+                    "Cartesian product ensures the length of the tuple to be equal to ARITY",
+                );
+
+                let assignment = assignment.try_into().expect(
+                    "Cartesian product ensures the length of the tuple to be equal to ARITY",
+                );
+                (Op::apply(formulas), Op::eval(assignment))
+            });
+
+        let empty_interpretation = Valuation::new();
+        for (fully_interpreted_formula, expected_eval) in eval_variants {
+            eprintln!("{:?} -> {:?}", fully_interpreted_formula, expected_eval);
+            if let Formula::TruthValue(val) =
+                fully_interpreted_formula.interpret(&empty_interpretation)
+            {
+                assert_eq!(val, expected_eval);
+            } else {
+                panic!("The formula was not fully reduced");
+            }
+        }
+    }
+}
