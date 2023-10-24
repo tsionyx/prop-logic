@@ -11,7 +11,10 @@ use std::{
     sync::Arc,
 };
 
-pub use super::ops::*;
+pub use super::{
+    connective::{FunctionDescriptor, TruthFunction},
+    ops::*,
+};
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 /// [`Formula`] is a well-formed expression constructed from
@@ -44,6 +47,11 @@ pub enum Formula<T> {
 
     /// <https://en.wikipedia.org/wiki/Logical_biconditional>
     Equivalent(Box<Self>, Box<Self>),
+
+    Other {
+        operator: FunctionDescriptor<2, T>,
+        operands: (Box<Self>, Box<Self>),
+    },
 }
 
 /// An atomic entity with no deeper propositional structure.
@@ -87,6 +95,9 @@ impl<T> Formula<T> {
             Self::Xor(..) => 4,
             Self::Implies(..) => 5,
             Self::Equivalent(..) => 6,
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 
@@ -96,6 +107,9 @@ impl<T> Formula<T> {
             Self::Not(..) => 1,
             Self::And(..) | Self::Or(..) | Self::Xor(..) => 2,
             Self::Implies(..) | Self::Equivalent(..) => 3,
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 
@@ -116,6 +130,9 @@ impl<T> Clone for Formula<T> {
             Self::Xor(e1, e2) => Self::Xor(e1.clone(), e2.clone()),
             Self::Implies(e1, e2) => Self::Implies(e1.clone(), e2.clone()),
             Self::Equivalent(e1, e2) => Self::Equivalent(e1.clone(), e2.clone()),
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 }
@@ -194,6 +211,9 @@ where
                 } else {
                     write!(f, "({})", e2)
                 }
+            }
+            Self::Other { .. } => {
+                todo!()
             }
         }
     }
@@ -474,6 +494,9 @@ impl<T> Formula<T> {
                         E::Terminal(e1_val == e2_val)
                     }
                 }
+            }
+            Self::Other { .. } => {
+                todo!()
             }
         }
     }

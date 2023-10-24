@@ -43,17 +43,78 @@ pub trait TruthFunction<const ARITY: usize> {
     /// It gets used later to generate the [`truth_table`].
     fn eval(values: [bool; ARITY]) -> bool;
 
-    /// Returns a [callable object][OperatorEvaluator] which can
-    /// be called to [evaluate][Self::eval] the result of applying the [`TruthFunction`].
-    fn evaluator() -> OperatorEvaluator<ARITY>
+    /// Returns a [callable object][Operation] which can
+    /// represent the [`TruthFunction`] as a logical operation
+    /// on simple boolean values.
+    fn bool_evaluator() -> Operation<ARITY, bool>
     where
         Self: Sized + 'static,
     {
-        OperatorEvaluator::with_connective::<Self>()
+        Operation::new(Self::eval)
     }
 
     /// Create a [`Formula`] with this [`TruthFunction`].
     fn apply<T>(expr: [Formula<T>; ARITY]) -> Formula<T>;
+
+    /// Returns a [callable object][Operation] which can
+    /// be used to [apply][Self::apply] the [`TruthFunction`]
+    /// to a number of [`Formula`]-s.
+    fn formula_connector<T>() -> Operation<ARITY, Formula<T>> {
+        Operation::new(Self::apply)
+    }
+
+    /// Create a `FunctionDescriptor` object combining
+    /// the [`TruthFunction`] and [`Connective`] properties into a single variable.
+    fn descriptor<Atom>() -> FunctionDescriptor<ARITY, Atom>
+    where
+        Self: Connective + Sized + 'static,
+    {
+        FunctionDescriptor {
+            bool_evaluator: Self::bool_evaluator(),
+            formula_connector: Self::formula_connector(),
+            notation: Self::notation(),
+            alternate_notations: Self::alternate_notations(),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Hash)]
+/// Representation of a [`TruthFunction`] as an 'instance-level' variable,
+/// opposed to the static ('class-level') typed description of it.
+pub struct FunctionDescriptor<const ARITY: usize, Atom> {
+    bool_evaluator: Operation<ARITY, bool>,
+    formula_connector: Operation<ARITY, Formula<Atom>>,
+    notation: FunctionNotation,
+    alternate_notations: Option<Vec<FunctionNotation>>,
+}
+
+#[derive(Eq, PartialEq, Hash)]
+/// Represents the most general form of
+/// [homogeneous operation](https://en.wikipedia.org/wiki/Binary_operation).
+///
+/// It also works as a workaround emulating `impl Fn` behaviour for a struct.
+pub struct Operation<const ARITY: usize, T> {
+    func: fn([T; ARITY]) -> T,
+}
+
+impl<const ARITY: usize, T> fmt::Debug for Operation<ARITY, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}-ary Operation", ARITY)
+    }
+}
+
+impl<const ARITY: usize, T> Operation<ARITY, T> {
+    fn new(func: fn([T; ARITY]) -> T) -> Self {
+        Self { func }
+    }
+}
+
+impl<const ARITY: usize, T> Deref for Operation<ARITY, T> {
+    type Target = fn([T; ARITY]) -> T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.func
+    }
 }
 
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
@@ -80,7 +141,7 @@ pub trait Connective {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 /// Name or notation of the function.
 pub enum FunctionNotation {
     /// Symbolic representation of a functions as an operator.
@@ -109,39 +170,6 @@ impl From<String> for FunctionNotation {
 impl From<&'static str> for FunctionNotation {
     fn from(value: &'static str) -> Self {
         Self::Name(value.into())
-    }
-}
-
-/// Workaround emulating `impl Fn` behaviour
-/// for the [`TruthFunction`].
-pub struct OperatorEvaluator<const N: usize> {
-    closure: Box<dyn Fn([bool; N]) -> bool>,
-}
-
-impl<const N: usize> fmt::Debug for OperatorEvaluator<N> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "OperatorEvaluator for {}-arity predicate", N)
-    }
-}
-
-impl<const N: usize> OperatorEvaluator<N> {
-    fn new(closure: Box<dyn Fn([bool; N]) -> bool>) -> Self {
-        Self { closure }
-    }
-
-    fn with_connective<O>() -> Self
-    where
-        O: TruthFunction<N> + 'static,
-    {
-        Self::new(Box::new(O::eval))
-    }
-}
-
-impl<const N: usize> Deref for OperatorEvaluator<N> {
-    type Target = dyn Fn([bool; N]) -> bool;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.closure
     }
 }
 

@@ -106,13 +106,13 @@ mod tests {
 
     #[test]
     fn projection_eval() {
-        let x = Projection::<0>::evaluator();
+        let x = Projection::<0>::bool_evaluator();
         assert!(!x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
         assert!(x([true, true]));
 
-        let x = Projection::<1>::evaluator();
+        let x = Projection::<1>::bool_evaluator();
         assert!(!x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
@@ -121,13 +121,13 @@ mod tests {
 
     #[test]
     fn projection_neg_eval() {
-        let x = ProjectAndUnary::<0, Negation>::evaluator();
+        let x = ProjectAndUnary::<0, Negation>::bool_evaluator();
         assert!(x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
         assert!(!x([true, true]));
 
-        let x = ProjectAndUnary::<1, Negation>::evaluator();
+        let x = ProjectAndUnary::<1, Negation>::bool_evaluator();
         assert!(x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
