@@ -11,9 +11,10 @@ use std::{
     sync::Arc,
 };
 
-pub use super::ops::*;
+pub use self::helper::DynOperator;
+pub use super::{connective::Connective, ops::*};
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+#[derive(Debug, Eq, PartialEq)]
 /// [`Formula`] is a well-formed expression constructed from
 /// propositions or [variables][Atom]
 /// and [logical operators][super::connective::Connective].
@@ -44,6 +45,14 @@ pub enum Formula<T> {
 
     /// <https://en.wikipedia.org/wiki/Logical_biconditional>
     Equivalent(Box<Self>, Box<Self>),
+
+    /// The operator is specified dynamically.
+    Other {
+        /// The [`Connective`] for the operands.
+        operator: DynOperator,
+        /// Sub-formulas.
+        operands: (Box<Self>, Box<Self>),
+    },
 }
 
 /// An atomic entity with no deeper propositional structure.
@@ -87,6 +96,9 @@ impl<T> Formula<T> {
             Self::Xor(..) => 4,
             Self::Implies(..) => 5,
             Self::Equivalent(..) => 6,
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 
@@ -96,11 +108,90 @@ impl<T> Formula<T> {
             Self::Not(..) => 1,
             Self::And(..) | Self::Or(..) | Self::Xor(..) => 2,
             Self::Implies(..) | Self::Equivalent(..) => 3,
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 
     const fn has_obvious_priority_over(&self, e: &Self) -> bool {
         self.vague_priority() < e.vague_priority()
+    }
+}
+
+mod helper {
+    use std::{any::Any, fmt::Debug, ops::Deref};
+
+    use upcast::{Upcast, UpcastFrom};
+
+    use super::Connective;
+
+    #[derive(Debug)]
+    /// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
+    pub struct DynOperator {
+        inner: Box<dyn UsableConnective<2>>,
+    }
+
+    impl DynOperator {
+        /// Create a [`DynOperator`] with a [`Connective<2>`].
+        pub fn new<C>() -> Self
+        where
+            C: Connective<2> + Debug + 'static,
+        {
+            // /// Assert the type is ZST.
+            // struct CheckZst<T>(PhantomData<T>);
+            // impl<T> CheckZst<T> {
+            //     const ZERO_SIZE: () = assert!(std::mem::size_of::<T>() == 0);
+            // }
+            // const _: () = CheckZst::<C>::ZERO_SIZE;
+            Self {
+                inner: Box::new(C::init()),
+            }
+        }
+    }
+
+    impl Deref for DynOperator {
+        type Target = dyn Connective<2>;
+
+        fn deref(&self) -> &Self::Target {
+            self.inner.as_ref().up()
+        }
+    }
+
+    impl PartialEq for DynOperator {
+        fn eq(&self, other: &Self) -> bool {
+            // TODO: ensure ZST in `DynOperator::new`
+            self.inner.type_id() == other.inner.type_id()
+        }
+    }
+
+    impl Eq for DynOperator {}
+
+    trait UsableConnective<const N: usize>: Connective<N> + Upcast<dyn Connective<N>> + Debug {}
+
+    impl<const N: usize, T> UsableConnective<N> for T where T: Connective<N> + Debug + 'static {}
+
+    impl<'a, const N: usize, T: Connective<N> + 'a> UpcastFrom<T> for dyn Connective<N> + 'a {
+        fn up_from(value: &T) -> &(dyn Connective<N> + 'a) {
+            value
+        }
+
+        fn up_from_mut(value: &mut T) -> &mut (dyn Connective<N> + 'a) {
+            value
+        }
+    }
+}
+
+impl<T> Formula<T> {
+    /// Create a [`Formula`] with the dynamic [`Connective`].
+    pub fn with_connective<C>(op1: Self, op2: Self) -> Self
+    where
+        C: Connective<2> + fmt::Debug + 'static,
+    {
+        Self::Other {
+            operator: DynOperator::new::<C>(),
+            operands: (Box::new(op1), Box::new(op2)),
+        }
     }
 }
 
@@ -116,6 +207,10 @@ impl<T> Clone for Formula<T> {
             Self::Xor(e1, e2) => Self::Xor(e1.clone(), e2.clone()),
             Self::Implies(e1, e2) => Self::Implies(e1.clone(), e2.clone()),
             Self::Equivalent(e1, e2) => Self::Equivalent(e1.clone(), e2.clone()),
+
+            Self::Other { .. } => {
+                todo!()
+            }
         }
     }
 }
@@ -194,6 +289,10 @@ where
                 } else {
                     write!(f, "({})", e2)
                 }
+            }
+
+            Self::Other { .. } => {
+                todo!()
             }
         }
     }
@@ -474,6 +573,10 @@ impl<T> Formula<T> {
                         E::Terminal(e1_val == e2_val)
                     }
                 }
+            }
+
+            Self::Other { .. } => {
+                todo!()
             }
         }
     }

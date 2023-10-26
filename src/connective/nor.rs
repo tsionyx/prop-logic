@@ -17,23 +17,25 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 pub struct NonDisjunction;
 
 impl TruthFunction<2> for NonDisjunction {
-    fn eval([disjunct1, disjunct2]: [bool; 2]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
         !disjunct1 && !disjunct2
     }
 
-    fn apply<T>([disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
+    fn apply<T>(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
         !(disjunct1.or(disjunct2))
     }
 }
 
-impl Connective for NonDisjunction {
-    const ARITY: usize = 2;
-
-    fn notation() -> FunctionNotation {
+impl Connective<2> for NonDisjunction {
+    fn notation(&self) -> FunctionNotation {
         '↓'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             "Xpq".into(), // Polish notation
             "NOR".into(),

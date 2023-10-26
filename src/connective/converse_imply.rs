@@ -15,23 +15,25 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 pub struct ConverseImplication;
 
 impl TruthFunction<2> for ConverseImplication {
-    fn eval([consequent, antecedent]: [bool; 2]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, [consequent, antecedent]: [bool; 2]) -> bool {
         consequent || !antecedent
     }
 
-    fn apply<T>([consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
+    fn apply<T>(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
         antecedent.implies(consequent)
     }
 }
 
-impl Connective for ConverseImplication {
-    const ARITY: usize = 2;
-
-    fn notation() -> FunctionNotation {
+impl Connective<2> for ConverseImplication {
+    fn notation(&self) -> FunctionNotation {
         '←'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '⊂'.into(),
             '≥'.into(),

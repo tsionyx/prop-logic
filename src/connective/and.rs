@@ -13,23 +13,25 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 pub struct Conjunction;
 
 impl TruthFunction<2> for Conjunction {
-    fn eval([conjunct1, conjunct2]: [bool; 2]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
         conjunct1 && conjunct2
     }
 
-    fn apply<T>([conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
+    fn apply<T>(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
         conjunct1.and(conjunct2)
     }
 }
 
-impl Connective for Conjunction {
-    const ARITY: usize = 2;
-
-    fn notation() -> FunctionNotation {
+impl Connective<2> for Conjunction {
+    fn notation(&self) -> FunctionNotation {
         '∧'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '&'.into(),
             '×'.into(),

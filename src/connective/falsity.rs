@@ -10,25 +10,27 @@ pub struct Falsity;
 
 // allow to use the `False` constant in unary or binary on N-ary context
 impl<const ARITY: usize> TruthFunction<ARITY> for Falsity {
-    fn eval(_values: [bool; ARITY]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, _values: [bool; ARITY]) -> bool {
         false
     }
 
-    fn apply<T>(_expr: [Formula<T>; ARITY]) -> Formula<T> {
+    fn apply<T>(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {
         Formula::contradiction()
     }
 }
 
-impl Connective for Falsity {
-    const ARITY: usize = 0;
-
-    fn notation() -> FunctionNotation {
+impl Connective<0> for Falsity {
+    fn notation(&self) -> FunctionNotation {
         // _falsum_ or _absurdum_
         // <https://en.wikipedia.org/wiki/Up_tack>
         '⊥'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec!["False".into(), "false".into(), "Opq".into()])
     }
 }

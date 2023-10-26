@@ -36,36 +36,58 @@ pub use self::{
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
 /// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
 ///
+/// The [`ARITY`](https://en.wikipedia.org/wiki/Arity) is the number of arguments which this function accepts.
+///
 /// <https://en.wikipedia.org/wiki/Truth_function>
 pub trait TruthFunction<const ARITY: usize> {
+    /// Every [`TruthFunction`] is essentially a bunch of _static_ functions
+    /// without the need to create an _instance_. So, as a rule of thumb,
+    /// any instantiated type should have exactly one value (unit type, isomorphic to `()`).
+    ///
+    /// But, in order to use the [`TruthFunction`] in a dynamic context
+    /// we have to create some 'dummy' instance.
+    fn init() -> Self
+    where
+        Self: Sized;
+
     /// The way to express the [`TruthFunction`] as a boolean function of its arguments.
     ///
     /// It gets used later to generate the [`truth_table`].
-    fn eval(values: [bool; ARITY]) -> bool;
+    fn eval(&self, values: [bool; ARITY]) -> bool;
 
-    /// Returns a [callable object][OperatorEvaluator] which can
-    /// be called to [evaluate][Self::eval] the result of applying the [`TruthFunction`].
-    fn evaluator() -> OperatorEvaluator<ARITY>
+    /// Returns a [callable object][Operation] which can
+    /// represent the [`TruthFunction`] as a logical operation
+    /// on simple boolean values.
+    fn bool_evaluator(&self) -> Operation<ARITY, bool>
     where
-        Self: Sized + 'static,
+        Self: Copy + 'static,
     {
-        OperatorEvaluator::with_connective::<Self>()
+        let self_ = *self;
+        Operation::new(Box::new(move |args| self_.eval(args)))
     }
 
     /// Create a [`Formula`] with this [`TruthFunction`].
-    fn apply<T>(expr: [Formula<T>; ARITY]) -> Formula<T>;
+    fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>
+    where
+        Self: Sized;
+
+    /// Returns a [callable object][Operation] which can
+    /// be used to [apply][Self::apply] the [`TruthFunction`]
+    /// to a number of [`Formula`]-s.
+    fn formula_connector<T>(&self) -> Operation<ARITY, Formula<T>>
+    where
+        Self: Copy + 'static,
+    {
+        let self_ = *self;
+        Operation::new(Box::new(move |args| self_.apply(args)))
+    }
 }
 
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
-pub trait Connective {
-    /// Number of arguments which gets connected with this [`Connective`].
-    ///
-    /// <https://en.wikipedia.org/wiki/Arity>
-    const ARITY: usize;
-
+pub trait Connective<const ARITY: usize>: TruthFunction<ARITY> {
     /// The symbol (or name) most commonly used for the operation.
-    fn notation() -> FunctionNotation;
+    fn notation(&self) -> FunctionNotation;
 
     /// The set of alternate symbols (names) which can be used
     /// instead of the [main one][Self::notation].
@@ -75,7 +97,7 @@ pub trait Connective {
     /// Also,
     /// [the polish notation]( https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique)
     /// included.
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         None
     }
 }
@@ -112,36 +134,35 @@ impl From<&'static str> for FunctionNotation {
     }
 }
 
-/// Workaround emulating `impl Fn` behaviour
-/// for the [`TruthFunction`].
-pub struct OperatorEvaluator<const N: usize> {
-    closure: Box<dyn Fn([bool; N]) -> bool>,
+/// Represents the most general form of
+/// [homogeneous operation](https://en.wikipedia.org/wiki/Binary_operation).
+///
+/// It also works as a workaround emulating `impl Fn` behaviour
+/// by allowing to 'call' it through [`Deref`]-ing.
+pub struct Operation<const ARITY: usize, T> {
+    func: Box<dyn Fn([T; ARITY]) -> T>,
 }
 
-impl<const N: usize> fmt::Debug for OperatorEvaluator<N> {
+impl<const ARITY: usize, T> fmt::Debug for Operation<ARITY, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "OperatorEvaluator for {}-arity predicate", N)
+        write!(f, "{}-ary Operation", ARITY)
     }
 }
 
-impl<const N: usize> OperatorEvaluator<N> {
-    fn new(closure: Box<dyn Fn([bool; N]) -> bool>) -> Self {
-        Self { closure }
-    }
-
-    fn with_connective<O>() -> Self
-    where
-        O: TruthFunction<N> + 'static,
-    {
-        Self::new(Box::new(O::eval))
+impl<const ARITY: usize, T> Operation<ARITY, T> {
+    fn new(func: Box<dyn Fn([T; ARITY]) -> T>) -> Self {
+        Self { func }
     }
 }
 
-impl<const N: usize> Deref for OperatorEvaluator<N> {
-    type Target = dyn Fn([bool; N]) -> bool;
+impl<const ARITY: usize, T> Deref for Operation<ARITY, T>
+where
+    T: 'static,
+{
+    type Target = dyn Fn([T; ARITY]) -> T;
 
     fn deref(&self) -> &Self::Target {
-        &*self.closure
+        &self.func
     }
 }
 
@@ -174,7 +195,7 @@ mod tests {
                 let assignment = assignment.try_into().expect(
                     "Cartesian product ensures the length of the tuple to be equal to ARITY",
                 );
-                (Op::apply(formulas), Op::eval(assignment))
+                (Op::init().apply(formulas), Op::init().eval(assignment))
             });
 
         let empty_interpretation = Valuation::new();

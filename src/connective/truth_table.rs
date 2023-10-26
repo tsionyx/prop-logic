@@ -58,7 +58,7 @@ where
         .multi_cartesian_product()
         .map(|assignment| {
             let assignment = assignment.try_into().unwrap();
-            (assignment, Op::eval(assignment))
+            (assignment, Op::init().eval(assignment))
         })
         .collect();
 
@@ -69,7 +69,7 @@ where
         assert!(table.is_empty());
         assert_eq!(ARITY, 0);
         let dummy_empty_array = [false; ARITY];
-        iter::once((dummy_empty_array, Op::eval(dummy_empty_array))).collect()
+        iter::once((dummy_empty_array, Op::init().eval(dummy_empty_array))).collect()
     }
 }
 

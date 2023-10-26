@@ -13,23 +13,25 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 pub struct Disjunction;
 
 impl TruthFunction<2> for Disjunction {
-    fn eval([disjunct1, disjunct2]: [bool; 2]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
         disjunct1 || disjunct2
     }
 
-    fn apply<T>([disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
+    fn apply<T>(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
         disjunct1.or(disjunct2)
     }
 }
 
-impl Connective for Disjunction {
-    const ARITY: usize = 2;
-
-    fn notation() -> FunctionNotation {
+impl Connective<2> for Disjunction {
+    fn notation(&self) -> FunctionNotation {
         '∨'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '+'.into(),
             "||".into(),

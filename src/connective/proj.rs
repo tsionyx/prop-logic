@@ -34,66 +34,66 @@ impl<const I: usize, UnaryOp: TruthFunction<1>> TruthFunction<2> for ProjectAndU
 where
     Projection<I>: TruthFunction<2>,
 {
-    fn eval(values: [bool; 2]) -> bool {
-        let project_result = Projection::<I>::eval(values);
-        UnaryOp::eval([project_result])
+    fn init() -> Self {
+        Self::new()
     }
 
-    fn apply<T>(expressions: [Formula<T>; 2]) -> Formula<T> {
-        let expr = Projection::<I>::apply(expressions);
-        UnaryOp::apply([expr])
+    fn eval(&self, values: [bool; 2]) -> bool {
+        let project_result = Projection::<I>::init().eval(values);
+        UnaryOp::init().eval([project_result])
+    }
+
+    fn apply<T>(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
+        let expr = Projection::<I>::init().apply(expressions);
+        UnaryOp::init().apply([expr])
     }
 }
 
 impl<const I: usize> TruthFunction<2> for Projection<I> {
-    fn eval(values: [bool; 2]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, values: [bool; 2]) -> bool {
         // TODO: check indices
         // ignores the first or second argument
         values[I]
     }
 
-    fn apply<T>(expressions: [Formula<T>; 2]) -> Formula<T> {
+    fn apply<T>(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
         // TODO: check indices, do not Clone
         expressions[I].clone()
     }
 }
 
 // === The following implementations are degenerate ===
-// impl Connective for Projection<0> {
-//     const ARITY: usize = 2;
-//
-//     fn notation() -> FunctionNotation {
+// impl Connective<2> for Projection<0> {
+//     fn notation(&self) -> FunctionNotation {
 //         "π1".into()
 //     }
 //
-//     fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+//     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
 //         Some(vec!["πl".into(), "Ipq".into()])
 //     }
 // }
-// impl Connective for Projection<1> {
-//     const ARITY: usize = 2;
-//
-//     fn notation() -> FunctionNotation {
+// impl Connective<2> for Projection<1> {
+//     fn notation(&self) -> FunctionNotation {
 //         "π2".into()
 //     }
 //
-//     fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+//     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
 //         Some(vec!["πr".into(), "Hpq".into()])
 //     }
 // }
-// impl Connective for ProjectAndUnary<0, Negation> {
-//     const ARITY: usize = 2;
-//
-//     fn notation() -> FunctionNotation {
+// impl Connective<2> for ProjectAndUnary<0, Negation> {
+//     fn notation(&self) -> FunctionNotation {
 //         // only the polish notation available
 //         // <https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique>
 //         "Fpq".into()
 //     }
 // }
-// impl Connective for ProjectAndUnary<1, Negation> {
-//     const ARITY: usize = 2;
-//
-//     fn notation() -> FunctionNotation {
+// impl Connective<2> for ProjectAndUnary<1, Negation> {
+//     fn notation(&self) -> FunctionNotation {
 //         // only the polish notation available
 //         // <https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique>
 //         "Gpq".into()
@@ -106,13 +106,13 @@ mod tests {
 
     #[test]
     fn projection_eval() {
-        let x = Projection::<0>::evaluator();
+        let x = Projection::<0>::init().bool_evaluator();
         assert!(!x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
         assert!(x([true, true]));
 
-        let x = Projection::<1>::evaluator();
+        let x = Projection::<1>::init().bool_evaluator();
         assert!(!x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
@@ -121,13 +121,13 @@ mod tests {
 
     #[test]
     fn projection_neg_eval() {
-        let x = ProjectAndUnary::<0, Negation>::evaluator();
+        let x = ProjectAndUnary::<0, Negation>::init().bool_evaluator();
         assert!(x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
         assert!(!x([true, true]));
 
-        let x = ProjectAndUnary::<1, Negation>::evaluator();
+        let x = ProjectAndUnary::<1, Negation>::init().bool_evaluator();
         assert!(x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));

@@ -12,24 +12,26 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 pub struct Negation;
 
 impl TruthFunction<1> for Negation {
-    fn eval(values: [bool; 1]) -> bool {
+    fn init() -> Self {
+        Self
+    }
+
+    fn eval(&self, values: [bool; 1]) -> bool {
         let [value] = values;
         !value
     }
 
-    fn apply<T>([expr]: [Formula<T>; 1]) -> Formula<T> {
+    fn apply<T>(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {
         !expr
     }
 }
 
-impl Connective for Negation {
-    const ARITY: usize = 1;
-
-    fn notation() -> FunctionNotation {
+impl Connective<1> for Negation {
+    fn notation(&self) -> FunctionNotation {
         '¬'.into()
     }
 
-    fn alternate_notations() -> Option<Vec<FunctionNotation>> {
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '~'.into(),
             '-'.into(),
