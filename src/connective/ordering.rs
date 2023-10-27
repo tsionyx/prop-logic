@@ -1,13 +1,26 @@
 use std::cmp::Ordering;
 
 use super::{
+    and::Conjunction,
+    converse_imply::ConverseImplication,
+    converse_nimply::ConverseNonImplication,
     falsity::Falsity,
     id::LogicalIdentity,
+    imply::MaterialImplication,
+    nand::NonConjunction,
     neg::Negation,
+    nimply::MaterialNonImplication,
+    nor::NonDisjunction,
+    or::Disjunction,
     proj::{ProjectAndUnary, Projection},
     truth::Truth,
-    truth_table, TruthFunction,
+    truth_table,
+    xnor::LogicalBiconditional,
+    xor::ExclusiveDisjunction,
+    TruthFunction,
 };
+
+use crate::utils::cartesian_diag;
 
 /// Defines the partial order (`<=`) between the [`TruthFunction`]-s
 /// by associating them with the sets.
@@ -57,7 +70,8 @@ macro_rules! def_partial_ord {
         $(
             impl PartialEq<$t2> for $t1 {
                 fn eq(&self, _other: &$t2) -> bool {
-                    false
+                    use std::any::TypeId;
+                    TypeId::of::<$t1>() == TypeId::of::<$t2>()
                 }
             }
 
@@ -70,22 +84,61 @@ macro_rules! def_partial_ord {
     };
 }
 
-// nullary
-def_partial_ord!(Truth: 0 => Falsity);
-def_partial_ord!(Falsity: 0 => Truth);
 // unary
-def_partial_ord!(Truth: 1 => LogicalIdentity, Negation);
-def_partial_ord!(Falsity: 1 => LogicalIdentity, Negation);
+macro_rules! unary_partial_ord {
+    ($t1: tt, $t2: tt) => {
+        def_partial_ord! {$t1: 1 => $t2}
+    };
+}
+
+cartesian_diag!(
+    [Truth, Falsity],
+    [LogicalIdentity, Negation],
+    unary_partial_ord
+);
+
 def_partial_ord!(LogicalIdentity: 1 => Truth, Falsity, Negation);
 def_partial_ord!(Negation: 1 => Truth, Falsity, LogicalIdentity);
+
 // binary
-def_partial_ord!(Truth: 2 => Projection<0>, Projection<1>, ProjectAndUnary<0, Negation>, ProjectAndUnary<1, Negation>);
-def_partial_ord!(Falsity: 2 => Projection<0>, Projection<1>, ProjectAndUnary<0, Negation>, ProjectAndUnary<1, Negation>);
-def_partial_ord!(Projection<0>: 2 => Truth, Falsity, Projection<1>, ProjectAndUnary<0, Negation>, ProjectAndUnary<1, Negation>);
-def_partial_ord!(Projection<1>: 2 => Truth, Falsity, Projection<0>, ProjectAndUnary<0, Negation>, ProjectAndUnary<1, Negation>);
-def_partial_ord!(ProjectAndUnary<0, Negation>: 2 => Truth, Falsity, Projection<0>, Projection<1>, ProjectAndUnary<1, Negation>);
-def_partial_ord!(ProjectAndUnary<1, Negation>: 2 => Truth, Falsity, Projection<0>, Projection<1>, ProjectAndUnary<0, Negation>);
-// TODO: 10 more functions here
+macro_rules! binary_partial_ord {
+    ($t1: tt, $t2: tt) => {
+        def_partial_ord! {$t1: 2 => $t2}
+    };
+}
+
+type Proj0 = Projection<0>;
+type Proj1 = Projection<1>;
+type NProj0 = ProjectAndUnary<0, Negation>;
+type NProj1 = ProjectAndUnary<1, Negation>;
+
+macro_rules! ignore {
+    ($a: tt, $b: tt) => {};
+}
+
+cartesian_diag!(
+    square
+    [
+        Truth,
+        Falsity,
+        Proj0,
+        Proj1,
+        NProj0,
+        NProj1,
+        Conjunction,
+        NonConjunction,
+        Disjunction,
+        NonDisjunction,
+        ExclusiveDisjunction,
+        LogicalBiconditional,
+        MaterialImplication,
+        MaterialNonImplication,
+        ConverseImplication,
+        ConverseNonImplication
+    ],
+    binary_partial_ord,
+    ignore
+);
 
 #[cfg(test)]
 mod order_tests {

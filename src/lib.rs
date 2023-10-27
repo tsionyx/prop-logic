@@ -83,5 +83,6 @@
 pub mod connective;
 pub mod formula;
 mod ops;
+mod utils;
 
 pub use self::formula::{Formula, Var, Variable};
