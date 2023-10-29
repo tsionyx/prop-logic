@@ -147,39 +147,57 @@ mod order_tests {
     #[test]
     fn unary_identity() {
         assert!(LogicalIdentity > Falsity);
+        assert!(Falsity < LogicalIdentity);
         assert!(LogicalIdentity.partial_cmp(&Negation).is_none());
         assert!(LogicalIdentity < Truth);
+        assert!(Truth > LogicalIdentity);
     }
 
     #[test]
     fn unary_negation() {
         assert!(Negation > Falsity);
+        assert!(Falsity < Negation);
         assert!(Negation.partial_cmp(&LogicalIdentity).is_none());
         assert!(Negation < Truth);
+        assert!(Truth > Negation);
     }
 
     #[test]
     fn contradiction_is_lowest() {
         assert!(Falsity < Truth);
-        assert!(Falsity < LogicalIdentity);
-        assert!(Falsity < Negation);
-        assert!(Falsity < Projection::<0>);
-        assert!(Falsity < Projection::<1>);
-        assert!(Falsity < ProjectAndUnary::<0, Negation>::new());
-        assert!(Falsity < ProjectAndUnary::<1, Negation>::new());
-        // TODO: 10 more
+        assert!(Falsity < NonConjunction);
+        assert!(Falsity < ConverseImplication);
+        assert!(Falsity < MaterialImplication);
+        assert!(Falsity < Disjunction);
+        assert!(Falsity < NProj1::new());
+        assert!(Falsity < NProj0::new());
+        assert!(Falsity < LogicalBiconditional);
+        assert!(Falsity < ExclusiveDisjunction);
+        assert!(Falsity < Proj0 {});
+        assert!(Falsity < Proj1 {});
+        assert!(Falsity < NonDisjunction);
+        assert!(Falsity < MaterialNonImplication);
+        assert!(Falsity < ConverseNonImplication);
+        assert!(Falsity < Conjunction);
     }
 
     #[test]
     fn tautology_is_greatest() {
+        assert!(Truth > NonConjunction);
+        assert!(Truth > ConverseImplication);
+        assert!(Truth > MaterialImplication);
+        assert!(Truth > Disjunction);
+        assert!(Truth > NProj1::new());
+        assert!(Truth > NProj0::new());
+        assert!(Truth > LogicalBiconditional);
+        assert!(Truth > ExclusiveDisjunction);
+        assert!(Truth > Proj0 {});
+        assert!(Truth > Proj1 {});
+        assert!(Truth > NonDisjunction);
+        assert!(Truth > MaterialNonImplication);
+        assert!(Truth > ConverseNonImplication);
+        assert!(Truth > Conjunction);
         assert!(Truth > Falsity);
-        assert!(Truth > LogicalIdentity);
-        assert!(Truth > Negation);
-        assert!(Truth > Projection::<0>);
-        assert!(Truth > Projection::<1>);
-        assert!(Truth > ProjectAndUnary::<0, Negation>::new());
-        assert!(Truth > ProjectAndUnary::<1, Negation>::new());
-        // TODO: 10 more
     }
 
     #[test]
