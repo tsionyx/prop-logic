@@ -122,11 +122,12 @@ impl<T> Formula<T> {
 mod helper {
     use std::{any::Any, fmt::Debug, ops::Deref};
 
+    use dyn_clone::{clone_trait_object, DynClone};
     use upcast::{Upcast, UpcastFrom};
 
     use super::Connective;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone)]
     /// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
     pub struct DynOperator {
         inner: Box<dyn UsableConnective<2>>,
@@ -136,7 +137,7 @@ mod helper {
         /// Create a [`DynOperator`] with a [`Connective<2>`].
         pub fn new<C>() -> Self
         where
-            C: Connective<2> + Debug + 'static,
+            C: Connective<2> + Debug + Copy + 'static,
         {
             // /// Assert the type is ZST.
             // struct CheckZst<T>(PhantomData<T>);
@@ -167,9 +168,15 @@ mod helper {
 
     impl Eq for DynOperator {}
 
-    trait UsableConnective<const N: usize>: Connective<N> + Upcast<dyn Connective<N>> + Debug {}
+    trait UsableConnective<const N: usize>:
+        Connective<N> + Upcast<dyn Connective<N>> + Debug + DynClone
+    {
+    }
 
-    impl<const N: usize, T> UsableConnective<N> for T where T: Connective<N> + Debug + 'static {}
+    impl<const N: usize, T> UsableConnective<N> for T where T: Connective<N> + Debug + DynClone + 'static
+    {}
+
+    clone_trait_object!(<const N: usize> UsableConnective<N>);
 
     impl<'a, const N: usize, T: Connective<N> + 'a> UpcastFrom<T> for dyn Connective<N> + 'a {
         fn up_from(value: &T) -> &(dyn Connective<N> + 'a) {
@@ -186,7 +193,7 @@ impl<T> Formula<T> {
     /// Create a [`Formula`] with the dynamic [`Connective`].
     pub fn with_connective<C>(op1: Self, op2: Self) -> Self
     where
-        C: Connective<2> + fmt::Debug + 'static,
+        C: Connective<2> + fmt::Debug + Copy + 'static,
     {
         Self::Other {
             operator: DynOperator::new::<C>(),
@@ -207,10 +214,13 @@ impl<T> Clone for Formula<T> {
             Self::Xor(e1, e2) => Self::Xor(e1.clone(), e2.clone()),
             Self::Implies(e1, e2) => Self::Implies(e1.clone(), e2.clone()),
             Self::Equivalent(e1, e2) => Self::Equivalent(e1.clone(), e2.clone()),
-
-            Self::Other { .. } => {
-                todo!()
-            }
+            Self::Other {
+                operator,
+                operands: (e1, e2),
+            } => Self::Other {
+                operator: operator.clone(),
+                operands: (e1.clone(), e2.clone()),
+            },
         }
     }
 }

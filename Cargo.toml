@@ -11,3 +11,4 @@ repository = "https://github.com/tsionyx/prop-logic"
 [dependencies]
 itertools = "0.11"
 upcast = "0.1"
+dyn-clone = "1.0"

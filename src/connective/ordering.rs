@@ -140,6 +140,13 @@ cartesian_diag!(
     ignore
 );
 
+trait TruthFunctionWithNot<const ARITY: usize>: TruthFunction<ARITY> {
+    type Not: TruthFunction<ARITY>;
+}
+
+// TODO: Storage of Connective for every ARITY
+//  impl PartialOrd and Not for every Operator
+
 #[cfg(test)]
 mod order_tests {
     use super::*;
@@ -163,34 +170,16 @@ mod order_tests {
     }
 
     #[test]
-    fn contradiction_is_lowest() {
-        assert!(Falsity < Truth);
-        assert!(Falsity < NonConjunction);
-        assert!(Falsity < ConverseImplication);
-        assert!(Falsity < MaterialImplication);
-        assert!(Falsity < Disjunction);
-        assert!(Falsity < NProj1::new());
-        assert!(Falsity < NProj0::new());
-        assert!(Falsity < LogicalBiconditional);
-        assert!(Falsity < ExclusiveDisjunction);
-        assert!(Falsity < Proj0 {});
-        assert!(Falsity < Proj1 {});
-        assert!(Falsity < NonDisjunction);
-        assert!(Falsity < MaterialNonImplication);
-        assert!(Falsity < ConverseNonImplication);
-        assert!(Falsity < Conjunction);
-    }
-
-    #[test]
     fn tautology_is_greatest() {
+        assert_eq!(Truth, Truth);
         assert!(Truth > NonConjunction);
         assert!(Truth > ConverseImplication);
         assert!(Truth > MaterialImplication);
         assert!(Truth > Disjunction);
         assert!(Truth > NProj1::new());
         assert!(Truth > NProj0::new());
-        assert!(Truth > LogicalBiconditional);
         assert!(Truth > ExclusiveDisjunction);
+        assert!(Truth > LogicalBiconditional);
         assert!(Truth > Proj0 {});
         assert!(Truth > Proj1 {});
         assert!(Truth > NonDisjunction);
@@ -201,64 +190,350 @@ mod order_tests {
     }
 
     #[test]
-    fn left_projection() {
-        assert!(Projection::<0> < Truth);
-        assert!(Projection::<0> > Falsity);
-        assert!(Projection::<0>.partial_cmp(&Projection::<1>).is_none());
-        assert!(Projection::<0>
-            .partial_cmp(&ProjectAndUnary::<0, Negation>::new())
-            .is_none());
-        assert!(Projection::<0>
-            .partial_cmp(&ProjectAndUnary::<1, Negation>::new())
-            .is_none());
-        // TODO: 10 more
+    fn sheffer_stroke() {
+        assert!(NonConjunction < Truth);
+        assert_eq!(NonConjunction, NonConjunction);
+        assert!(NonConjunction.partial_cmp(&ConverseImplication).is_none());
+        assert!(NonConjunction.partial_cmp(&MaterialImplication).is_none());
+        assert!(NonConjunction.partial_cmp(&Disjunction).is_none());
+        assert!(NonConjunction > NProj1::new());
+        assert!(NonConjunction > NProj0::new());
+        assert!(NonConjunction > ExclusiveDisjunction);
+        assert!(NonConjunction.partial_cmp(&LogicalBiconditional).is_none());
+        assert!(NonConjunction.partial_cmp(&Proj0 {}).is_none());
+        assert!(NonConjunction.partial_cmp(&Proj1 {}).is_none());
+        assert!(NonConjunction > NonDisjunction);
+        assert!(NonConjunction > MaterialNonImplication);
+        assert!(NonConjunction > ConverseNonImplication);
+        assert!(NonConjunction.partial_cmp(&Conjunction).is_none());
+        assert!(NonConjunction > Falsity);
     }
 
     #[test]
-    fn right_projection() {
-        assert!(Projection::<1> < Truth);
-        assert!(Projection::<1> > Falsity);
-        assert!(Projection::<1>.partial_cmp(&Projection::<0>).is_none());
-        assert!(Projection::<1>
-            .partial_cmp(&ProjectAndUnary::<0, Negation>::new())
+    fn converse_implication() {
+        assert!(ConverseImplication < Truth);
+        assert!(ConverseImplication.partial_cmp(&NonConjunction).is_none());
+        assert_eq!(ConverseImplication, ConverseImplication);
+        assert!(ConverseImplication
+            .partial_cmp(&MaterialImplication)
             .is_none());
-        assert!(Projection::<1>
-            .partial_cmp(&ProjectAndUnary::<1, Negation>::new())
+        assert!(ConverseImplication.partial_cmp(&Disjunction).is_none());
+        assert!(ConverseImplication > NProj1::new());
+        assert!(ConverseImplication.partial_cmp(&NProj0::new()).is_none());
+        assert!(ConverseImplication
+            .partial_cmp(&ExclusiveDisjunction)
             .is_none());
-        // TODO: 10 more
+        assert!(ConverseImplication > LogicalBiconditional);
+        assert!(ConverseImplication > Proj0 {});
+        assert!(ConverseImplication.partial_cmp(&Proj1 {}).is_none());
+        assert!(ConverseImplication > NonDisjunction);
+        assert!(ConverseImplication > MaterialNonImplication);
+        assert!(ConverseImplication
+            .partial_cmp(&ConverseNonImplication)
+            .is_none());
+        assert!(ConverseImplication > Conjunction);
+        assert!(ConverseImplication > Falsity);
     }
 
     #[test]
-    fn neg_left_projection() {
-        assert!(ProjectAndUnary::<0, Negation>::new() < Truth);
-        assert!(ProjectAndUnary::<0, Negation>::new() > Falsity);
-        assert!(ProjectAndUnary::<0, Negation>::new()
-            .partial_cmp(&Projection::<0>)
+    fn implication() {
+        assert!(MaterialImplication < Truth);
+        assert!(MaterialImplication.partial_cmp(&NonConjunction).is_none());
+        assert!(MaterialImplication
+            .partial_cmp(&ConverseImplication)
             .is_none());
-        assert!(ProjectAndUnary::<0, Negation>::new()
-            .partial_cmp(&Projection::<1>)
+        assert_eq!(MaterialImplication, MaterialImplication);
+        assert!(MaterialImplication.partial_cmp(&Disjunction).is_none());
+        assert!(MaterialImplication.partial_cmp(&NProj1::new()).is_none());
+        assert!(MaterialImplication > NProj0::new());
+        assert!(MaterialImplication
+            .partial_cmp(&ExclusiveDisjunction)
             .is_none());
-        assert!(ProjectAndUnary::<0, Negation>::new()
-            .partial_cmp(&ProjectAndUnary::<1, Negation>::new())
+        assert!(MaterialImplication > LogicalBiconditional);
+        assert!(MaterialImplication.partial_cmp(&Proj0 {}).is_none());
+        assert!(MaterialImplication > Proj1 {});
+        assert!(MaterialImplication > NonDisjunction);
+        assert!(MaterialImplication
+            .partial_cmp(&MaterialNonImplication)
             .is_none());
-        // TODO: 10 more
+        assert!(MaterialImplication > ConverseNonImplication);
+        assert!(MaterialImplication > Conjunction);
+        assert!(MaterialImplication > Falsity);
+    }
+
+    #[test]
+    fn disjunction() {
+        assert!(Disjunction < Truth);
+        assert!(Disjunction.partial_cmp(&NonConjunction).is_none());
+        assert!(Disjunction.partial_cmp(&ConverseImplication).is_none());
+        assert!(Disjunction.partial_cmp(&MaterialImplication).is_none());
+        assert_eq!(Disjunction, Disjunction);
+        assert!(Disjunction.partial_cmp(&NProj1::new()).is_none());
+        assert!(Disjunction.partial_cmp(&NProj0::new()).is_none());
+        assert!(Disjunction > ExclusiveDisjunction);
+        assert!(Disjunction.partial_cmp(&LogicalBiconditional).is_none());
+        assert!(Disjunction > Proj0 {});
+        assert!(Disjunction > Proj1 {});
+        assert!(Disjunction.partial_cmp(&NonDisjunction).is_none());
+        assert!(Disjunction > MaterialNonImplication);
+        assert!(Disjunction > ConverseNonImplication);
+        assert!(Disjunction > Conjunction);
+        assert!(Disjunction > Falsity);
     }
 
     #[test]
     fn neg_right_projection() {
-        assert!(ProjectAndUnary::<1, Negation>::new() < Truth);
-        assert!(ProjectAndUnary::<1, Negation>::new() > Falsity);
-        assert!(ProjectAndUnary::<1, Negation>::new()
-            .partial_cmp(&Projection::<0>)
-            .is_none());
-        assert!(ProjectAndUnary::<1, Negation>::new()
-            .partial_cmp(&Projection::<1>)
-            .is_none());
-        assert!(ProjectAndUnary::<1, Negation>::new()
-            .partial_cmp(&ProjectAndUnary::<0, Negation>::new())
-            .is_none());
-        // TODO: 10 more
+        let neg_right = NProj1::new();
+        assert!(neg_right < Truth);
+        assert!(neg_right < NonConjunction);
+        assert!(neg_right < ConverseImplication);
+        assert!(neg_right.partial_cmp(&MaterialImplication).is_none());
+        assert!(neg_right.partial_cmp(&Disjunction).is_none());
+        assert_eq!(neg_right, NProj1::new());
+        assert!(neg_right.partial_cmp(&NProj0::new()).is_none());
+        assert!(neg_right.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(neg_right.partial_cmp(&LogicalBiconditional).is_none());
+        assert!(neg_right.partial_cmp(&Proj0 {}).is_none());
+        assert!(neg_right.partial_cmp(&Proj1 {}).is_none());
+        assert!(neg_right > NonDisjunction);
+        assert!(neg_right > MaterialNonImplication);
+        assert!(neg_right.partial_cmp(&ConverseNonImplication).is_none());
+        assert!(neg_right.partial_cmp(&Conjunction).is_none());
+        assert!(neg_right > Falsity);
     }
 
-    // TODO: 10 more tests for every connective
+    #[test]
+    fn neg_left_projection() {
+        let neg_left = NProj0::new();
+        assert!(neg_left < Truth);
+        assert!(neg_left < NonConjunction);
+        assert!(neg_left.partial_cmp(&ConverseImplication).is_none());
+        assert!(neg_left < MaterialImplication);
+        assert!(neg_left.partial_cmp(&Disjunction).is_none());
+        assert!(neg_left.partial_cmp(&NProj1::new()).is_none());
+        assert_eq!(neg_left, NProj0::new());
+        assert!(neg_left.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(neg_left.partial_cmp(&LogicalBiconditional).is_none());
+        assert!(neg_left.partial_cmp(&Proj0 {}).is_none());
+        assert!(neg_left.partial_cmp(&Proj1 {}).is_none());
+        assert!(neg_left > NonDisjunction);
+        assert!(neg_left.partial_cmp(&MaterialNonImplication).is_none());
+        assert!(neg_left > ConverseNonImplication);
+        assert!(neg_left.partial_cmp(&Conjunction).is_none());
+        assert!(neg_left > Falsity);
+    }
+
+    #[test]
+    fn xor() {
+        assert!(ExclusiveDisjunction < Truth);
+        assert!(ExclusiveDisjunction < NonConjunction);
+        assert!(ExclusiveDisjunction
+            .partial_cmp(&ConverseImplication)
+            .is_none());
+        assert!(ExclusiveDisjunction
+            .partial_cmp(&MaterialImplication)
+            .is_none());
+        assert!(ExclusiveDisjunction < Disjunction);
+        assert!(ExclusiveDisjunction.partial_cmp(&NProj1::new()).is_none());
+        assert!(ExclusiveDisjunction.partial_cmp(&NProj0::new()).is_none());
+        assert_eq!(ExclusiveDisjunction, ExclusiveDisjunction);
+        assert!(ExclusiveDisjunction
+            .partial_cmp(&LogicalBiconditional)
+            .is_none());
+        assert!(ExclusiveDisjunction.partial_cmp(&Proj0 {}).is_none());
+        assert!(ExclusiveDisjunction.partial_cmp(&Proj1 {}).is_none());
+        assert!(ExclusiveDisjunction.partial_cmp(&NonDisjunction).is_none());
+        assert!(ExclusiveDisjunction > MaterialNonImplication);
+        assert!(ExclusiveDisjunction > ConverseNonImplication);
+        assert!(ExclusiveDisjunction.partial_cmp(&Conjunction).is_none());
+        assert!(ExclusiveDisjunction > Falsity);
+    }
+
+    #[test]
+    fn equiv() {
+        assert!(LogicalBiconditional < Truth);
+        assert!(LogicalBiconditional.partial_cmp(&NonConjunction).is_none());
+        assert!(LogicalBiconditional < ConverseImplication);
+        assert!(LogicalBiconditional < MaterialImplication);
+        assert!(LogicalBiconditional.partial_cmp(&Disjunction).is_none());
+        assert!(LogicalBiconditional.partial_cmp(&NProj1::new()).is_none());
+        assert!(LogicalBiconditional.partial_cmp(&NProj0::new()).is_none());
+        assert!(LogicalBiconditional
+            .partial_cmp(&ExclusiveDisjunction)
+            .is_none());
+        assert_eq!(LogicalBiconditional, LogicalBiconditional);
+        assert!(LogicalBiconditional.partial_cmp(&Proj0 {}).is_none());
+        assert!(LogicalBiconditional.partial_cmp(&Proj1 {}).is_none());
+        assert!(LogicalBiconditional > NonDisjunction);
+        assert!(LogicalBiconditional
+            .partial_cmp(&MaterialNonImplication)
+            .is_none());
+        assert!(LogicalBiconditional
+            .partial_cmp(&ConverseNonImplication)
+            .is_none());
+        assert!(LogicalBiconditional > Conjunction);
+        assert!(LogicalBiconditional > Falsity);
+    }
+
+    #[test]
+    fn left_projection() {
+        let left = Proj0 {};
+        assert!(left < Truth);
+        assert!(left.partial_cmp(&NonConjunction).is_none());
+        assert!(left < ConverseImplication);
+        assert!(left.partial_cmp(&MaterialImplication).is_none());
+        assert!(left < Disjunction);
+        assert!(left.partial_cmp(&NProj1::new()).is_none());
+        assert!(left.partial_cmp(&NProj0::new()).is_none());
+        assert!(left.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(left.partial_cmp(&LogicalBiconditional).is_none());
+        assert_eq!(left, Proj0 {});
+        assert!(left.partial_cmp(&Proj1 {}).is_none());
+        assert!(left.partial_cmp(&NonDisjunction).is_none());
+        assert!(left > MaterialNonImplication);
+        assert!(left.partial_cmp(&ConverseNonImplication).is_none());
+        assert!(left > Conjunction);
+        assert!(left > Falsity);
+    }
+
+    #[test]
+    fn right_projection() {
+        let right = Proj1 {};
+        assert!(right < Truth);
+        assert!(right.partial_cmp(&NonConjunction).is_none());
+        assert!(right.partial_cmp(&ConverseImplication).is_none());
+        assert!(right < MaterialImplication);
+        assert!(right < Disjunction);
+        assert!(right.partial_cmp(&NProj1::new()).is_none());
+        assert!(right.partial_cmp(&NProj0::new()).is_none());
+        assert!(right.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(right.partial_cmp(&LogicalBiconditional).is_none());
+        assert!(right.partial_cmp(&Proj0 {}).is_none());
+        assert_eq!(right, Proj1 {});
+        assert!(right.partial_cmp(&NonDisjunction).is_none());
+        assert!(right.partial_cmp(&MaterialNonImplication).is_none());
+        assert!(right > ConverseNonImplication);
+        assert!(right > Conjunction);
+        assert!(right > Falsity);
+    }
+
+    #[test]
+    fn pierce_arrow() {
+        assert!(NonDisjunction < Truth);
+        assert!(NonDisjunction < NonConjunction);
+        assert!(NonDisjunction < ConverseImplication);
+        assert!(NonDisjunction < MaterialImplication);
+        assert!(NonDisjunction.partial_cmp(&Disjunction).is_none());
+        assert!(NonDisjunction < NProj1::new());
+        assert!(NonDisjunction < NProj0::new());
+        assert!(NonDisjunction.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(NonDisjunction < LogicalBiconditional);
+        assert!(NonDisjunction.partial_cmp(&Proj0 {}).is_none());
+        assert!(NonDisjunction.partial_cmp(&Proj1 {}).is_none());
+        assert_eq!(NonDisjunction, NonDisjunction);
+        assert!(NonDisjunction
+            .partial_cmp(&MaterialNonImplication)
+            .is_none());
+        assert!(NonDisjunction
+            .partial_cmp(&ConverseNonImplication)
+            .is_none());
+        assert!(NonDisjunction.partial_cmp(&Conjunction).is_none());
+        assert!(NonDisjunction > Falsity);
+    }
+
+    #[test]
+    fn non_imply() {
+        assert!(MaterialNonImplication < Truth);
+        assert!(MaterialNonImplication < NonConjunction);
+        assert!(MaterialNonImplication < ConverseImplication);
+        assert!(MaterialNonImplication
+            .partial_cmp(&MaterialImplication)
+            .is_none());
+        assert!(MaterialNonImplication < Disjunction);
+        assert!(MaterialNonImplication < NProj1::new());
+        assert!(MaterialNonImplication.partial_cmp(&NProj0::new()).is_none());
+        assert!(MaterialNonImplication < ExclusiveDisjunction);
+        assert!(MaterialNonImplication
+            .partial_cmp(&LogicalBiconditional)
+            .is_none());
+        assert!(MaterialNonImplication < Proj0 {});
+        assert!(MaterialNonImplication.partial_cmp(&Proj1 {}).is_none());
+        assert!(MaterialNonImplication
+            .partial_cmp(&NonDisjunction)
+            .is_none());
+        assert_eq!(MaterialNonImplication, MaterialNonImplication);
+        assert!(MaterialNonImplication
+            .partial_cmp(&ConverseNonImplication)
+            .is_none());
+        assert!(MaterialNonImplication.partial_cmp(&Conjunction).is_none());
+        assert!(MaterialNonImplication > Falsity);
+    }
+
+    #[test]
+    fn converse_non_imply() {
+        assert!(ConverseNonImplication < Truth);
+        assert!(ConverseNonImplication < NonConjunction);
+        assert!(ConverseNonImplication
+            .partial_cmp(&ConverseImplication)
+            .is_none());
+        assert!(ConverseNonImplication < MaterialImplication);
+        assert!(ConverseNonImplication < Disjunction);
+        assert!(ConverseNonImplication.partial_cmp(&NProj1::new()).is_none());
+        assert!(ConverseNonImplication < NProj0::new());
+        assert!(ConverseNonImplication < ExclusiveDisjunction);
+        assert!(ConverseNonImplication
+            .partial_cmp(&LogicalBiconditional)
+            .is_none());
+        assert!(ConverseNonImplication.partial_cmp(&Proj0 {}).is_none());
+        assert!(ConverseNonImplication < Proj1 {});
+        assert!(ConverseNonImplication
+            .partial_cmp(&NonDisjunction)
+            .is_none());
+        assert!(ConverseNonImplication
+            .partial_cmp(&MaterialNonImplication)
+            .is_none());
+        assert_eq!(ConverseNonImplication, ConverseNonImplication);
+        assert!(ConverseNonImplication.partial_cmp(&Conjunction).is_none());
+        assert!(ConverseNonImplication > Falsity);
+    }
+
+    #[test]
+    fn conjunction() {
+        assert!(Conjunction < Truth);
+        assert!(Conjunction.partial_cmp(&NonConjunction).is_none());
+        assert!(Conjunction < ConverseImplication);
+        assert!(Conjunction < MaterialImplication);
+        assert!(Conjunction < Disjunction);
+        assert!(Conjunction.partial_cmp(&NProj1::new()).is_none());
+        assert!(Conjunction.partial_cmp(&NProj0::new()).is_none());
+        assert!(Conjunction.partial_cmp(&ExclusiveDisjunction).is_none());
+        assert!(Conjunction < LogicalBiconditional);
+        assert!(Conjunction < Proj0 {});
+        assert!(Conjunction < Proj1 {});
+        assert!(Conjunction.partial_cmp(&NonDisjunction).is_none());
+        assert!(Conjunction.partial_cmp(&MaterialNonImplication).is_none());
+        assert!(Conjunction.partial_cmp(&ConverseNonImplication).is_none());
+        assert_eq!(Conjunction, Conjunction);
+        assert!(Conjunction > Falsity);
+    }
+
+    #[test]
+    fn contradiction_is_lowest() {
+        assert!(Falsity < Truth);
+        assert!(Falsity < NonConjunction);
+        assert!(Falsity < ConverseImplication);
+        assert!(Falsity < MaterialImplication);
+        assert!(Falsity < Disjunction);
+        assert!(Falsity < NProj1::new());
+        assert!(Falsity < NProj0::new());
+        assert!(Falsity < ExclusiveDisjunction);
+        assert!(Falsity < LogicalBiconditional);
+        assert!(Falsity < Proj0 {});
+        assert!(Falsity < Proj1 {});
+        assert!(Falsity < NonDisjunction);
+        assert!(Falsity < MaterialNonImplication);
+        assert!(Falsity < ConverseNonImplication);
+        assert!(Falsity < Conjunction);
+        assert_eq!(Falsity, Falsity);
+    }
 }

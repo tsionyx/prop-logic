@@ -55,14 +55,21 @@ impl<const I: usize> TruthFunction<2> for Projection<I> {
     }
 
     fn eval(&self, values: [bool; 2]) -> bool {
-        // TODO: check indices
-        // ignores the first or second argument
-        values[I]
+        let [val1, val2] = values;
+        if I == 0 {
+            val1
+        } else {
+            val2
+        }
     }
 
     fn apply<T>(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
-        // TODO: check indices, do not Clone
-        expressions[I].clone()
+        let [expr1, expr2] = expressions;
+        if I == 0 {
+            expr1
+        } else {
+            expr2
+        }
     }
 }
 
