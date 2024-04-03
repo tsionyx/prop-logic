@@ -19,7 +19,7 @@ pub use super::ops::*;
 /// and [logical operators][super::connective::Connective].
 pub enum Formula<T> {
     /// Degenerate kind of [`Formula`] having fixed
-    /// [truth value](<https://en.wikipedia.org/wiki/Truth_value)
+    /// [truth value](https://en.wikipedia.org/wiki/Truth_value)
     /// without any [`Atom`]s.
     TruthValue(bool),
 
@@ -565,6 +565,6 @@ mod tests {
     #[test]
     fn size_var_contains_no_label() {
         let var = Var::new(12);
-        assert_eq!(std::mem::size_of_val(&var), 8);
+        assert_eq!(mem::size_of_val(&var), 8);
     }
 }

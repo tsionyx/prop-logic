@@ -30,6 +30,12 @@ impl<const I: usize, UnaryOp: TruthFunction<1>> ProjectAndUnary<I, UnaryOp> {
     }
 }
 
+impl<const I: usize, UnaryOp: TruthFunction<1>> Default for ProjectAndUnary<I, UnaryOp> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const I: usize, UnaryOp: TruthFunction<1>> TruthFunction<2> for ProjectAndUnary<I, UnaryOp>
 where
     Projection<I>: TruthFunction<2>,

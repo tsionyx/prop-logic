@@ -1,5 +1,3 @@
-use std::convert::Into;
-
 use super::formula::Formula;
 
 /// The logical conjunction operator.
