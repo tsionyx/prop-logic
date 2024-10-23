@@ -21,14 +21,11 @@
 //
 #![warn(absolute_paths_not_starting_with_crate)]
 #![warn(anonymous_parameters)]
-// use `Box` without fear
-#![allow(box_pointers)]
 #![warn(deprecated_in_future)]
 #![warn(elided_lifetimes_in_paths)]
 #![warn(explicit_outlives_requirements)]
 #![warn(ffi_unwind_calls)]
 #![warn(fuzzy_provenance_casts)]
-#![warn(indirect_structural_match)]
 #![warn(invalid_reference_casting)]
 #![warn(keyword_idents)]
 #![warn(let_underscore_drop)]
@@ -44,7 +41,6 @@
 #![warn(non_ascii_idents)]
 #![warn(non_exhaustive_omitted_patterns)]
 #![warn(noop_method_call)]
-#![warn(pointer_structural_match)]
 #![warn(private_bounds)]
 #![warn(private_interfaces)]
 #![warn(rust_2021_incompatible_closure_captures)]
@@ -69,7 +65,6 @@
 #![warn(unused_macro_rules)]
 #![warn(unused_qualifications)]
 #![warn(unused_results)]
-#![warn(unused_tuple_struct_fields)]
 #![warn(variant_size_differences)]
 //
 // additional recommendations

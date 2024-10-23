@@ -26,11 +26,21 @@ use crate::formula::Formula;
 
 pub use self::{
     and::Conjunction,
+    converse_imply::ConverseImplication,
+    converse_nimply::ConverseNonImplication,
     falsity::Falsity,
     id::LogicalIdentity,
+    imply::MaterialImplication,
+    nand::NonConjunction,
     neg::Negation,
+    nimply::MaterialNonImplication,
+    nor::NonDisjunction,
+    or::Disjunction,
+    ordering::TruthFunctionWithNot,
     proj::{ProjectAndUnary, Projection},
     truth::Truth,
+    xnor::LogicalBiconditional,
+    xor::ExclusiveDisjunction,
 };
 
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input

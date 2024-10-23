@@ -162,7 +162,7 @@ mod helper {
     impl PartialEq for DynOperator {
         fn eq(&self, other: &Self) -> bool {
             // TODO: ensure ZST in `DynOperator::new`
-            self.inner.type_id() == other.inner.type_id()
+            (*self.inner).type_id() == (*other.inner).type_id()
         }
     }
 
@@ -678,6 +678,6 @@ mod tests {
     #[test]
     fn size_var_contains_no_label() {
         let var = Var::new(12);
-        assert_eq!(std::mem::size_of_val(&var), 8);
+        assert_eq!(size_of_val(&var), 8);
     }
 }
