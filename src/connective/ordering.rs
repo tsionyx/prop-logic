@@ -1,23 +1,24 @@
 use std::cmp::Ordering;
 
 use super::{
-    and::Conjunction,
-    converse_imply::ConverseImplication,
-    converse_nimply::ConverseNonImplication,
-    falsity::Falsity,
-    id::LogicalIdentity,
-    imply::MaterialImplication,
-    nand::NonConjunction,
-    neg::Negation,
-    nimply::MaterialNonImplication,
-    nor::NonDisjunction,
-    or::Disjunction,
-    proj::{ProjectAndUnary, Projection},
-    truth::Truth,
-    truth_table,
-    xnor::LogicalBiconditional,
-    xor::ExclusiveDisjunction,
-    TruthFunction,
+    functions::{
+        and::Conjunction,
+        converse_imply::ConverseImplication,
+        converse_nimply::ConverseNonImplication,
+        falsity::Falsity,
+        id::LogicalIdentity,
+        imply::MaterialImplication,
+        nand::NonConjunction,
+        neg::Negation,
+        nimply::MaterialNonImplication,
+        nor::NonDisjunction,
+        or::Disjunction,
+        proj::{ProjectAndUnary, Projection},
+        truth::Truth,
+        xnor::LogicalBiconditional,
+        xor::ExclusiveDisjunction,
+    },
+    truth_table, TruthFunction,
 };
 
 use crate::utils::cartesian_diag;
