@@ -56,6 +56,16 @@ pub trait TruthFunction<const ARITY: usize> {
     ///
     /// But, in order to use the [`TruthFunction`] in a dynamic context
     /// we have to create some 'dummy' instance.
+    ///
+    /// Unfortunately it is not possible now in stable rust
+    /// to ensure the generic type is ZST, so whenever you use
+    /// the [`TruthFunction`] and want to ensure it has zero size,
+    /// you have to:
+    /// 1. Require that the generic [`TruthFunction`] is [`ZST`][crate::utils::Zst].
+    ///    This is not used as a supertrait here deliberately to allow to use `dyn TruthFunction`,
+    ///    (as the `Zst` trait contains an associated constant preventing the dynamic object to create).
+    /// 2. Use the [`Zst::ASSERT_ZST`][crate::utils::Zst::ASSERT_ZST] in your function accepting
+    ///    generic `TruthFunction` to force the compiler to do `size_of` check.
     fn init() -> Self
     where
         Self: Sized;
