@@ -2,46 +2,15 @@
 //! their operations and mutual dependencies.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
-mod and;
-mod converse_imply;
-mod converse_nimply;
-mod falsity;
-mod id;
-mod imply;
-mod nand;
-mod neg;
-mod nimply;
-mod nor;
-mod or;
+mod functions;
 mod ordering;
-mod proj;
-mod truth;
 pub mod truth_table;
-mod xnor;
-mod xor;
 
 use std::{fmt, ops::Deref, sync::Arc};
 
 use crate::formula::Formula;
 
-pub use self::{
-    and::Conjunction,
-    converse_imply::ConverseImplication,
-    converse_nimply::ConverseNonImplication,
-    falsity::Falsity,
-    id::LogicalIdentity,
-    imply::MaterialImplication,
-    nand::NonConjunction,
-    neg::Negation,
-    nimply::MaterialNonImplication,
-    nor::NonDisjunction,
-    or::Disjunction,
-    ordering::TruthFunctionWithNot,
-    proj::{ProjectAndUnary, Projection},
-    truth::Truth,
-    xnor::LogicalBiconditional,
-    xor::ExclusiveDisjunction,
-};
+pub use self::{functions::*, ordering::TruthFunctionWithNot};
 
 #[allow(path_statements)]
 const _ASSERT_ZST: () = {

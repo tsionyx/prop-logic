@@ -45,7 +45,7 @@ impl Connective<2> for ConverseNonImplication {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::tests::apply_and_eval_is_equivalent, *};
+    use super::{super::super::tests::apply_and_eval_is_equivalent, *};
 
     #[test]
     fn eval_is_sync_with_apply() {
