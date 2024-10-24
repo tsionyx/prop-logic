@@ -80,4 +80,7 @@ pub mod formula;
 mod ops;
 mod utils;
 
-pub use self::formula::{Formula, Var, Variable};
+pub use self::{
+    formula::{Formula, Var, Variable},
+    utils::Zst,
+};

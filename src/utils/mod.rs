@@ -1,3 +1,5 @@
 mod macros;
+mod zst;
 
-pub(crate) use macros::cartesian_diag;
+pub(crate) use self::macros::cartesian_diag;
+pub use self::zst::Zst;

@@ -126,6 +126,7 @@ mod helper {
     use upcast::{Upcast, UpcastFrom};
 
     use super::Connective;
+    use crate::utils::Zst;
 
     #[derive(Debug, Clone)]
     /// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
@@ -135,16 +136,13 @@ mod helper {
 
     impl DynOperator {
         /// Create a [`DynOperator`] with a [`Connective<2>`].
+        #[allow(path_statements)]
         pub fn new<C>() -> Self
         where
-            C: Connective<2> + Debug + Copy + 'static,
+            C: Connective<2> + Zst + Debug + Copy + 'static,
         {
-            // /// Assert the type is ZST.
-            // struct CheckZst<T>(PhantomData<T>);
-            // impl<T> CheckZst<T> {
-            //     const ZERO_SIZE: () = assert!(std::mem::size_of::<T>() == 0);
-            // }
-            // const _: () = CheckZst::<C>::ZERO_SIZE;
+            C::ASSERT;
+
             Self {
                 inner: Box::new(C::init()),
             }
@@ -161,7 +159,6 @@ mod helper {
 
     impl PartialEq for DynOperator {
         fn eq(&self, other: &Self) -> bool {
-            // TODO: ensure ZST in `DynOperator::new`
             (*self.inner).type_id() == (*other.inner).type_id()
         }
     }
