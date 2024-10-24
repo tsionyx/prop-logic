@@ -122,18 +122,6 @@ cartesian_diag!(
     ignore
 );
 
-/// Easily convert a `TruthFunction` into its counterpart in terms
-/// of switching all the bits in its truth table.
-///
-/// TODO: impl for all `TruthFunction`-s
-pub trait TruthFunctionWithNot<const ARITY: usize>: TruthFunction<ARITY> {
-    /// Another `TruthFunction` which truth function is an invertion of the original one.
-    type Not: TruthFunction<ARITY>;
-}
-
-// TODO: Storage of Connective for every ARITY
-//  impl PartialOrd and Not for every Operator
-
 #[cfg(test)]
 mod order_tests {
     use super::*;

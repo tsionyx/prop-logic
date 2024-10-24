@@ -3,7 +3,9 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
 mod functions;
+mod ops;
 mod ordering;
+mod storage;
 pub mod truth_table;
 
 use std::{collections::BTreeMap, fmt, iter, ops::Deref, sync::Arc};
@@ -12,7 +14,10 @@ use itertools::Itertools as _;
 
 use crate::formula::Formula;
 
-pub use self::{functions::*, ordering::TruthFunctionWithNot};
+pub use self::{
+    functions::*,
+    ops::{Converse, Negate},
+};
 
 #[allow(path_statements)]
 const _ASSERT_ZST: () = {
@@ -134,6 +139,8 @@ pub trait TruthFunction<const ARITY: usize> {
 
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
+///
+/// Its main usage is to convert to/from string representation of a formula.
 pub trait Connective<const ARITY: usize>: TruthFunction<ARITY> {
     /// The symbol (or name) most commonly used for the operation.
     fn notation(&self) -> FunctionNotation;
