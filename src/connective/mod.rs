@@ -3,14 +3,19 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
 mod functions;
+mod ops;
 mod ordering;
+mod storage;
 pub mod truth_table;
 
 use std::{fmt, ops::Deref, sync::Arc};
 
 use crate::formula::Formula;
 
-pub use self::{functions::*, ordering::TruthFunctionWithNot};
+pub use self::{
+    functions::*,
+    ops::{Converse, Negate},
+};
 
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
 /// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
@@ -74,6 +79,8 @@ pub trait TruthFunction<const ARITY: usize> {
 
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
+///
+/// Its main usage is to convert to/from string representation of a formula.
 pub trait Connective<const ARITY: usize>: TruthFunction<ARITY> {
     /// The symbol (or name) most commonly used for the operation.
     fn notation(&self) -> FunctionNotation;
