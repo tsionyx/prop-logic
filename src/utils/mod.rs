@@ -1,3 +1,4 @@
+pub(crate) mod dependent_array;
 mod macros;
 mod zst;
 

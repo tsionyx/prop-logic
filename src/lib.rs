@@ -82,5 +82,8 @@ mod utils;
 
 pub use self::{
     formula::{Formula, Var, Variable},
-    utils::Zst,
+    utils::{
+        dependent_array::{CheckedArray, CheckedStorage, SizedArray, VerifySize},
+        Zst,
+    },
 };
