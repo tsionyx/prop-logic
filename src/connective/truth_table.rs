@@ -8,9 +8,7 @@
 //! that the table represents (for example, A XOR B).
 //! Each row of the truth table contains one possible configuration of the input variables
 //! (for instance, A=true, B=false), and the result of the operation for those values.
-use std::{collections::BTreeMap, iter};
-
-use itertools::Itertools as _;
+use std::collections::BTreeMap;
 
 use super::TruthFunction;
 
@@ -53,24 +51,7 @@ pub fn get_mapping<Op, const ARITY: usize>() -> BTreeMap<[bool; ARITY], bool>
 where
     Op: TruthFunction<ARITY>,
 {
-    let table: BTreeMap<_, _> = iter::repeat([false, true])
-        .take(ARITY)
-        .multi_cartesian_product()
-        .map(|assignment| {
-            let assignment = assignment.try_into().unwrap();
-            (assignment, Op::init().eval(assignment))
-        })
-        .collect();
-
-    if ARITY > 0 {
-        assert_eq!(table.len(), 1 << ARITY);
-        table
-    } else {
-        assert!(table.is_empty());
-        assert_eq!(ARITY, 0);
-        let dummy_empty_array = [false; ARITY];
-        iter::once((dummy_empty_array, Op::init().eval(dummy_empty_array))).collect()
-    }
+    Op::init().get_truth_table()
 }
 
 #[cfg(test)]

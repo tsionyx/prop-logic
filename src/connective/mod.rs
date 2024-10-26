@@ -6,7 +6,9 @@ mod functions;
 mod ordering;
 pub mod truth_table;
 
-use std::{fmt, ops::Deref, sync::Arc};
+use std::{collections::BTreeMap, fmt, iter, ops::Deref, sync::Arc};
+
+use itertools::Itertools as _;
 
 use crate::formula::Formula;
 
@@ -96,6 +98,37 @@ pub trait TruthFunction<const ARITY: usize> {
     {
         let self_ = *self;
         Operation::new(Box::new(move |args| self_.apply(args)))
+    }
+
+    /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
+    /// for a [`TruthFunction`] as the **key** (boolean arguments)-**value** (function result)
+    /// ordered map.
+    ///
+    /// # Panics
+    ///
+    /// If a single point of cartesian product of `ARITY` bool values
+    /// does not contain exactly `ARITY` values.
+    /// This invariant should be guaranteed by the
+    /// [itertools library][itertools::Itertools::multi_cartesian_product].
+    fn get_truth_table(&self) -> BTreeMap<[bool; ARITY], bool> {
+        let table: BTreeMap<_, _> = iter::repeat([false, true])
+            .take(ARITY)
+            .multi_cartesian_product()
+            .map(|assignment| {
+                let assignment = assignment.try_into().unwrap();
+                (assignment, self.eval(assignment))
+            })
+            .collect();
+
+        if ARITY > 0 {
+            assert_eq!(table.len(), 1 << ARITY);
+            table
+        } else {
+            assert!(table.is_empty());
+            assert_eq!(ARITY, 0);
+            let dummy_empty_array = [false; ARITY];
+            iter::once((dummy_empty_array, self.eval(dummy_empty_array))).collect()
+        }
     }
 }
 
