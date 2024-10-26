@@ -17,6 +17,9 @@ use crate::formula::Formula;
 pub use self::{
     functions::*,
     ops::{Converse, Negate},
+    storage::{
+        AllFunctions, Arity0, Arity1, Arity2, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS,
+    },
 };
 
 #[allow(path_statements)]
