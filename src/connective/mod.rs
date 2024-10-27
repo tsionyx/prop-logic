@@ -43,6 +43,33 @@ pub use self::{
     xor::ExclusiveDisjunction,
 };
 
+#[allow(path_statements)]
+const _ASSERT_ZST: () = {
+    use crate::utils::Zst;
+
+    // nullary and unary
+    Falsity::ASSERT_ZST;
+    LogicalIdentity::ASSERT_ZST;
+    Negation::ASSERT_ZST;
+    Truth::ASSERT_ZST;
+
+    // then binary
+    Conjunction::ASSERT_ZST;
+    MaterialNonImplication::ASSERT_ZST;
+    Projection::<0>::ASSERT_ZST;
+    ConverseNonImplication::ASSERT_ZST;
+    Projection::<1>::ASSERT_ZST;
+    ExclusiveDisjunction::ASSERT_ZST;
+    Disjunction::ASSERT_ZST;
+    NonDisjunction::ASSERT_ZST;
+    LogicalBiconditional::ASSERT_ZST;
+    ProjectAndUnary::<1, Negation>::ASSERT_ZST;
+    ConverseImplication::ASSERT_ZST;
+    ProjectAndUnary::<0, Negation>::ASSERT_ZST;
+    MaterialImplication::ASSERT_ZST;
+    NonConjunction::ASSERT_ZST;
+};
+
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
 /// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
 ///
