@@ -58,6 +58,8 @@ where
 mod tests {
     use super::{super::*, *};
 
+    use itertools::Itertools as _;
+
     #[test]
     fn nullary_truth() {
         type T = Truth;
