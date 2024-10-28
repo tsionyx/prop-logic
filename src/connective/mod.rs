@@ -47,35 +47,29 @@ const _ASSERT_ZST: () = {
 
 #[cfg(test)]
 mod tests {
-    use std::iter;
-
     use itertools::Itertools as _;
 
+    use crate::{arity::two_powers, formula::Valuation, utils::dependent_array::CheckedArray};
+
     use super::*;
-    use crate::formula::Valuation;
 
     pub(super) fn apply_and_eval_is_equivalent<Op, const ARITY: usize>()
     where
         Op: TruthFunction<ARITY>,
+        two_powers::D: CheckedArray<ARITY>,
     {
-        let eval_variants = iter::repeat([false, true])
-            .take(ARITY)
-            .multi_cartesian_product()
-            .map(|assignment| {
-                let formulas = assignment
-                    .iter()
-                    .copied()
-                    .map(Formula::<()>::TruthValue)
-                    .collect_vec();
-                let formulas = formulas.try_into().expect(
-                    "Cartesian product ensures the length of the tuple to be equal to ARITY",
-                );
+        let truth_table = Op::init().get_truth_table().into_inner();
+        let eval_variants = truth_table.into_iter().map(|(assignment, eval)| {
+            let formulas = assignment
+                .into_iter()
+                .map(Formula::<()>::TruthValue)
+                .collect_vec();
+            let formulas = formulas
+                .try_into()
+                .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-                let assignment = assignment.try_into().expect(
-                    "Cartesian product ensures the length of the tuple to be equal to ARITY",
-                );
-                (Op::init().apply(formulas), Op::init().eval(assignment))
-            });
+            (Op::init().apply(formulas), eval)
+        });
 
         let empty_interpretation = Valuation::new();
         for (fully_interpreted_formula, expected_eval) in eval_variants {

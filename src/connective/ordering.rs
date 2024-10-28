@@ -2,7 +2,10 @@ use std::cmp::Ordering;
 
 use super::{functions::*, truth_table, TruthFunction};
 
-use crate::utils::cartesian_diag;
+use crate::{
+    arity::two_powers::D,
+    utils::{cartesian_diag, dependent_array::CheckedArray},
+};
 
 /// Defines the partial order (`<=`) between the [`TruthFunction`]-s
 /// by associating them with the sets.
@@ -13,9 +16,11 @@ fn partial_ordering<Op1, Op2, const ARITY: usize>() -> Option<Ordering>
 where
     Op1: TruthFunction<ARITY>,
     Op2: TruthFunction<ARITY>,
+    D: CheckedArray<ARITY>,
+    <D as CheckedArray<ARITY>>::Array<truth_table::Row<ARITY>>: Clone,
 {
-    let op1_truth_table = truth_table::get::<Op1, ARITY>();
-    let op2_truth_table = truth_table::get::<Op2, ARITY>();
+    let op1_truth_table = Op1::init().get_truth_table().values();
+    let op2_truth_table = Op2::init().get_truth_table().values();
 
     let mut set_ordering = Ordering::Equal;
     for (&val1, &val2) in op1_truth_table.iter().zip(&op2_truth_table) {

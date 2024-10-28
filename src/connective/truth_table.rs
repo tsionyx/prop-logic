@@ -8,19 +8,19 @@
 //! that the table represents (for example, A XOR B).
 //! Each row of the truth table contains one possible configuration of the input variables
 //! (for instance, A=true, B=false), and the result of the operation for those values.
-use std::collections::BTreeMap;
+use std::{fmt, ops::Deref};
 
-use super::TruthFunction;
+use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, CheckedArray};
 
-/// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
-/// for an [`TruthFunction`]
+/// A [truth table](https://en.wikipedia.org/wiki/Truth_table)
+/// for arbitrary [`TruthFunction`][super::TruthFunction]
 /// with the values produced by applying
 /// the arguments in default order
 /// (as the sequence of incrementing binary numbers):
 ///
 /// # Example
 ///
-/// For the XOR-function the last column will be produced.
+/// For the XOR-function the last two column will be produced.
 ///
 /// ```text
 /// |  i |    args | value |
@@ -30,35 +30,99 @@ use super::TruthFunction;
 /// |  2 |  (1, 0) |     1 |
 /// |  3 |  (1, 1) |     0 |
 /// ```
-pub fn get<Op, const ARITY: usize>() -> Vec<bool>
+pub struct TruthTable<const ARITY: usize>
 where
-    Op: TruthFunction<ARITY>,
+    D: CheckedArray<ARITY>,
 {
-    get_mapping::<Op, ARITY>().into_values().collect()
+    table: CheckedStorage<ARITY, D, Row<ARITY>>,
 }
 
-/// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
-/// for an [`TruthFunction`] as the **key** (boolean arguments)-**value** (function result)
-/// ordered map.
-///
-/// # Panics
-///
-/// If a single point of cartesian product of `ARITY` bool values
-/// does not contain exactly `ARITY` values.
-/// This invariant should be guaranteed by the
-/// [itertools library][itertools::Itertools::multi_cartesian_product].
-pub fn get_mapping<Op, const ARITY: usize>() -> BTreeMap<[bool; ARITY], bool>
+impl<const ARITY: usize> fmt::Debug for TruthTable<ARITY>
 where
-    Op: TruthFunction<ARITY>,
+    D: CheckedArray<ARITY>,
+    <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: fmt::Debug,
 {
-    Op::init().get_truth_table()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TruthTable")
+            .field("table", &*self.table)
+            .finish()
+    }
+}
+
+pub(crate) type Row<const ARITY: usize> = ([bool; ARITY], bool);
+
+impl<const ARITY: usize> TruthTable<ARITY>
+where
+    D: CheckedArray<ARITY>,
+{
+    /// Create new [`TruthTable`] from the individual rows.
+    pub const fn new(table: <D as CheckedArray<ARITY>>::Array<Row<ARITY>>) -> Self {
+        Self {
+            table: CheckedStorage::new(table),
+        }
+    }
+
+    /// Get the ordered sequence of bool results of a [`TruthFunction`][super::TruthFunction].
+    pub fn values(&self) -> Vec<bool>
+    where
+        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
+    {
+        let v = self.table.deref().clone().into();
+        v.into_iter().map(|(_k, v)| v).collect()
+    }
+
+    /// Convert the whole table into the ordered sequence
+    /// of bool results of a [`TruthFunction`][super::TruthFunction].
+    pub fn into_values(self) -> Vec<bool> {
+        self.table
+            .into_inner()
+            .into_iter()
+            .map(|(_k, v)| v)
+            .collect()
+    }
+
+    /// Return inner [array][CheckedArray::Array].
+    pub fn into_inner(self) -> <D as CheckedArray<ARITY>>::Array<Row<ARITY>> {
+        self.table.into_inner()
+    }
+}
+
+impl<const ARITY: usize> Deref for TruthTable<ARITY>
+where
+    D: CheckedArray<ARITY>,
+{
+    type Target = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.table
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{super::*, *};
 
-    use itertools::Itertools as _;
+    fn get<Op, const ARITY: usize>() -> Vec<bool>
+    where
+        Op: TruthFunction<ARITY>,
+        D: CheckedArray<ARITY>,
+        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
+    {
+        get_mapping::<Op, ARITY>()
+            .into_iter()
+            .map(|(_, v)| v)
+            .collect()
+    }
+
+    fn get_mapping<Op, const ARITY: usize>() -> Vec<Row<ARITY>>
+    where
+        Op: TruthFunction<ARITY>,
+        D: CheckedArray<ARITY>,
+        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
+    {
+        let table = Op::init().get_truth_table();
+        table.clone().into()
+    }
 
     #[test]
     fn nullary_truth() {
@@ -67,7 +131,7 @@ mod tests {
         assert_eq!(table, [true]);
 
         let table = get_mapping::<T, 0>();
-        assert_eq!(table.into_iter().collect_vec(), vec![([], true)]);
+        assert_eq!(table, vec![([], true)]);
     }
 
     #[test]
@@ -77,7 +141,7 @@ mod tests {
         assert_eq!(table, [false]);
 
         let table = get_mapping::<T, 0>();
-        assert_eq!(table.into_iter().collect_vec(), vec![([], false)]);
+        assert_eq!(table, vec![([], false)]);
     }
 
     #[test]
@@ -87,10 +151,7 @@ mod tests {
         assert_eq!(table, [true, true]);
 
         let table = get_mapping::<T, 1>();
-        assert_eq!(
-            table.into_iter().collect_vec(),
-            vec![([false], true), ([true], true)]
-        );
+        assert_eq!(table, vec![([false], true), ([true], true)]);
     }
 
     #[test]
@@ -100,10 +161,7 @@ mod tests {
         assert_eq!(table, [false, false]);
 
         let table = get_mapping::<T, 1>();
-        assert_eq!(
-            table.into_iter().collect_vec(),
-            vec![([false], false), ([true], false)]
-        );
+        assert_eq!(table, vec![([false], false), ([true], false)]);
     }
 
     #[test]
@@ -114,7 +172,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], true),
                 ([false, true], true),
@@ -132,7 +190,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], false),
                 ([false, true], false),
@@ -149,10 +207,7 @@ mod tests {
         assert_eq!(table, [false, true]);
 
         let table = get_mapping::<T, 1>();
-        assert_eq!(
-            table.into_iter().collect_vec(),
-            vec![([false], false), ([true], true)]
-        );
+        assert_eq!(table, vec![([false], false), ([true], true)]);
     }
 
     #[test]
@@ -162,10 +217,7 @@ mod tests {
         assert_eq!(table, [true, false]);
 
         let table = get_mapping::<T, 1>();
-        assert_eq!(
-            table.into_iter().collect_vec(),
-            vec![([false], true), ([true], false)]
-        );
+        assert_eq!(table, vec![([false], true), ([true], false)]);
     }
 
     #[test]
@@ -176,7 +228,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], false),
                 ([false, true], false),
@@ -194,7 +246,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], false),
                 ([false, true], true),
@@ -212,7 +264,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], true),
                 ([false, true], true),
@@ -230,7 +282,7 @@ mod tests {
 
         let table = get_mapping::<T, 2>();
         assert_eq!(
-            table.into_iter().collect_vec(),
+            table,
             vec![
                 ([false, false], true),
                 ([false, true], false),

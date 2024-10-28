@@ -1,8 +1,10 @@
-use std::{collections::BTreeMap, fmt, iter, ops::Deref, sync::Arc};
+use std::{collections::BTreeMap as Map, fmt, iter, ops::Deref, sync::Arc};
 
 use itertools::Itertools as _;
 
-use crate::formula::Formula;
+use crate::{arity::two_powers, formula::Formula, utils::dependent_array::CheckedArray};
+
+use super::truth_table::{Row, TruthTable};
 
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
 /// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
@@ -71,8 +73,11 @@ pub trait TruthFunction<const ARITY: usize> {
     /// does not contain exactly `ARITY` values.
     /// This invariant should be guaranteed by the
     /// [itertools library][itertools::Itertools::multi_cartesian_product].
-    fn get_truth_table(&self) -> BTreeMap<[bool; ARITY], bool> {
-        let table: BTreeMap<_, _> = iter::repeat([false, true])
+    fn get_truth_table(&self) -> TruthTable<ARITY>
+    where
+        two_powers::D: CheckedArray<ARITY>,
+    {
+        let table: Map<_, _> = iter::repeat([false, true])
             .take(ARITY)
             .multi_cartesian_product()
             .map(|assignment| {
@@ -81,15 +86,19 @@ pub trait TruthFunction<const ARITY: usize> {
             })
             .collect();
 
-        if ARITY > 0 {
-            assert_eq!(table.len(), 1 << ARITY);
-            table
-        } else {
+        let table = if ARITY == 0 {
             assert!(table.is_empty());
-            assert_eq!(ARITY, 0);
             let dummy_empty_array = [false; ARITY];
-            iter::once((dummy_empty_array, self.eval(dummy_empty_array))).collect()
-        }
+            let row: Row<ARITY> = (dummy_empty_array, self.eval(dummy_empty_array));
+            vec![row]
+        } else {
+            table.into_iter().collect()
+        };
+
+        assert_eq!(table.len(), 1 << ARITY);
+        table
+            .try_into()
+            .map_or_else(|_| panic!("Size checked before"), TruthTable::new)
     }
 }
 
