@@ -1,6 +1,9 @@
 use super::{functions, TruthFunction};
 
-use crate::utils::dependent_array::{CheckedArray, CheckedStorage, SizedArray, VerifySize};
+use crate::{
+    arity::two_powers_of_two_powers::{Arity0, Arity1, Arity2},
+    utils::dependent_array::CheckedStorage,
+};
 
 /// This type stores all `TruthFunction`-s for a given `ARITY`.
 ///
@@ -52,42 +55,6 @@ pub const BINARY_FUNCTIONS: AllFunctions<2, Arity2> = CheckedStorage::new([
     &functions::NonConjunction,                           // 1 1 1 0
     &functions::Truth,                                    // 1 1 1 1
 ]);
-
-#[derive(Debug, Clone, Copy)]
-/// Helper type to implement size checking for 0-arity functions.
-pub struct Arity0;
-
-#[derive(Debug, Clone, Copy)]
-/// Helper type to implement size checking for unary functions.
-pub struct Arity1;
-
-#[derive(Debug, Clone, Copy)]
-
-/// Helper type to implement size checking for binary functions.
-pub struct Arity2;
-
-// Implement for specific numbers we need
-impl CheckedArray for Arity0 {
-    type Array<T> = [T; 2];
-}
-
-impl CheckedArray for Arity1 {
-    type Array<T> = [T; 4];
-}
-
-impl CheckedArray for Arity2 {
-    type Array<T> = [T; 16];
-}
-
-trait DoublePowerArray<const IN: usize>: CheckedArray {
-    const DOUBLE_POWER: usize = (1 << (1 << IN));
-}
-
-impl<const IN: usize, ARR> DoublePowerArray<IN> for ARR where ARR: CheckedArray {}
-
-impl<const ARITY: usize, N: DoublePowerArray<ARITY>> VerifySize<ARITY> for N {
-    const ASSERT_SIZE: () = assert!(<N::Array<()> as SizedArray>::SIZE == N::DOUBLE_POWER);
-}
 
 #[cfg(test)]
 mod tests_ordering {

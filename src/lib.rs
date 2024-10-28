@@ -75,12 +75,14 @@
 #![cfg_attr(test, allow(clippy::wildcard_imports))]
 // ====
 // ==== The end of the lint lists.
+mod arity;
 pub mod connective;
 pub mod formula;
 mod ops;
 mod utils;
 
 pub use self::{
+    arity::two_powers_of_two_powers,
     formula::{Formula, Var, Variable},
     utils::{
         dependent_array::{CheckedArray, CheckedStorage, SizedArray, VerifySize},
