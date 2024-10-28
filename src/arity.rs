@@ -1,6 +1,6 @@
-use crate::utils::dependent_array::{CheckedArray, SizedArray, VerifySize};
+use crate::utils::dependent_array::{CheckedArray, CheckedStorage, Discriminant};
 
-/// Implement size checking for 2^(2^ARITY) arrays.
+/// Implement size checking for the arrays of size `2^(2^ARITY)`.
 ///
 /// Suitable to assert the number of possible
 /// [`TruthFunction`][crate::TruthFunction]-s for a given `ARITY`.
@@ -8,36 +8,39 @@ pub mod two_powers_of_two_powers {
     use super::*;
 
     #[derive(Debug, Clone, Copy)]
-    /// Marker type to implement size checking for nullary functions.
-    pub struct Arity0;
+    /// Discriminant for 2^(2^ARITY) size.
+    pub struct D;
 
-    impl CheckedArray for Arity0 {
+    impl<const ARITY: usize> Discriminant<ARITY> for D {
+        const ARR_SIZE: usize = (1 << (1 << ARITY));
+    }
+
+    impl CheckedArray<0> for D {
         type Array<T> = [T; 2];
     }
 
-    #[derive(Debug, Clone, Copy)]
-    /// Marker type to implement size checking for unary functions.
-    pub struct Arity1;
-
-    impl CheckedArray for Arity1 {
+    impl CheckedArray<1> for D {
         type Array<T> = [T; 4];
     }
 
-    #[derive(Debug, Clone, Copy)]
-    /// Marker type to implement size checking for binary functions.
-    pub struct Arity2;
-
-    impl CheckedArray for Arity2 {
+    impl CheckedArray<2> for D {
         type Array<T> = [T; 16];
     }
 
-    trait DoubleTwoPowerArray<const IN: usize>: CheckedArray {
-        const DOUBLE_POWER: usize = (1 << (1 << IN));
-    }
+    const _ASSERT_0: () = <CheckedStorage<0, D, ()>>::ASSERT_SIZE;
+    const _ASSERT_1: () = <CheckedStorage<1, D, ()>>::ASSERT_SIZE;
+    const _ASSERT_2: () = <CheckedStorage<2, D, ()>>::ASSERT_SIZE;
+}
 
-    impl<const IN: usize, ARR> DoubleTwoPowerArray<IN> for ARR where ARR: CheckedArray {}
+#[cfg(test)]
+mod tests {
+    use crate::CheckedStorage;
 
-    impl<const ARITY: usize, N: DoubleTwoPowerArray<ARITY>> VerifySize<ARITY> for N {
-        const ASSERT_SIZE: () = assert!(<N::Array<()> as SizedArray>::SIZE == N::DOUBLE_POWER);
-    }
+    use super::*;
+
+    const _Y0: CheckedStorage<0, two_powers_of_two_powers::D, u8> = CheckedStorage::new([1, 2]);
+    const _Y1: CheckedStorage<1, two_powers_of_two_powers::D, u8> =
+        CheckedStorage::new([1, 2, 3, 4]);
+    const _Y2: CheckedStorage<2, two_powers_of_two_powers::D, u8> =
+        CheckedStorage::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
 }

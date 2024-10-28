@@ -85,7 +85,7 @@ pub use self::{
     arity::two_powers_of_two_powers,
     formula::{Formula, Var, Variable},
     utils::{
-        dependent_array::{CheckedArray, CheckedStorage, SizedArray, VerifySize},
+        dependent_array::{CheckedArray, CheckedStorage, Discriminant, SizedArray, VerifySize},
         Zst,
     },
 };

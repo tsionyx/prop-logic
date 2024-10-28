@@ -1,31 +1,28 @@
 use super::{functions, TruthFunction};
 
-use crate::{
-    arity::two_powers_of_two_powers::{Arity0, Arity1, Arity2},
-    utils::dependent_array::CheckedStorage,
-};
+use crate::{arity::two_powers_of_two_powers::D, utils::dependent_array::CheckedStorage};
 
 /// This type stores all `TruthFunction`-s for a given `ARITY`.
 ///
 /// Also, it allows to compare the given generic function
 /// (identified by their truth tables, TO BE DONE) with the [concrete ones][TruthFunction].
-pub type AllFunctions<const ARITY: usize, ARR> =
-    CheckedStorage<ARITY, ARR, &'static dyn TruthFunction<ARITY>>;
+pub type AllFunctions<const ARITY: usize> =
+    CheckedStorage<ARITY, D, &'static dyn TruthFunction<ARITY>>;
 
-const _ASSERT_0: () = <AllFunctions<0, Arity0>>::ASSERT_SIZE;
-const _ASSERT_1: () = <AllFunctions<1, Arity1>>::ASSERT_SIZE;
-const _ASSERT_2: () = <AllFunctions<2, Arity2>>::ASSERT_SIZE;
+const _ASSERT_0: () = <AllFunctions<0>>::ASSERT_SIZE;
+const _ASSERT_1: () = <AllFunctions<1>>::ASSERT_SIZE;
+const _ASSERT_2: () = <AllFunctions<2>>::ASSERT_SIZE;
 
 #[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of 0-arity functions.
-pub const NULLARY_FUNCTIONS: AllFunctions<0, Arity0> = CheckedStorage::new([
+pub const NULLARY_FUNCTIONS: AllFunctions<0> = CheckedStorage::new([
     &functions::Falsity as &'static dyn TruthFunction<0>,
     &functions::Truth,
 ]);
 
 #[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of unary functions.
-pub const UNARY_FUNCTIONS: AllFunctions<1, Arity1> = CheckedStorage::new([
+pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
     &functions::Falsity as &'static dyn TruthFunction<1>,
     &functions::LogicalIdentity,
     &functions::Negation,
@@ -37,7 +34,7 @@ type NProj1 = functions::ProjectAndUnary<1, functions::Negation>;
 
 #[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of unary functions.
-pub const BINARY_FUNCTIONS: AllFunctions<2, Arity2> = CheckedStorage::new([
+pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage::new([
     &functions::Falsity as &'static dyn TruthFunction<2>, // 0 0 0 0
     &functions::Conjunction,                              // 0 0 0 1
     &functions::MaterialNonImplication,                   // 0 0 1 0
