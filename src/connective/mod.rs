@@ -53,12 +53,11 @@ mod tests {
 
     use super::*;
 
-    pub(super) fn apply_and_eval_is_equivalent<Op, const ARITY: usize>()
+    fn apply_and_eval_is_equivalent<const ARITY: usize>(f: impl TruthFunction<ARITY>)
     where
-        Op: TruthFunction<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
-        let truth_table = Op::init().get_truth_table().into_inner();
+        let truth_table = f.get_truth_table().into_inner();
         let eval_variants = truth_table.into_iter().map(|(assignment, eval)| {
             let formulas = assignment
                 .into_iter()
@@ -68,7 +67,7 @@ mod tests {
                 .try_into()
                 .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-            (Op::init().apply(formulas), eval)
+            (f.apply(formulas), eval)
         });
 
         let empty_interpretation = Valuation::new();
@@ -82,5 +81,37 @@ mod tests {
                 panic!("The formula was not fully reduced");
             }
         }
+    }
+
+    #[test]
+    fn eval_is_sync_with_apply() {
+        // nullary
+        apply_and_eval_is_equivalent::<0>(Falsity);
+        apply_and_eval_is_equivalent::<0>(Truth);
+
+        // unary
+        apply_and_eval_is_equivalent::<1>(Falsity);
+        apply_and_eval_is_equivalent::<1>(LogicalIdentity);
+        apply_and_eval_is_equivalent::<1>(Negation);
+        apply_and_eval_is_equivalent::<1>(Truth);
+
+        // binary
+        apply_and_eval_is_equivalent::<2>(Falsity);
+        apply_and_eval_is_equivalent::<2>(Conjunction);
+        apply_and_eval_is_equivalent::<2>(MaterialNonImplication);
+        apply_and_eval_is_equivalent::<2>(Projection::<0>);
+        apply_and_eval_is_equivalent::<2>(ConverseNonImplication);
+        apply_and_eval_is_equivalent::<2>(Projection::<1>);
+        apply_and_eval_is_equivalent::<2>(ExclusiveDisjunction);
+        apply_and_eval_is_equivalent::<2>(Disjunction);
+
+        apply_and_eval_is_equivalent::<2>(NonDisjunction);
+        apply_and_eval_is_equivalent::<2>(LogicalBiconditional);
+        apply_and_eval_is_equivalent::<2>(ProjectAndUnary::<1, Negation>::new());
+        apply_and_eval_is_equivalent::<2>(ConverseImplication);
+        apply_and_eval_is_equivalent::<2>(ProjectAndUnary::<0, Negation>::new());
+        apply_and_eval_is_equivalent::<2>(MaterialImplication);
+        apply_and_eval_is_equivalent::<2>(NonConjunction);
+        apply_and_eval_is_equivalent::<2>(Truth);
     }
 }
