@@ -39,12 +39,11 @@ pub trait TruthFunction<const ARITY: usize> {
     /// Returns a [callable object][Operation] which can
     /// represent the [`TruthFunction`] as a logical operation
     /// on simple boolean values.
-    fn bool_evaluator(&self) -> Operation<ARITY, bool>
+    fn bool_evaluator(self) -> Operation<ARITY, bool>
     where
-        Self: Copy + 'static,
+        Self: Sized + 'static,
     {
-        let self_ = *self;
-        Operation::new(Box::new(move |args| self_.eval(args)))
+        Operation::new(Box::new(move |args| self.eval(args)))
     }
 
     /// Create a [`Formula`] with this [`TruthFunction`].
@@ -55,12 +54,11 @@ pub trait TruthFunction<const ARITY: usize> {
     /// Returns a [callable object][Operation] which can
     /// be used to [apply][Self::apply] the [`TruthFunction`]
     /// to a number of [`Formula`]-s.
-    fn formula_connector<T>(&self) -> Operation<ARITY, Formula<T>>
+    fn formula_connector<T>(self) -> Operation<ARITY, Formula<T>>
     where
-        Self: Copy + 'static,
+        Self: Sized + 'static,
     {
-        let self_ = *self;
-        Operation::new(Box::new(move |args| self_.apply(args)))
+        Operation::new(Box::new(move |args| self.apply(args)))
     }
 
     /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
