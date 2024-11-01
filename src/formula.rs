@@ -123,10 +123,12 @@ mod helper {
     use std::{any::Any, fmt::Debug, ops::Deref};
 
     use dyn_clone::{clone_trait_object, DynClone};
-    use upcast::{Upcast, UpcastFrom};
 
     use super::Connective;
-    use crate::utils::Zst;
+    use crate::utils::{
+        upcast::{Upcast, UpcastFrom},
+        Zst,
+    };
 
     #[derive(Debug, Clone)]
     /// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
