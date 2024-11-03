@@ -5,6 +5,7 @@
 mod functions;
 mod ops;
 mod ordering;
+mod priority;
 mod storage;
 mod traits;
 pub mod truth_table;
@@ -14,6 +15,7 @@ use crate::formula::Formula;
 pub use self::{
     functions::*,
     ops::{Converse, Negate},
+    priority::{Prioritized, Priority},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
     traits::{Connective, FunctionNotation, Operation, TruthFunction},
 };
