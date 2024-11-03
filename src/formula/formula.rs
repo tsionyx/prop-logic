@@ -3,7 +3,9 @@
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
 use std::{fmt, mem, sync::Arc};
 
-pub use super::{super::connective::Connective, atom::Atom, connective::DynOperator, ops::*};
+use crate::connective::Connective;
+
+pub use super::{atom::Atom, connective::DynConnective, ops::*};
 
 #[derive(Debug, Eq, PartialEq)]
 /// [`Formula`] is a well-formed expression constructed from
@@ -42,7 +44,7 @@ pub enum Formula<T> {
     /// The operator is specified dynamically.
     Other {
         /// The [`Connective`] for the operands.
-        operator: DynOperator,
+        operator: DynConnective,
         /// Sub-formulas.
         operands: (Box<Self>, Box<Self>),
     },
@@ -101,7 +103,7 @@ impl<T> Formula<T> {
         C: Connective<2> + fmt::Debug + Copy + 'static,
     {
         Self::Other {
-            operator: DynOperator::new::<C>(),
+            operator: DynConnective::new::<C>(),
             operands: (Box::new(op1), Box::new(op2)),
         }
     }

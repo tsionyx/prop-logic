@@ -12,7 +12,7 @@ mod var;
 
 pub use self::{
     atom::{Atom, AtomValue},
-    connective::DynOperator,
+    connective::DynConnective,
     eval::Valuation,
     formula::Formula,
     ops::{And, Equivalent, Implies, Or, Xor},

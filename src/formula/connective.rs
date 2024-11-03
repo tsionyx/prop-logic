@@ -12,11 +12,11 @@ use crate::{
 
 #[derive(Debug, Clone)]
 /// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
-pub struct DynOperator {
+pub struct DynConnective {
     inner: Box<dyn UsableConnective<2>>,
 }
 
-impl DynOperator {
+impl DynConnective {
     /// Create a [`DynOperator`] with a [`Connective<2>`].
     pub fn new<C>() -> Self
     where
@@ -33,7 +33,7 @@ impl DynOperator {
     }
 }
 
-impl Deref for DynOperator {
+impl Deref for DynConnective {
     type Target = dyn Connective<2>;
 
     fn deref(&self) -> &Self::Target {
@@ -41,13 +41,13 @@ impl Deref for DynOperator {
     }
 }
 
-impl PartialEq for DynOperator {
+impl PartialEq for DynConnective {
     fn eq(&self, other: &Self) -> bool {
         (*self.inner).type_id() == (*other.inner).type_id()
     }
 }
 
-impl Eq for DynOperator {}
+impl Eq for DynConnective {}
 
 trait UsableConnective<const N: usize>:
     Connective<N> + Upcast<dyn Connective<N>> + Debug + DynClone
