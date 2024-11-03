@@ -72,22 +72,12 @@ impl<T> Formula<T> {
         mem::discriminant(self) == mem::discriminant(e)
     }
 
-    const fn priority(&self) -> u8 {
-        match *self {
-            Self::TruthValue(..) | Self::Atomic(..) => 0,
-            Self::Not(..) => 1,
-            Self::And(..) => 2,
-            Self::Or(..) => 3,
-            Self::Xor(..) => 4,
-            Self::Implies(..) => 5,
-            Self::Equivalent(..) => 6,
-            Self::Other { .. } => {
-                todo!()
-            }
-        }
+    /// Whether the given [`Formula`] contains other [`Formula`]-s.
+    pub const fn is_complex(&self) -> bool {
+        !matches!(self, Self::TruthValue(..) | Self::Atomic(..))
     }
 
-    const fn vague_priority(&self) -> u8 {
+    const fn priority(&self) -> u8 {
         match *self {
             Self::TruthValue(..) | Self::Atomic(..) => 0,
             Self::Not(..) => 1,
@@ -100,7 +90,7 @@ impl<T> Formula<T> {
     }
 
     const fn has_obvious_priority_over(&self, e: &Self) -> bool {
-        self.vague_priority() < e.vague_priority()
+        self.priority() < e.priority()
     }
 }
 
@@ -149,7 +139,7 @@ where
             Self::TruthValue(t) => write!(f, "{}", if *t { 'T' } else { 'F' }),
             Self::Atomic(p) => write!(f, "{}", p),
             Self::Not(e) => {
-                if e.has_obvious_priority_over(self) || e.priority() == self.priority() {
+                if e.has_obvious_priority_over(self) || e.has_same_operation(self) {
                     write!(f, "¬{}", e)
                 } else {
                     write!(f, "¬({})", e)
