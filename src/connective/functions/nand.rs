@@ -5,9 +5,9 @@
 //! since it says in effect that at least one of its operands is `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
-use crate::ops::And;
+use crate::formula::{And, Formula};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Non-conjunction is an operation on two logical values,

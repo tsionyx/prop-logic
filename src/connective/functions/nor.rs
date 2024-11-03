@@ -6,9 +6,9 @@
 //! since it says in effect that both of its operands are `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_NOR>
-use crate::ops::Or;
+use crate::formula::{Formula, Or};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Non-disjunction is an operation on two logical values,

@@ -78,7 +78,6 @@
 mod arity;
 pub mod connective;
 pub mod formula;
-mod ops;
 mod utils;
 
 pub use self::{
@@ -86,6 +85,6 @@ pub use self::{
     formula::{Formula, Var, Variable},
     utils::{
         dependent_array::{CheckedArray, CheckedStorage, Discriminant, SizedArray, VerifySize},
-        Zst,
+        zst::{Void, Zst},
     },
 };

@@ -2,9 +2,9 @@
 //! is `true` if and only if its arguments differ.
 //!
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
-use crate::ops::Xor;
+use crate::formula::{Formula, Xor};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Exclusive disjunction is an operation on two logical values,

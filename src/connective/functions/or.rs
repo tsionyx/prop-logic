@@ -2,9 +2,9 @@
 //! is `true` when either or both of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use crate::ops::Or;
+use crate::formula::{Formula, Or};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Logical disjunction is an operation on two logical values,

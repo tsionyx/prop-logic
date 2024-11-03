@@ -2,9 +2,9 @@
 //! is `true` if and only if all of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
-use crate::ops::And;
+use crate::formula::{And, Formula};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Logical conjunction is an operation on two logical values,

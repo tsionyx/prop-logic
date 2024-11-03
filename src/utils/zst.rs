@@ -17,3 +17,7 @@ impl<T: Sized> Zst for T {
         assert!(size == 0, "Type must be zero-sized");
     };
 }
+
+#[derive(Debug, Copy, Clone)]
+/// Uninhabited type.
+pub enum Void {}

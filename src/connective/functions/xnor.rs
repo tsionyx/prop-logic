@@ -5,9 +5,9 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_biconditional>
 //! <https://en.wikipedia.org/wiki/Logical_equality>
-use crate::ops::Equivalent;
+use crate::formula::{Equivalent, Formula};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Logical biconditional is an operation on two logical values,

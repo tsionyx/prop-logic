@@ -4,9 +4,9 @@
 //! _antecedent_ and _consequent_.
 //!
 //! <https://en.wikipedia.org/wiki/Converse_implication>
-use crate::ops::Implies;
+use crate::formula::{Formula, Implies};
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{Connective, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Converse implication is an operation on two logical values,
