@@ -68,3 +68,29 @@ impl<'a, const N: usize, T: Connective<N> + 'a> UpcastFrom<T> for dyn Connective
         value
     }
 }
+
+mod impls {
+    use crate::connective::{functions::*, Prioritized, Priority};
+
+    macro_rules! impl_priority {
+        ($($t:ty),+ : $pr:expr) => {
+            $(
+                impl Prioritized for $t {
+                    fn priority(&self) -> Priority {
+                        Priority($pr)
+                    }
+                }
+            )+
+        };
+    }
+
+    // TODO: refine the priorities and maybe introduce some more of them
+
+    // most common operations' priorities
+    impl_priority!(Falsity, LogicalIdentity, Truth: 255);
+    impl_priority!(Negation: 200);
+    impl_priority!(Conjunction: 100);
+    impl_priority!(Disjunction, ExclusiveDisjunction: 100);
+    impl_priority!(MaterialImplication, LogicalBiconditional: 90);
+    impl_priority!(NonConjunction, NonDisjunction: 80);
+}

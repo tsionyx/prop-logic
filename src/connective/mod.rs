@@ -2,7 +2,7 @@
 //! their operations and mutual dependencies.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
-mod functions;
+pub(crate) mod functions;
 mod ops;
 mod ordering;
 mod priority;
