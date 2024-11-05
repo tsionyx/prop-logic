@@ -3,7 +3,7 @@
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
 use std::{fmt, sync::Arc};
 
-use crate::connective::{functions, Connective};
+use crate::connective::{functions, Connective, Prioritized, Priority};
 
 pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
@@ -95,20 +95,12 @@ impl<T> Formula<T> {
         !matches!(self, Self::TruthValue(..) | Self::Atomic(..))
     }
 
-    const fn priority(&self) -> u8 {
-        match *self {
-            Self::TruthValue(..) | Self::Atomic(..) => 0,
-            Self::Not(..) => 1,
-            Self::And(..) | Self::Or(..) | Self::Xor(..) => 2,
-            Self::Implies(..) | Self::Equivalent(..) => 3,
-            Self::Other { .. } => {
-                todo!()
-            }
-        }
+    fn priority(&self) -> Priority {
+        self.get_connective().priority()
     }
 
-    const fn has_obvious_priority_over(&self, e: &Self) -> bool {
-        self.priority() < e.priority()
+    fn has_obvious_priority_over(&self, e: &Self) -> bool {
+        self.priority() > e.priority()
     }
 }
 
@@ -116,7 +108,7 @@ impl<T> Formula<T> {
     /// Create a [`Formula`] with the dynamic [`Connective`].
     pub fn with_connective<C>(op1: Self, op2: Self) -> Self
     where
-        C: Connective<2> + fmt::Debug + Copy + 'static,
+        C: Connective<2> + Prioritized + fmt::Debug + Copy + 'static,
     {
         Self::Other {
             operator: AnyConnective::new_2::<C>(),

@@ -3,7 +3,7 @@ use std::{any::Any, fmt::Debug, ops::Deref};
 use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
-    connective::Connective,
+    connective::{Connective, Prioritized},
     utils::{
         upcast::{Upcast, UpcastFrom},
         Zst,
@@ -25,7 +25,7 @@ impl AnyConnective {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new_0<C>() -> Self
     where
-        C: Connective<0> + Zst + Debug + Copy + 'static,
+        C: Connective<0> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Nullary(DynConnective::new::<C>())
     }
@@ -33,7 +33,7 @@ impl AnyConnective {
     /// Create a [`DynConnective`] with a [`Connective<1>`].
     pub fn new_1<C>() -> Self
     where
-        C: Connective<1> + Zst + Debug + Copy + 'static,
+        C: Connective<1> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Unary(DynConnective::new::<C>())
     }
@@ -41,7 +41,7 @@ impl AnyConnective {
     /// Create a [`DynConnective`] with a [`Connective<2>`].
     pub fn new_2<C>() -> Self
     where
-        C: Connective<2> + Zst + Debug + Copy + 'static,
+        C: Connective<2> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Binary(DynConnective::new::<C>())
     }
@@ -55,7 +55,7 @@ impl<const ARITY: usize> DynConnective<ARITY> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new<C>() -> Self
     where
-        C: Connective<ARITY> + Zst + Debug + Copy + 'static,
+        C: Connective<ARITY> + Prioritized + Zst + Debug + Copy + 'static,
     {
         #[allow(path_statements)]
         {
@@ -85,12 +85,12 @@ impl<const ARITY: usize> Eq for DynConnective<ARITY> {}
 
 /// [`Connective`]'s subtrait with enabled usability for dynamic context.
 trait UsableConnective<const N: usize>:
-    Connective<N> + Any + Upcast<dyn Connective<N>> + Debug + DynClone
+    Connective<N> + Prioritized + Any + Upcast<dyn Connective<N>> + Debug + DynClone
 {
 }
 
 impl<const N: usize, T> UsableConnective<N> for T where
-    T: Connective<N> + Any + Debug + DynClone + 'static
+    T: Connective<N> + Prioritized + Any + Debug + DynClone + 'static
 {
 }
 
@@ -107,6 +107,8 @@ impl<'a, const N: usize, T: Connective<N> + 'a> UpcastFrom<T> for dyn Connective
 }
 
 mod impls {
+    use super::*;
+
     use crate::connective::{functions::*, Prioritized, Priority};
 
     macro_rules! impl_priority {
@@ -130,6 +132,22 @@ mod impls {
     impl_priority!(Disjunction, ExclusiveDisjunction: 100);
     impl_priority!(MaterialImplication, LogicalBiconditional: 90);
     impl_priority!(NonConjunction, NonDisjunction: 80);
+
+    impl<const ARITY: usize> Prioritized for DynConnective<ARITY> {
+        fn priority(&self) -> Priority {
+            self.0.priority()
+        }
+    }
+
+    impl Prioritized for AnyConnective {
+        fn priority(&self) -> Priority {
+            match self {
+                Self::Nullary(c) => c.priority(),
+                Self::Unary(c) => c.priority(),
+                Self::Binary(c) => c.priority(),
+            }
+        }
+    }
 }
 
 #[cfg(test)]
