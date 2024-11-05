@@ -42,12 +42,7 @@ pub enum Formula<T> {
     Equivalent(Box<Self>, Box<Self>),
 
     /// The operator is specified dynamically.
-    Other {
-        /// The [`Connective`] for the operands.
-        operator: AnyConnective,
-        /// Sub-formulas.
-        operands: (Box<Self>, Box<Self>),
-    },
+    Other(AnyConnective<Box<Self>>),
 }
 
 impl<T: Atom> Formula<T> {
@@ -71,23 +66,27 @@ impl<T> Formula<T> {
     }
 
     /// Get a top-level connective for a given [`Formula`].
-    pub fn get_connective(&self) -> AnyConnective {
+    pub fn get_connective(&self) -> AnyConnective<&Self> {
         match self {
             Self::TruthValue(true) => AnyConnective::new_0::<functions::Truth>(),
             Self::TruthValue(false) => AnyConnective::new_0::<functions::Falsity>(),
-            Self::Atomic(_) => AnyConnective::new_1::<functions::LogicalIdentity>(),
-            Self::Not(_) => AnyConnective::new_1::<functions::Negation>(),
-            Self::And(_, _) => AnyConnective::new_2::<functions::Conjunction>(),
-            Self::Or(_, _) => AnyConnective::new_2::<functions::Disjunction>(),
-            Self::Xor(_, _) => AnyConnective::new_2::<functions::ExclusiveDisjunction>(),
-            Self::Implies(_, _) => AnyConnective::new_2::<functions::MaterialImplication>(),
-            Self::Equivalent(_, _) => AnyConnective::new_2::<functions::LogicalBiconditional>(),
-            Self::Other { operator, .. } => operator.clone(),
+            Self::Atomic(_) => AnyConnective::new_1::<functions::LogicalIdentity>(self),
+            Self::Not(x) => AnyConnective::new_1::<functions::Negation>(x),
+            Self::And(x1, x2) => AnyConnective::new_2::<functions::Conjunction>((x1, x2)),
+            Self::Or(x1, x2) => AnyConnective::new_2::<functions::Disjunction>((x1, x2)),
+            Self::Xor(x1, x2) => AnyConnective::new_2::<functions::ExclusiveDisjunction>((x1, x2)),
+            Self::Implies(x1, x2) => {
+                AnyConnective::new_2::<functions::MaterialImplication>((x1, x2))
+            }
+            Self::Equivalent(x1, x2) => {
+                AnyConnective::new_2::<functions::LogicalBiconditional>((x1, x2))
+            }
+            Self::Other(inner) => inner.as_ref(),
         }
     }
 
     fn has_same_operation(&self, e: &Self) -> bool {
-        self.get_connective() == e.get_connective()
+        self.get_connective().clear_operands() == e.get_connective().clear_operands()
     }
 
     /// Whether the given [`Formula`] contains other [`Formula`]-s.
@@ -110,10 +109,7 @@ impl<T> Formula<T> {
     where
         C: Connective<2> + Prioritized + fmt::Debug + Copy + 'static,
     {
-        Self::Other {
-            operator: AnyConnective::new_2::<C>(),
-            operands: (Box::new(op1), Box::new(op2)),
-        }
+        Self::Other(AnyConnective::new_2::<C>((Box::new(op1), Box::new(op2))))
     }
 }
 
@@ -129,13 +125,7 @@ impl<T> Clone for Formula<T> {
             Self::Xor(e1, e2) => Self::Xor(e1.clone(), e2.clone()),
             Self::Implies(e1, e2) => Self::Implies(e1.clone(), e2.clone()),
             Self::Equivalent(e1, e2) => Self::Equivalent(e1.clone(), e2.clone()),
-            Self::Other {
-                operator,
-                operands: (e1, e2),
-            } => Self::Other {
-                operator: operator.clone(),
-                operands: (e1.clone(), e2.clone()),
-            },
+            Self::Other(op) => Self::Other(op.clone()),
         }
     }
 }

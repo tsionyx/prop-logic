@@ -12,16 +12,26 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// Wrapper for [`Connective`] of ARITY from {0, 1, 2} with more traits enabled for usability.
-pub enum AnyConnective {
+pub enum AnyConnective<OPERAND> {
     /// Nullary [`Connective`].
     Nullary(DynConnective<0>),
     /// Unary [`Connective`].
-    Unary(DynConnective<1>),
+    Unary {
+        /// The unary [`Connective`].
+        operator: DynConnective<1>,
+        /// The single operand.
+        operand: OPERAND,
+    },
     /// Binary [`Connective`].
-    Binary(DynConnective<2>),
+    Binary {
+        /// The binary [`Connective`].
+        operator: DynConnective<2>,
+        /// Two operands for a [`Connective`].
+        operands: (OPERAND, OPERAND),
+    },
 }
 
-impl AnyConnective {
+impl<OPERAND> AnyConnective<OPERAND> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new_0<C>() -> Self
     where
@@ -31,19 +41,58 @@ impl AnyConnective {
     }
 
     /// Create a [`DynConnective`] with a [`Connective<1>`].
-    pub fn new_1<C>() -> Self
+    pub fn new_1<C>(operand: OPERAND) -> Self
     where
         C: Connective<1> + Prioritized + Zst + Debug + Copy + 'static,
     {
-        Self::Unary(DynConnective::new::<C>())
+        Self::Unary {
+            operator: DynConnective::new::<C>(),
+            operand,
+        }
     }
 
     /// Create a [`DynConnective`] with a [`Connective<2>`].
-    pub fn new_2<C>() -> Self
+    pub fn new_2<C>(operands: (OPERAND, OPERAND)) -> Self
     where
         C: Connective<2> + Prioritized + Zst + Debug + Copy + 'static,
     {
-        Self::Binary(DynConnective::new::<C>())
+        Self::Binary {
+            operator: DynConnective::new::<C>(),
+            operands,
+        }
+    }
+
+    /// Forget the operands and return 'only-operator' version of [`AnyConnective`].
+    pub fn clear_operands(&self) -> AnyConnective<()> {
+        match self {
+            Self::Nullary(operator) => AnyConnective::Nullary(operator.clone()),
+            Self::Unary { operator, .. } => AnyConnective::Unary {
+                operator: operator.clone(),
+                operand: (),
+            },
+            Self::Binary { operator, .. } => AnyConnective::Binary {
+                operator: operator.clone(),
+                operands: ((), ()),
+            },
+        }
+    }
+
+    /// The 'reference' version of [`AnyConnective`].
+    pub fn as_ref<U: ?Sized>(&self) -> AnyConnective<&U>
+    where
+        OPERAND: AsRef<U>,
+    {
+        match self {
+            Self::Nullary(operator) => AnyConnective::Nullary(operator.clone()),
+            Self::Unary { operator, operand } => AnyConnective::Unary {
+                operator: operator.clone(),
+                operand: operand.as_ref(),
+            },
+            Self::Binary { operator, operands } => AnyConnective::Binary {
+                operator: operator.clone(),
+                operands: (operands.0.as_ref(), operands.1.as_ref()),
+            },
+        }
     }
 }
 
@@ -139,12 +188,12 @@ mod impls {
         }
     }
 
-    impl Prioritized for AnyConnective {
+    impl<OPERAND> Prioritized for AnyConnective<OPERAND> {
         fn priority(&self) -> Priority {
             match self {
-                Self::Nullary(c) => c.priority(),
-                Self::Unary(c) => c.priority(),
-                Self::Binary(c) => c.priority(),
+                Self::Nullary(operator) => operator.priority(),
+                Self::Unary { operator, .. } => operator.priority(),
+                Self::Binary { operator, .. } => operator.priority(),
             }
         }
     }
@@ -157,12 +206,64 @@ mod tests {
     use super::*;
 
     #[test]
-    fn two_different_binary_are_not_the_same() {
+    fn dyn_equality() {
         let x = DynConnective::new::<Conjunction>();
         let y = DynConnective::new::<Disjunction>();
         let z = DynConnective::new::<Conjunction>();
 
         assert_ne!(x, y);
         assert_eq!(x, z);
+    }
+
+    #[test]
+    fn any_equality_with_clearing_operands() {
+        let x = AnyConnective::Binary {
+            operator: DynConnective::new::<Conjunction>(),
+            operands: ((), ()),
+        };
+        let y = AnyConnective::Binary {
+            operator: DynConnective::new::<Disjunction>(),
+            operands: ((), ()),
+        };
+        let z = AnyConnective::Binary {
+            operator: DynConnective::new::<Conjunction>(),
+            operands: ((), ()),
+        };
+
+        assert_ne!(x, y);
+        assert_eq!(x, z);
+
+        let x = x.clear_operands();
+        let y = y.clear_operands();
+        let z = z.clear_operands();
+
+        assert_ne!(x, y);
+        assert_eq!(x, z);
+    }
+
+    #[test]
+    fn any_equality_with_ref() {
+        let x = AnyConnective::Binary {
+            operator: DynConnective::new::<Conjunction>(),
+            operands: ("a".to_string(), "b".to_string()),
+        };
+        let y = AnyConnective::Binary {
+            operator: DynConnective::new::<Disjunction>(),
+            operands: ("a".to_string(), "b".to_string()),
+        };
+        let z = AnyConnective::Binary {
+            operator: DynConnective::new::<Conjunction>(),
+            operands: ("a".to_string(), "b".to_string()),
+        };
+
+        assert_ne!(x, y);
+        assert_eq!(x, z);
+
+        let x_ref = x.as_ref::<str>();
+        let y_ref = y.as_ref();
+        let z_ref = z.as_ref();
+
+        assert_ne!(x_ref, y_ref);
+        assert_eq!(x_ref, z_ref);
     }
 }
