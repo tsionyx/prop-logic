@@ -1,4 +1,4 @@
-use super::{Formula, TruthFunction};
+use super::{Connective, Formula, FunctionNotation, TruthFunction};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// The unary
@@ -23,9 +23,9 @@ impl TruthFunction<1> for LogicalIdentity {
     }
 }
 
-// === The following implementation is degenerate ===
-// impl Connective<1> for LogicalIdentity {
-//     fn notation(&self) -> FunctionNotation {
-//         "Id".into()
-//     }
-// }
+impl Connective<1> for LogicalIdentity {
+    fn notation(&self) -> FunctionNotation {
+        // degenerate implementation
+        "".into()
+    }
+}

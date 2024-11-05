@@ -10,52 +10,89 @@ use crate::{
     },
 };
 
-#[derive(Debug, Clone)]
-/// Wrapper for dynamic [`Connective`] with more traits enabled for usability.
-pub struct DynConnective {
-    inner: Box<dyn UsableConnective<2>>,
+#[derive(Debug, Clone, PartialEq, Eq)]
+/// Wrapper for [`Connective`] of ARITY from {0, 1, 2} with more traits enabled for usability.
+pub enum AnyConnective {
+    /// Nullary [`Connective`].
+    Nullary(DynConnective<0>),
+    /// Unary [`Connective`].
+    Unary(DynConnective<1>),
+    /// Binary [`Connective`].
+    Binary(DynConnective<2>),
 }
 
-impl DynConnective {
-    /// Create a [`DynOperator`] with a [`Connective<2>`].
-    pub fn new<C>() -> Self
+impl AnyConnective {
+    /// Create a [`DynConnective`] with a [`Connective<0>`].
+    pub fn new_0<C>() -> Self
+    where
+        C: Connective<0> + Zst + Debug + Copy + 'static,
+    {
+        Self::Nullary(DynConnective::new::<C>())
+    }
+
+    /// Create a [`DynConnective`] with a [`Connective<1>`].
+    pub fn new_1<C>() -> Self
+    where
+        C: Connective<1> + Zst + Debug + Copy + 'static,
+    {
+        Self::Unary(DynConnective::new::<C>())
+    }
+
+    /// Create a [`DynConnective`] with a [`Connective<2>`].
+    pub fn new_2<C>() -> Self
     where
         C: Connective<2> + Zst + Debug + Copy + 'static,
+    {
+        Self::Binary(DynConnective::new::<C>())
+    }
+}
+
+#[derive(Debug, Clone)]
+/// Wrapper for dynamic [`Connective`] with more traits enabled for usability
+pub struct DynConnective<const ARITY: usize>(Box<dyn UsableConnective<ARITY>>);
+
+impl<const ARITY: usize> DynConnective<ARITY> {
+    /// Create a [`DynConnective`] with a [`Connective<0>`].
+    pub fn new<C>() -> Self
+    where
+        C: Connective<ARITY> + Zst + Debug + Copy + 'static,
     {
         #[allow(path_statements)]
         {
             C::ASSERT_ZST;
         }
 
-        Self {
-            inner: Box::new(C::init()),
-        }
+        Self(Box::new(C::init()))
     }
 }
 
-impl Deref for DynConnective {
-    type Target = dyn Connective<2>;
+impl<const ARITY: usize> Deref for DynConnective<ARITY> {
+    type Target = dyn Connective<ARITY>;
 
     fn deref(&self) -> &Self::Target {
-        self.inner.as_ref().up()
+        self.0.as_ref().up()
     }
 }
 
-impl PartialEq for DynConnective {
+impl<const ARITY: usize> PartialEq for DynConnective<ARITY> {
     fn eq(&self, other: &Self) -> bool {
-        (*self.inner).type_id() == (*other.inner).type_id()
+        // use the `Any` supertrait under the hood
+        (*self.0).type_id() == (*other.0).type_id()
     }
 }
 
-impl Eq for DynConnective {}
+impl<const ARITY: usize> Eq for DynConnective<ARITY> {}
 
+/// [`Connective`]'s subtrait with enabled usability for dynamic context.
 trait UsableConnective<const N: usize>:
-    Connective<N> + Upcast<dyn Connective<N>> + Debug + DynClone
+    Connective<N> + Any + Upcast<dyn Connective<N>> + Debug + DynClone
 {
 }
 
-impl<const N: usize, T> UsableConnective<N> for T where T: Connective<N> + Debug + DynClone + 'static
-{}
+impl<const N: usize, T> UsableConnective<N> for T where
+    T: Connective<N> + Any + Debug + DynClone + 'static
+{
+}
 
 clone_trait_object!(<const N: usize> UsableConnective<N>);
 
@@ -93,4 +130,21 @@ mod impls {
     impl_priority!(Disjunction, ExclusiveDisjunction: 100);
     impl_priority!(MaterialImplication, LogicalBiconditional: 90);
     impl_priority!(NonConjunction, NonDisjunction: 80);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::connective::{Conjunction, Disjunction};
+
+    use super::*;
+
+    #[test]
+    fn two_different_binary_are_not_the_same() {
+        let x = DynConnective::new::<Conjunction>();
+        let y = DynConnective::new::<Disjunction>();
+        let z = DynConnective::new::<Conjunction>();
+
+        assert_ne!(x, y);
+        assert_eq!(x, z);
+    }
 }

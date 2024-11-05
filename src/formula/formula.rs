@@ -1,11 +1,11 @@
 //! A [Formula](https://en.wikipedia.org/wiki/Propositional_formula) is a Boolean-valued
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
-use std::{fmt, mem, sync::Arc};
+use std::{fmt, sync::Arc};
 
-use crate::connective::Connective;
+use crate::connective::{functions, Connective};
 
-pub use super::{atom::Atom, connective::DynConnective, ops::*};
+pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
 #[derive(Debug, Eq, PartialEq)]
 /// [`Formula`] is a well-formed expression constructed from
@@ -44,7 +44,7 @@ pub enum Formula<T> {
     /// The operator is specified dynamically.
     Other {
         /// The [`Connective`] for the operands.
-        operator: DynConnective,
+        operator: AnyConnective,
         /// Sub-formulas.
         operands: (Box<Self>, Box<Self>),
     },
@@ -70,8 +70,24 @@ impl<T> Formula<T> {
         Self::TruthValue(false)
     }
 
+    /// Get a top-level connective for a given [`Formula`].
+    pub fn get_connective(&self) -> AnyConnective {
+        match self {
+            Self::TruthValue(true) => AnyConnective::new_0::<functions::Truth>(),
+            Self::TruthValue(false) => AnyConnective::new_0::<functions::Falsity>(),
+            Self::Atomic(_) => AnyConnective::new_1::<functions::LogicalIdentity>(),
+            Self::Not(_) => AnyConnective::new_1::<functions::Negation>(),
+            Self::And(_, _) => AnyConnective::new_2::<functions::Conjunction>(),
+            Self::Or(_, _) => AnyConnective::new_2::<functions::Disjunction>(),
+            Self::Xor(_, _) => AnyConnective::new_2::<functions::ExclusiveDisjunction>(),
+            Self::Implies(_, _) => AnyConnective::new_2::<functions::MaterialImplication>(),
+            Self::Equivalent(_, _) => AnyConnective::new_2::<functions::LogicalBiconditional>(),
+            Self::Other { operator, .. } => operator.clone(),
+        }
+    }
+
     fn has_same_operation(&self, e: &Self) -> bool {
-        mem::discriminant(self) == mem::discriminant(e)
+        self.get_connective() == e.get_connective()
     }
 
     /// Whether the given [`Formula`] contains other [`Formula`]-s.
@@ -103,7 +119,7 @@ impl<T> Formula<T> {
         C: Connective<2> + fmt::Debug + Copy + 'static,
     {
         Self::Other {
-            operator: DynConnective::new::<C>(),
+            operator: AnyConnective::new_2::<C>(),
             operands: (Box::new(op1), Box::new(op2)),
         }
     }
