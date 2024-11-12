@@ -3,7 +3,7 @@ use std::{any::Any, fmt::Debug, ops::Deref};
 use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
-    connective::{Connective, Prioritized},
+    connective::{BoolFn, Connective, Prioritized},
     utils::{
         upcast::{Upcast, UpcastFrom},
         Zst,
@@ -131,6 +131,12 @@ impl<const ARITY: usize> PartialEq for DynConnective<ARITY> {
 }
 
 impl<const ARITY: usize> Eq for DynConnective<ARITY> {}
+
+impl<const ARITY: usize> BoolFn<ARITY> for DynConnective<ARITY> {
+    fn eval(&self, values: [bool; ARITY]) -> bool {
+        self.0.eval(values)
+    }
+}
 
 /// [`Connective`]'s subtrait with enabled usability for dynamic context.
 trait UsableConnective<const N: usize>:

@@ -3,7 +3,7 @@
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
 use std::{fmt, sync::Arc};
 
-use crate::connective::{functions, Connective, Prioritized, Priority};
+use crate::connective::{functions, Associativity as _, Connective, Prioritized, Priority};
 
 pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
@@ -135,79 +135,40 @@ where
     T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::TruthValue(t) => write!(f, "{}", if *t { 'T' } else { 'F' }),
-            Self::Atomic(p) => write!(f, "{}", p),
-            Self::Not(e) => {
-                if e.has_obvious_priority_over(self) || e.has_same_operation(self) {
-                    write!(f, "¬{}", e)
-                } else {
-                    write!(f, "¬({})", e)
-                }
-            }
-            Self::And(e1, e2) => {
-                if e1.has_obvious_priority_over(self) || e1.has_same_operation(self) {
-                    write!(f, "{}∧", e1)
-                } else {
-                    write!(f, "({})∧", e1)
-                }?;
-                if e2.has_obvious_priority_over(self) || e2.has_same_operation(self) {
-                    write!(f, "{}", e2)
-                } else {
-                    write!(f, "({})", e2)
-                }
-            }
-            Self::Or(e1, e2) => {
-                if e1.has_obvious_priority_over(self) || e1.has_same_operation(self) {
-                    write!(f, "{}∨", e1)
-                } else {
-                    write!(f, "({})∨", e1)
-                }?;
-                if e2.has_obvious_priority_over(self) || e2.has_same_operation(self) {
-                    write!(f, "{}", e2)
-                } else {
-                    write!(f, "({})", e2)
-                }
-            }
-            Self::Xor(e1, e2) => {
-                if e1.has_obvious_priority_over(self) || e1.has_same_operation(self) {
-                    write!(f, "{}⊕", e1)
-                } else {
-                    write!(f, "({})⊕", e1)
-                }?;
-                if e2.has_obvious_priority_over(self) || e2.has_same_operation(self) {
-                    write!(f, "{}", e2)
-                } else {
-                    write!(f, "({})", e2)
-                }
-            }
-            Self::Implies(e1, e2) => {
-                if e1.has_obvious_priority_over(self) {
-                    write!(f, "{}⇒", e1)
-                } else {
-                    write!(f, "({})⇒", e1)
-                }?;
-                if e2.has_obvious_priority_over(self) || e2.has_same_operation(self) {
-                    write!(f, "{}", e2)
-                } else {
-                    write!(f, "({})", e2)
-                }
-            }
-            Self::Equivalent(e1, e2) => {
-                if e1.has_obvious_priority_over(self) {
-                    write!(f, "{}⇔", e1)
-                } else {
-                    write!(f, "({})⇔", e1)
-                }?;
-                if e2.has_obvious_priority_over(self) || e2.has_same_operation(self) {
-                    write!(f, "{}", e2)
-                } else {
-                    write!(f, "({})", e2)
-                }
-            }
+        if let Self::Atomic(p) = self {
+            return write!(f, "{}", p);
+        }
 
-            Self::Other { .. } => {
-                todo!()
+        let conn = self.get_connective();
+
+        match &conn {
+            AnyConnective::Nullary(operator) => write!(f, "{}", operator.notation()),
+            AnyConnective::Unary { operator, operand } => {
+                if operand.has_obvious_priority_over(self) || operand.has_same_operation(self) {
+                    write!(f, "{}{}", operator.notation(), operand)
+                } else {
+                    write!(f, "{}({})", operator.notation(), operand)
+                }
+            }
+            AnyConnective::Binary {
+                operator,
+                operands: (op1, op2),
+            } => {
+                let is_associative = operator.is_associative();
+                if op1.has_obvious_priority_over(self)
+                    || (is_associative && op1.has_same_operation(self))
+                {
+                    write!(f, "{}{}", op1, operator.notation())
+                } else {
+                    write!(f, "({}){}", op1, operator.notation())
+                }?;
+                if op2.has_obvious_priority_over(self)
+                    || (is_associative && op2.has_same_operation(self))
+                {
+                    write!(f, "{}", op2)
+                } else {
+                    write!(f, "({})", op2)
+                }
             }
         }
     }
@@ -258,14 +219,14 @@ mod tests {
         let q = Arc::new(Variable::with_data(2, 'q'));
         let (p, q) = (Formula::atomic(p), Formula::atomic(q));
 
-        format_eq!(Formula::TruthValue::<i32>(true), "T");
-        format_eq!(Formula::TruthValue::<i32>(false), "F");
+        format_eq!(Formula::TruthValue::<i32>(true), "⊤");
+        format_eq!(Formula::TruthValue::<i32>(false), "⊥");
         format_eq!(p.clone().not(), "¬p");
         format_eq!(p.clone().and(q.clone()), "p∧q");
         format_eq!(p.clone().or(q.clone()), "p∨q");
         format_eq!(p.clone().xor(q.clone()), "p⊕q");
-        format_eq!(p.clone().implies(q.clone()), "p⇒q");
-        format_eq!(p.equivalent(q), "p⇔q");
+        format_eq!(p.clone().implies(q.clone()), "p→q");
+        format_eq!(p.equivalent(q), "p↔q");
     }
 
     #[test]
@@ -291,13 +252,13 @@ mod tests {
         format_eq!(r.clone().or(p_and_q), "r∨(p∧q)");
 
         let p_implies_q = p.clone().implies(q.clone());
-        format_eq!(p_implies_q.clone().not(), "¬(p⇒q)");
-        format_eq!(p_implies_q.clone().implies(r.clone()), "(p⇒q)⇒r");
-        format_eq!(r.clone().implies(p_implies_q), "r⇒p⇒q");
+        format_eq!(p_implies_q.clone().not(), "¬(p→q)");
+        format_eq!(p_implies_q.clone().implies(r.clone()), "(p→q)→r");
+        format_eq!(r.clone().implies(p_implies_q), "r→(p→q)");
 
         let p_equivalent_q = p.equivalent(q);
-        format_eq!(p_equivalent_q.clone().not(), "¬(p⇔q)");
-        format_eq!(p_equivalent_q.clone().equivalent(r.clone()), "(p⇔q)⇔r");
-        format_eq!(r.equivalent(p_equivalent_q), "r⇔p⇔q");
+        format_eq!(p_equivalent_q.clone().not(), "¬(p↔q)");
+        format_eq!(p_equivalent_q.clone().equivalent(r.clone()), "p↔q↔r");
+        format_eq!(r.equivalent(p_equivalent_q), "r↔p↔q");
     }
 }

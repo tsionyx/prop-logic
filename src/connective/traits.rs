@@ -1,4 +1,10 @@
-use std::{collections::BTreeMap as Map, fmt, iter, ops::Deref, sync::Arc};
+use std::{
+    collections::BTreeMap as Map,
+    fmt::{self, Write},
+    iter,
+    ops::Deref,
+    sync::Arc,
+};
 
 use itertools::Itertools as _;
 
@@ -167,6 +173,15 @@ impl From<String> for FunctionNotation {
 impl From<&'static str> for FunctionNotation {
     fn from(value: &'static str) -> Self {
         Self::Name(value.into())
+    }
+}
+
+impl fmt::Display for FunctionNotation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Name(name) => f.write_str(name),
+            Self::Symbol(s) => f.write_char(*s),
+        }
     }
 }
 
