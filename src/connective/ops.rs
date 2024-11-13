@@ -1,7 +1,7 @@
 //! Unary operations on the [`TruthFn`]-s.
 use std::ops::Not;
 
-use super::{functions::*, TruthFn};
+use super::{functions::*, ternary::Ternary, BoolFn, TruthFn};
 
 /// Easily convert a `TruthFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -143,13 +143,54 @@ impl_converse![
     ProjectAndUnary::<0, Negation> = !ProjectAndUnary::<1, Negation>,
 ];
 
+/// Allow to check the
+/// [Commutativity property](https://en.wikipedia.org/wiki/Commutative_property#Truth_functional_connectives)
+/// of a binary [`TruthFn`].
+pub trait Commutativity {
+    /// Whether the given [`TruthFn`] returns the same result
+    /// regardles of its arguments' order.
+    fn is_commutative(&self) -> bool;
+}
+
+impl<F> Commutativity for F
+where
+    F: Converse,
+{
+    fn is_commutative(&self) -> bool {
+        self.get_truth_table().into_values()
+            == <Self as Converse>::Conversion::init()
+                .get_truth_table()
+                .into_values()
+    }
+}
+
+/// Allow to check the
+/// [associativity property](https://en.wikipedia.org/wiki/Associative_property#Truth_functional_connectives)
+/// of a binary [`TruthFn`].
+pub trait Associativity {
+    /// Whether the given binary [`TruthFn`]
+    /// can be evaluated in arbitrary order while chained.
+    fn is_associative(&self) -> bool;
+}
+
+impl<F> Associativity for F
+where
+    F: BoolFn<2>,
+{
+    fn is_associative(&self) -> bool {
+        let t_left = Ternary::<true, _>::new(self, self);
+        let t_right = Ternary::<false, _>::new(self, self);
+        t_left.get_truth_table().into_values() == t_right.get_truth_table().into_values()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
 
     use crate::{arity::two_powers, utils::dependent_array::CheckedArray};
 
-    use super::{super::BoolFn as _, *};
+    use super::*;
 
     fn assert_neg<const ARITY: usize, N: Negate<ARITY>>()
     where

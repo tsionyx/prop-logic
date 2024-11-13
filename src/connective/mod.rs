@@ -14,7 +14,7 @@ use crate::formula::Formula;
 
 pub use self::{
     functions::*,
-    ops::{Converse, Negate},
+    ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
     traits::{BoolFn, Connective, FunctionNotation, Operation, TruthFn},

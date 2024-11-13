@@ -27,9 +27,14 @@ pub mod two_powers {
         type Array<T> = [T; 4];
     }
 
+    impl CheckedArray<3> for D {
+        type Array<T> = [T; 8];
+    }
+
     const _ASSERT_0: () = <CheckedStorage<0, D, ()>>::ASSERT_SIZE;
     const _ASSERT_1: () = <CheckedStorage<1, D, ()>>::ASSERT_SIZE;
     const _ASSERT_2: () = <CheckedStorage<2, D, ()>>::ASSERT_SIZE;
+    const _ASSERT_3: () = <CheckedStorage<3, D, ()>>::ASSERT_SIZE;
 }
 
 /// Implement size checking for the arrays of size `2^(2^ARITY)`.
