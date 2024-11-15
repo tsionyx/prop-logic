@@ -1,3 +1,6 @@
+//! Generic ternary function as the composition of two binary functions.
+//!
+//! <https://en.wikipedia.org/wiki/Ternary_operation>
 use super::{BoolFn, Formula, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]

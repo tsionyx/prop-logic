@@ -148,7 +148,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Self::Atomic(p) = self {
-            return write!(f, "{}", p);
+            return write!(f, "{p}");
         }
 
         let conn = self.get_connective();
@@ -170,16 +170,16 @@ where
                 if op1.has_obvious_priority_over(self)
                     || (is_associative && op1.has_same_operation(self))
                 {
-                    write!(f, "{}{}", op1, operator.notation())
+                    write!(f, "{op1}{}", operator.notation())
                 } else {
-                    write!(f, "({}){}", op1, operator.notation())
+                    write!(f, "({op1}){}", operator.notation())
                 }?;
                 if op2.has_obvious_priority_over(self)
                     || (is_associative && op2.has_same_operation(self))
                 {
-                    write!(f, "{}", op2)
+                    write!(f, "{op2}")
                 } else {
-                    write!(f, "({})", op2)
+                    write!(f, "({op2})")
                 }
             }
         }

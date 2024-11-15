@@ -11,7 +11,7 @@ use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical biconditional is an operation on two logical values,
-/// typically the values of two propositions, that produces a value of `true`
+/// that produces a value of `true`
 /// if and only if both operands are `false` or both operands are `true`.
 pub struct LogicalBiconditional;
 

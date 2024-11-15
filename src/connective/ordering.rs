@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+#[allow(clippy::wildcard_imports)]
 use super::{functions::*, truth_table, TruthFn};
 
 use crate::{

@@ -187,7 +187,7 @@ impl<T> Formula<T> {
             }
 
             Self::Other { .. } => {
-                todo!()
+                todo!("generic short-circuiting for all functions")
             }
         }
     }

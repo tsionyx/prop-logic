@@ -49,9 +49,9 @@ where
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(extra) = &self.extra {
             if f.alternate() {
-                write!(f, "{} (id={})", extra, self.id)
+                write!(f, "{extra} (id={})", self.id)
             } else {
-                write!(f, "{}", extra)
+                write!(f, "{extra}")
             }
         } else {
             write!(f, "{}", self.id)
@@ -65,6 +65,8 @@ mod tests {
 
     #[test]
     fn size_var_contains_no_label() {
+        use std::mem::*;
+
         let var = Var::new(12);
         assert_eq!(size_of_val(&var), size_of::<VarId>());
     }

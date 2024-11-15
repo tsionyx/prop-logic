@@ -1,6 +1,6 @@
-/// Nullary logical function (constant) equals to `true`.
-///
-/// <https://en.wikipedia.org/wiki/Logical_truth>
+//! Nullary logical function (constant) equals to `true`.
+//!
+//! <https://en.wikipedia.org/wiki/Logical_truth>
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]

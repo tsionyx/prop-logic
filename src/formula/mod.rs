@@ -1,4 +1,5 @@
 //! Defines [propositional formula](https://en.wikipedia.org/wiki/Propositional_formula)
+//!
 //! which is a Boolean-valued
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).

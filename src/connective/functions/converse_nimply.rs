@@ -1,6 +1,7 @@
 //! The _converse nonimplication_
 //! is a logical operation that is the
 //! [negation][super::neg] of [converse implication][super::converse_imply]
+//!
 //! (equivalently, the [negation][super::neg]
 //! of the converse of [implication][super::imply]).
 //!
@@ -11,7 +12,7 @@ use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse nonimplication is an operation on two logical values,
-/// typically the values of two propositions, that produces a value of `false`
+/// that produces a value of `false`
 /// unless its first argument is `false` and its second argument is `true`.
 pub struct ConverseNonImplication;
 

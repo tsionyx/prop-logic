@@ -1,3 +1,6 @@
+//! Degenerate binary functions ignoring one of their arguments
+//! to actually dependent on the one that is left.
+
 use std::marker::PhantomData;
 
 use super::{neg::Negation, BoolFn, Formula, TruthFn};

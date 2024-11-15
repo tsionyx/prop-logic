@@ -1,5 +1,6 @@
 //! _Sheffer stroke_ is a logical operation that is the
 //! [negation][super::neg] of [conjunction][super::and]
+//!
 //! expressed in ordinary language as "not both".
 //! It is also called _non-conjunction_, or _alternative denial_
 //! since it says in effect that at least one of its operands is `false`.

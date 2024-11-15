@@ -106,7 +106,7 @@ impl<const ARITY: usize> DynConnective<ARITY> {
     where
         C: Connective<ARITY> + Prioritized + Zst + Debug + Copy + 'static,
     {
-        #[allow(path_statements)]
+        #[allow(path_statements, clippy::no_effect)]
         {
             C::ASSERT_ZST;
         }
@@ -162,8 +162,9 @@ impl<'a, const N: usize, T: Connective<N> + 'a> UpcastFrom<T> for dyn Connective
 }
 
 mod impls {
-    use super::*;
+    use super::{AnyConnective, DynConnective};
 
+    #[allow(clippy::wildcard_imports)]
     use crate::connective::{functions::*, Prioritized, Priority};
 
     macro_rules! impl_priority {

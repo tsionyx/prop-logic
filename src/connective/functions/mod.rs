@@ -1,19 +1,19 @@
-pub(crate) mod and;
-pub(crate) mod converse_imply;
-pub(crate) mod converse_nimply;
-pub(crate) mod falsity;
-pub(crate) mod id;
-pub(crate) mod imply;
-pub(crate) mod nand;
-pub(crate) mod neg;
-pub(crate) mod nimply;
-pub(crate) mod nor;
-pub(crate) mod or;
-pub(crate) mod proj;
-pub(crate) mod ternary;
-pub(crate) mod truth;
-pub(crate) mod xnor;
-pub(crate) mod xor;
+pub mod and;
+pub mod converse_imply;
+pub mod converse_nimply;
+pub mod falsity;
+pub mod id;
+pub mod imply;
+pub mod nand;
+pub mod neg;
+pub mod nimply;
+pub mod nor;
+pub mod or;
+pub mod proj;
+pub mod ternary;
+pub mod truth;
+pub mod xnor;
+pub mod xor;
 
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 

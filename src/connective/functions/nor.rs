@@ -1,5 +1,6 @@
 //! _Logical NOR_ or _Peirce arrow_
 //! aka _Webb operator_ aka _Quine dagger_
+//!
 //! is a logical operation that is the
 //! [negation][super::neg] of [disjunction][super::or].
 //! It is also called _non-disjunction_, or _joint denial_

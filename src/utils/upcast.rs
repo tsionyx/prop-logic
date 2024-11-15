@@ -33,9 +33,10 @@ pub trait Upcast<U: ?Sized> {
     fn up_mut(&mut self) -> &mut U;
 }
 
-impl<T: ?Sized, U: ?Sized> Upcast<U> for T
+impl<T, U> Upcast<U> for T
 where
-    U: UpcastFrom<T>,
+    T: ?Sized,
+    U: UpcastFrom<T> + ?Sized,
 {
     fn up(&self) -> &U {
         U::up_from(self)

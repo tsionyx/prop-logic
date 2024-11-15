@@ -41,7 +41,9 @@ pub trait BoolFn<const ARITY: usize> {
             .take(ARITY)
             .multi_cartesian_product()
             .map(|assignment| {
-                let assignment = assignment.try_into().unwrap();
+                let assignment = assignment
+                    .try_into()
+                    .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
                 (assignment, self.eval(assignment))
             })
             .collect();
@@ -196,7 +198,7 @@ pub struct Operation<const ARITY: usize, T> {
 
 impl<const ARITY: usize, T> fmt::Debug for Operation<ARITY, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}-ary Operation", ARITY)
+        write!(f, "{ARITY}-ary Operation")
     }
 }
 

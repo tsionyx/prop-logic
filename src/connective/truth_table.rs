@@ -1,7 +1,6 @@
 //! A [truth table](https://en.wikipedia.org/wiki/Truth_table)
 //! is a mathematical table which sets out the functional values
-//! of logical expressions on each of their functional arguments,
-//! that is, for each combination of values taken by their logical variables.
+//! of logical expressions on each combination of their functional arguments.
 //!
 //! A truth table has one column for each input variable (for example, A and B),
 //! and one final column showing all of the possible results of the logical operation
@@ -14,6 +13,7 @@ use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, Checke
 
 /// A [truth table](https://en.wikipedia.org/wiki/Truth_table)
 /// for arbitrary [`TruthFn`][super::TruthFn]
+///
 /// with the values produced by applying
 /// the arguments in default order
 /// (as the sequence of incrementing binary numbers):

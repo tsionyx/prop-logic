@@ -20,7 +20,7 @@ pub use self::{
     traits::{BoolFn, Connective, FunctionNotation, Operation, TruthFn},
 };
 
-#[allow(path_statements)]
+#[allow(path_statements, clippy::no_effect)]
 const _ASSERT_ZST: () = {
     use crate::utils::Zst;
 
@@ -55,6 +55,7 @@ mod tests {
 
     use super::*;
 
+    #[allow(clippy::needless_pass_by_value)]
     fn apply_and_eval_is_equivalent<const ARITY: usize>(f: impl TruthFn<ARITY>)
     where
         two_powers::D: CheckedArray<ARITY>,
@@ -74,7 +75,7 @@ mod tests {
 
         let empty_interpretation = Valuation::new();
         for (fully_interpreted_formula, expected_eval) in eval_variants {
-            eprintln!("{:?} -> {:?}", fully_interpreted_formula, expected_eval);
+            eprintln!("{fully_interpreted_formula:?} -> {expected_eval:?}");
             if let Formula::TruthValue(val) =
                 fully_interpreted_formula.interpret(&empty_interpretation)
             {

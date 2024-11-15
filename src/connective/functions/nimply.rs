@@ -9,7 +9,7 @@ use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Material nonimplication is an operation on two logical values,
-/// typically the values of two propositions, that produces a value of `false`
+/// that produces a value of `false`
 /// unless its first argument is `true` and its second argument is `false`.
 pub struct MaterialNonImplication;
 

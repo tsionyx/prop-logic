@@ -63,7 +63,7 @@ mod tests_ordering {
             dbg!(&t1);
             for f2 in NULLARY_FUNCTIONS.iter().skip(i + 1) {
                 let t2: Vec<_> = f2.get_truth_table().into_iter().map(|(_, k)| k).collect();
-                assert!(t1 < t2, "{:?} >= {:?}", t1, t2);
+                assert!(t1 < t2, "{t1:?} >= {t2:?}");
             }
         }
     }
@@ -75,7 +75,7 @@ mod tests_ordering {
             dbg!(&t1);
             for f2 in UNARY_FUNCTIONS.iter().skip(i + 1) {
                 let t2: Vec<_> = f2.get_truth_table().into_iter().map(|(_, k)| k).collect();
-                assert!(t1 < t2, "{:?} >= {:?}", t1, t2);
+                assert!(t1 < t2, "{t1:?} >= {t2:?}");
             }
         }
     }

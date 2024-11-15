@@ -1,6 +1,7 @@
 //! Unary operations on the [`TruthFn`]-s.
 use std::ops::Not;
 
+#[allow(clippy::wildcard_imports)]
 use super::{functions::*, ternary::Ternary, BoolFn, TruthFn};
 
 /// Easily convert a `TruthFn` into its counterpart in terms

@@ -1,3 +1,5 @@
+//! Degenerate unary [`TruthFn`] that simply return its sole argument.
+
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]

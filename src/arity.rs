@@ -5,6 +5,7 @@ use crate::utils::dependent_array::{CheckedArray, CheckedStorage, Discriminant};
 /// Suitable to assert the number of combinations of inputs
 /// of a [`TruthFn`][crate::TruthFn]-s for a given `ARITY`.
 pub mod two_powers {
+    #[allow(clippy::wildcard_imports)]
     use super::*;
 
     #[derive(Debug, Clone, Copy)]
@@ -42,6 +43,7 @@ pub mod two_powers {
 /// Suitable to assert the number of possible
 /// [`TruthFn`][crate::TruthFn]-s for a given `ARITY`.
 pub mod two_powers_of_two_powers {
+    #[allow(clippy::wildcard_imports)]
     use super::*;
 
     #[derive(Debug, Clone, Copy)]
