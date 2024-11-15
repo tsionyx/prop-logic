@@ -6,6 +6,7 @@ use crate::{arity::two_powers, formula::Formula, utils::dependent_array::Checked
 
 use super::truth_table::{Row, TruthTable};
 
+#[auto_impl::auto_impl(&, Box)]
 /// A function that accepts `ARITY` [`bool`] values as input
 /// and produces a `bool` value as an output.
 ///
@@ -15,16 +16,6 @@ pub trait BoolFn<const ARITY: usize> {
     ///
     /// It gets used later to generate the [`truth_table`].
     fn eval(&self, values: [bool; ARITY]) -> bool;
-
-    /// Returns a [callable object][Operation] which can
-    /// represent the [`BoolFn`] as a logical operation
-    /// on simple boolean values.
-    fn bool_evaluator(self) -> Operation<ARITY, bool>
-    where
-        Self: Sized + 'static,
-    {
-        Operation::new(Box::new(move |args| self.eval(args)))
-    }
 
     /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
     /// for a [`BoolFn`] as the **key** (boolean arguments)-**value** (function result)
@@ -91,6 +82,16 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     fn init() -> Self
     where
         Self: Sized;
+
+    /// Returns a [callable object][Operation] which can
+    /// represent the [`BoolFn`] as a logical operation
+    /// on simple boolean values.
+    fn bool_evaluator(self) -> Operation<ARITY, bool>
+    where
+        Self: Sized + 'static,
+    {
+        Operation::new(Box::new(move |args| self.eval(args)))
+    }
 
     /// Create a [`Formula`] with this [`TruthFn`].
     fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>
