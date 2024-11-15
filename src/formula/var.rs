@@ -6,7 +6,7 @@ use super::atom::Atom;
 
 type VarId = u64;
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 /// A propositional variable is a
 /// formal expression that denotes an [atomic formula][Atom].
 ///

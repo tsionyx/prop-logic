@@ -6,7 +6,7 @@ use super::{
     ops::{And, Equivalent, Implies, Or, Xor},
 };
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 /// Mapping the [`Atoms`]s of a [`Formula`]
 /// to one of the [truth values](https://en.wikipedia.org/wiki/Truth_value).
 ///
@@ -15,15 +15,23 @@ pub struct Valuation<T> {
     values: Map<Arc<T>, AtomValue>,
 }
 
-impl<T> Valuation<T>
-where
-    T: Eq + Hash,
-{
+impl<T> Default for Valuation<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> Valuation<T> {
     /// Construct a new `Valuation`.
     pub fn new() -> Self {
         Self { values: Map::new() }
     }
+}
 
+impl<T> Valuation<T>
+where
+    T: Eq + Hash,
+{
     /// Retrieve a truth value of a specific [`Atom`] if any.
     pub fn get_assignment<Q>(&self, key: &Q) -> Option<bool>
     where

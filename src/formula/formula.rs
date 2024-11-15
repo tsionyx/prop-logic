@@ -45,10 +45,22 @@ pub enum Formula<T> {
     Other(AnyConnective<Box<Self>>),
 }
 
+impl<T> From<bool> for Formula<T> {
+    fn from(value: bool) -> Self {
+        Self::TruthValue(value)
+    }
+}
+
+impl<T: Atom> From<Arc<T>> for Formula<T> {
+    fn from(value: Arc<T>) -> Self {
+        Self::Atomic(value)
+    }
+}
+
 impl<T: Atom> Formula<T> {
     /// Create an [atomic][Atom] formula.
-    pub fn atomic(p: Arc<T>) -> Self {
-        Self::Atomic(p)
+    pub fn atomic(atom: T) -> Self {
+        Self::Atomic(Arc::new(atom))
     }
 }
 
@@ -185,8 +197,8 @@ mod tests {
 
     #[test]
     fn operation() {
-        let p = Arc::new(Variable::with_data(1, 'p'));
-        let q = Arc::new(Variable::with_data(2, 'q'));
+        let p = Variable::with_data(1, 'p');
+        let q = Variable::with_data(2, 'q');
         let (p, q) = (Formula::atomic(p), Formula::atomic(q));
         assert_eq!(p.clone().not(), !p.clone());
         assert_eq!(p.clone().and(q.clone()), p.clone() & q.clone());
@@ -201,7 +213,7 @@ mod tests {
 
         impl Atom for A {}
 
-        let e1 = Formula::atomic(Arc::new(A(1)));
+        let e1 = Formula::atomic(A(1));
         let e2 = e1.clone();
         assert_eq!(e1, e2);
         drop(e2);
@@ -215,8 +227,8 @@ mod tests {
 
     #[test]
     fn formula_display() {
-        let p = Arc::new(Variable::with_data(1, 'p'));
-        let q = Arc::new(Variable::with_data(2, 'q'));
+        let p = Variable::with_data(1, 'p');
+        let q = Variable::with_data(2, 'q');
         let (p, q) = (Formula::atomic(p), Formula::atomic(q));
 
         format_eq!(Formula::TruthValue::<i32>(true), "⊤");
@@ -231,10 +243,10 @@ mod tests {
 
     #[test]
     fn formula_priority_display() {
-        let p = Arc::new(Variable::with_data(1, 'p'));
-        let q = Arc::new(Variable::with_data(2, 'q'));
-        let r = Arc::new(Variable::with_data(3, 'r'));
-        let (p, q, r) = (Formula::atomic(p), Formula::atomic(q), Formula::Atomic(r));
+        let p = Variable::with_data(1, 'p');
+        let q = Variable::with_data(2, 'q');
+        let r = Variable::with_data(3, 'r');
+        let (p, q, r) = (Formula::atomic(p), Formula::atomic(q), Formula::atomic(r));
 
         format_eq!(p.clone().not().not(), "¬¬p");
 
