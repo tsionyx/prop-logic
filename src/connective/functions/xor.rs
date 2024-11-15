@@ -6,7 +6,7 @@ use crate::formula::{Formula, Xor};
 
 use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Exclusive disjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
 /// if and only if one is `true` and the other is `false`.

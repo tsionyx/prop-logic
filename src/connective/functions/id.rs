@@ -1,6 +1,6 @@
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// The unary
 /// [identity function](https://en.wikipedia.org/wiki/Identity_function)
 /// for a proposition.

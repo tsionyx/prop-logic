@@ -6,7 +6,7 @@ use crate::formula::{Formula, Or};
 
 use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical disjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
 /// unless both of its arguments are `false`.

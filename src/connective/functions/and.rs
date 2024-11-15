@@ -6,7 +6,7 @@ use crate::formula::{And, Formula};
 
 use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical conjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
 /// if and only if both of its operands are `true`.

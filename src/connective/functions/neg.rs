@@ -4,7 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Negation>
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Unary operation that takes a proposition P
 /// to another proposition "not P"
 /// with [its value](https://en.wikipedia.org/wiki/Truth_value)

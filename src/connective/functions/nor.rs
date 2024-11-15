@@ -10,7 +10,7 @@ use crate::formula::{Formula, Or};
 
 use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Non-disjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
 /// if and only if both of the operands are `false`.

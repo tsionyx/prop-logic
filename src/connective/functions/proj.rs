@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use super::{neg::Negation, BoolFn, Formula, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// [`Projection`] onto the _I_-th coordinate is a function that
 /// takes an ordered pair like (x,y)
 /// and just strips away everything but the _I_-th coordinate (0-based).

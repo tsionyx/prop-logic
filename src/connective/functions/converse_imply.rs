@@ -8,7 +8,7 @@ use crate::formula::{Formula, Implies};
 
 use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse implication is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
 /// unless its first argument is `false` and its second argument is `true`.

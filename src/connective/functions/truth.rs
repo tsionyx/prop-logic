@@ -3,7 +3,7 @@
 /// <https://en.wikipedia.org/wiki/Logical_truth>
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// A statement which is always true,
 /// aka [tautology](https://en.wikipedia.org/wiki/Tautology_(logic)).
 pub struct Truth;

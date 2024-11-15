@@ -3,7 +3,7 @@
 //! <https://en.wikipedia.org/wiki/False_(logic)>
 use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// A statement which is always false,
 /// aka [contradiction](https://en.wikipedia.org/wiki/Contradiction).
 pub struct Falsity;

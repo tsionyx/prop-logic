@@ -69,6 +69,9 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     ///
     /// But, in order to use the [`TruthFn`] in a dynamic context
     /// we have to create some 'dummy' instance.
+    /// Usually, the [`Default`] trait can be used instead of the [`TruthFn::init`],
+    /// but using [`Default`] as a supertrait here disables the use of `Box<dyn TruthFn>`
+    /// because of the `Default: Sized` requirement.
     ///
     /// Unfortunately it is not possible now in stable rust
     /// to ensure the generic type is ZST, so whenever you use
