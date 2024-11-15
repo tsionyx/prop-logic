@@ -4,6 +4,8 @@ use crate::utils::zst::Void;
 
 use super::atom::Atom;
 
+type VarId = u64;
+
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 /// A propositional variable is a
 /// formal expression that denotes an [atomic formula][Atom].
@@ -13,7 +15,7 @@ use super::atom::Atom;
 ///
 /// <https://en.wikipedia.org/wiki/Propositional_variable>
 pub struct Variable<T> {
-    id: u64,
+    id: VarId,
     extra: Option<T>,
 }
 
@@ -24,13 +26,13 @@ pub type Var = Variable<Void>;
 
 impl<T> Variable<T> {
     /// Create a new [`Variable`] without any extra data associated with it.
-    pub const fn new(id: u64) -> Self {
+    pub const fn new(id: VarId) -> Self {
         Self { id, extra: None }
     }
 
     /// Create a new [`Variable`]
     /// associating some extra data with it.
-    pub const fn with_data(id: u64, data: T) -> Self {
+    pub const fn with_data(id: VarId, data: T) -> Self {
         Self {
             id,
             extra: Some(data),
@@ -64,6 +66,6 @@ mod tests {
     #[test]
     fn size_var_contains_no_label() {
         let var = Var::new(12);
-        assert_eq!(size_of_val(&var), 8);
+        assert_eq!(size_of_val(&var), size_of::<VarId>());
     }
 }
