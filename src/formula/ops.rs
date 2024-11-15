@@ -1,4 +1,4 @@
-use std::{convert::Into, ops};
+use std::ops;
 
 use super::formula::Formula;
 

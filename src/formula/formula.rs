@@ -15,7 +15,7 @@ pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 /// Based on <https://docs.rs/logic/>
 pub enum Formula<T> {
     /// Degenerate kind of [`Formula`] having fixed
-    /// [truth value](<https://en.wikipedia.org/wiki/Truth_value)
+    /// [truth value](https://en.wikipedia.org/wiki/Truth_value)
     /// without any [`Atom`]s.
     TruthValue(bool),
 
