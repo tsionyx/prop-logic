@@ -39,6 +39,21 @@ where
     }
 }
 
+/// The logical negation operator.
+pub trait Not<T> {
+    /// Performs the logical negation.
+    fn not(self) -> Formula<T>;
+}
+
+impl<T, F> Not<T> for F
+where
+    F: Into<Formula<T>>,
+{
+    fn not(self) -> Formula<T> {
+        Formula::Not(Box::new(self.into()))
+    }
+}
+
 /// The logical conjunction operator.
 pub trait And<T, RHS> {
     /// Performs the logical conjunction.

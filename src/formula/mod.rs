@@ -15,6 +15,6 @@ pub use self::{
     connective::{AnyConnective, DynConnective},
     eval::Valuation,
     formula::Formula,
-    ops::{And, Equivalent, Implies, Or, Xor},
+    ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},
 };

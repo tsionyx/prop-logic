@@ -1,9 +1,9 @@
-use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, ops::Not, sync::Arc};
+use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
 use super::{
     atom::AtomValue,
     formula::Formula,
-    ops::{And, Equivalent, Implies, Or, Xor},
+    ops::{And, Equivalent, Implies, Not, Or, Xor},
 };
 
 #[derive(Debug)]
