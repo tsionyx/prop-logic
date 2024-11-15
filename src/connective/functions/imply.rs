@@ -5,7 +5,7 @@
 //! <https://en.wikipedia.org/wiki/Material_conditional>
 use crate::formula::{Formula, Implies};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Material implication is an operation on two logical values,
@@ -13,13 +13,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// unless its first argument is `true` and its second argument is `false`.
 pub struct MaterialImplication;
 
-impl TruthFunction<2> for MaterialImplication {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for MaterialImplication {
     fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
         !antecedent || consequent
+    }
+}
+
+impl TruthFn<2> for MaterialImplication {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [antecedent, consequent]: [Formula<T>; 2]) -> Formula<T> {

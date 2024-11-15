@@ -14,7 +14,7 @@ pub(crate) mod truth;
 pub(crate) mod xnor;
 pub(crate) mod xor;
 
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 pub use self::{
     and::Conjunction,

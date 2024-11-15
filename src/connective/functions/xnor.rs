@@ -7,7 +7,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_equality>
 use crate::formula::{Equivalent, Formula};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Logical biconditional is an operation on two logical values,
@@ -15,13 +15,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// if and only if both operands are `false` or both operands are `true`.
 pub struct LogicalBiconditional;
 
-impl TruthFunction<2> for LogicalBiconditional {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for LogicalBiconditional {
     fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
         antecedent == consequent
+    }
+}
+
+impl TruthFn<2> for LogicalBiconditional {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [antecedent, consequent]: [Formula<T>; 2]) -> Formula<T> {

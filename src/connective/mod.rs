@@ -17,7 +17,7 @@ pub use self::{
     ops::{Converse, Negate},
     priority::{Prioritized, Priority},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{Connective, FunctionNotation, Operation, TruthFunction},
+    traits::{BoolFn, Connective, FunctionNotation, Operation, TruthFn},
 };
 
 #[allow(path_statements)]
@@ -55,7 +55,7 @@ mod tests {
 
     use super::*;
 
-    fn apply_and_eval_is_equivalent<const ARITY: usize>(f: impl TruthFunction<ARITY>)
+    fn apply_and_eval_is_equivalent<const ARITY: usize>(f: impl TruthFn<ARITY>)
     where
         two_powers::D: CheckedArray<ARITY>,
     {

@@ -1,4 +1,4 @@
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// The unary
@@ -6,16 +6,17 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 /// for a proposition.
 pub struct LogicalIdentity;
 
-impl TruthFunction<1> for LogicalIdentity {
-    fn init() -> Self {
-        Self
-    }
-
-    fn eval(&self, values: [bool; 1]) -> bool {
+impl BoolFn<1> for LogicalIdentity {
+    fn eval(&self, [value]: [bool; 1]) -> bool {
         // the truth value of the single given proposition
         // <https://en.wikipedia.org/wiki/Truth_value>
-        let [value] = values;
         value
+    }
+}
+
+impl TruthFn<1> for LogicalIdentity {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {

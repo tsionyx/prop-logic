@@ -7,7 +7,7 @@
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
 use crate::formula::{And, Formula};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Non-conjunction is an operation on two logical values,
@@ -15,13 +15,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// if and only if at least one of the operands is `false`.
 pub struct NonConjunction;
 
-impl TruthFunction<2> for NonConjunction {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for NonConjunction {
     fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
         !conjunct1 || !conjunct2
+    }
+}
+
+impl TruthFn<2> for NonConjunction {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {

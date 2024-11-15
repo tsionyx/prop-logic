@@ -4,7 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
 use crate::formula::{And, Formula};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Logical conjunction is an operation on two logical values,
@@ -12,13 +12,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// if and only if both of its operands are `true`.
 pub struct Conjunction;
 
-impl TruthFunction<2> for Conjunction {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for Conjunction {
     fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
         conjunct1 && conjunct2
+    }
+}
+
+impl TruthFn<2> for Conjunction {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {

@@ -1,21 +1,21 @@
 use std::cmp::Ordering;
 
-use super::{functions::*, truth_table, TruthFunction};
+use super::{functions::*, truth_table, TruthFn};
 
 use crate::{
     arity::two_powers::D,
     utils::{cartesian_diag, dependent_array::CheckedArray},
 };
 
-/// Defines the partial order (`<=`) between the [`TruthFunction`]-s
+/// Defines the partial order (`<=`) between the [`TruthFn`]-s
 /// by associating them with the sets.
 ///
 /// For more information, see the
 /// [Haase diagram](https://en.wikipedia.org/wiki/Logical_connective#Table_and_Hasse_diagram).
 fn partial_ordering<Op1, Op2, const ARITY: usize>() -> Option<Ordering>
 where
-    Op1: TruthFunction<ARITY>,
-    Op2: TruthFunction<ARITY>,
+    Op1: TruthFn<ARITY>,
+    Op2: TruthFn<ARITY>,
     D: CheckedArray<ARITY>,
     <D as CheckedArray<ARITY>>::Array<truth_table::Row<ARITY>>: Clone,
 {

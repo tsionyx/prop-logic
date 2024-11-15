@@ -4,7 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
 use crate::formula::{Formula, Xor};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Exclusive disjunction is an operation on two logical values,
@@ -12,13 +12,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// if and only if one is `true` and the other is `false`.
 pub struct ExclusiveDisjunction;
 
-impl TruthFunction<2> for ExclusiveDisjunction {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for ExclusiveDisjunction {
     fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
         disjunct1 ^ disjunct2
+    }
+}
+
+impl TruthFn<2> for ExclusiveDisjunction {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {

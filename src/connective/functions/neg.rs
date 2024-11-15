@@ -2,7 +2,7 @@
 //! is an unary operation that reverse its only argument.
 //!
 //! <https://en.wikipedia.org/wiki/Negation>
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Unary operation that takes a proposition P
@@ -11,14 +11,15 @@ use super::{Connective, Formula, FunctionNotation, TruthFunction};
 /// switched.
 pub struct Negation;
 
-impl TruthFunction<1> for Negation {
+impl BoolFn<1> for Negation {
+    fn eval(&self, [value]: [bool; 1]) -> bool {
+        !value
+    }
+}
+
+impl TruthFn<1> for Negation {
     fn init() -> Self {
         Self
-    }
-
-    fn eval(&self, values: [bool; 1]) -> bool {
-        let [value] = values;
-        !value
     }
 
     fn apply<T>(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {

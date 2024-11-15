@@ -1,21 +1,23 @@
 /// Nullary logical function (constant) equals to `true`.
 ///
 /// <https://en.wikipedia.org/wiki/Logical_truth>
-use super::{Connective, Formula, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// A statement which is always true,
 /// aka [tautology](https://en.wikipedia.org/wiki/Tautology_(logic)).
 pub struct Truth;
 
-// allow to use the `False` constant in unary or binary on N-ary context
-impl<const ARITY: usize> TruthFunction<ARITY> for Truth {
-    fn init() -> Self {
-        Self
-    }
-
+impl<const ARITY: usize> BoolFn<ARITY> for Truth {
     fn eval(&self, _values: [bool; ARITY]) -> bool {
         true
+    }
+}
+
+// allow to use the `False` constant in unary or binary on N-ary context
+impl<const ARITY: usize> TruthFn<ARITY> for Truth {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {

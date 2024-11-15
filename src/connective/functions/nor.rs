@@ -8,7 +8,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_NOR>
 use crate::formula::{Formula, Or};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Non-disjunction is an operation on two logical values,
@@ -16,13 +16,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// if and only if both of the operands are `false`.
 pub struct NonDisjunction;
 
-impl TruthFunction<2> for NonDisjunction {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for NonDisjunction {
     fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
         !disjunct1 && !disjunct2
+    }
+}
+
+impl TruthFn<2> for NonDisjunction {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {

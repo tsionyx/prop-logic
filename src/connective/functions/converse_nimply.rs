@@ -7,7 +7,7 @@
 //! <https://en.wikipedia.org/wiki/Converse_nonimplication>
 use crate::formula::{Formula, Implies};
 
-use super::{Connective, FunctionNotation, TruthFunction};
+use super::{BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// Converse nonimplication is an operation on two logical values,
@@ -15,13 +15,15 @@ use super::{Connective, FunctionNotation, TruthFunction};
 /// unless its first argument is `false` and its second argument is `true`.
 pub struct ConverseNonImplication;
 
-impl TruthFunction<2> for ConverseNonImplication {
-    fn init() -> Self {
-        Self
-    }
-
+impl BoolFn<2> for ConverseNonImplication {
     fn eval(&self, [consequent, antecedent]: [bool; 2]) -> bool {
         !consequent && antecedent
+    }
+}
+
+impl TruthFn<2> for ConverseNonImplication {
+    fn init() -> Self {
+        Self
     }
 
     fn apply<T>(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {

@@ -6,40 +6,18 @@ use crate::{arity::two_powers, formula::Formula, utils::dependent_array::Checked
 
 use super::truth_table::{Row, TruthTable};
 
-/// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
-/// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
+/// A function that accepts `ARITY` [`bool`] values as input
+/// and produces a `bool` value as an output.
 ///
 /// The [`ARITY`](https://en.wikipedia.org/wiki/Arity) is the number of arguments which this function accepts.
-///
-/// <https://en.wikipedia.org/wiki/Truth_function>
-pub trait TruthFunction<const ARITY: usize> {
-    /// Every [`TruthFunction`] is essentially a bunch of _static_ functions
-    /// without the need to create an _instance_. So, as a rule of thumb,
-    /// any instantiated type should have exactly one value (unit type, isomorphic to `()`).
-    ///
-    /// But, in order to use the [`TruthFunction`] in a dynamic context
-    /// we have to create some 'dummy' instance.
-    ///
-    /// Unfortunately it is not possible now in stable rust
-    /// to ensure the generic type is ZST, so whenever you use
-    /// the [`TruthFunction`] and want to ensure it has zero size,
-    /// you have to:
-    /// 1. Require that the generic [`TruthFunction`] is [`ZST`][crate::utils::Zst].
-    ///    This is not used as a supertrait here deliberately to allow to use `dyn TruthFunction`,
-    ///    (as the `Zst` trait contains an associated constant preventing the dynamic object to create).
-    /// 2. Use the [`Zst::ASSERT_ZST`][crate::utils::Zst::ASSERT_ZST] in your function accepting
-    ///    generic `TruthFunction` to force the compiler to do `size_of` check.
-    fn init() -> Self
-    where
-        Self: Sized;
-
-    /// The way to express the [`TruthFunction`] as a boolean function of its arguments.
+pub trait BoolFn<const ARITY: usize> {
+    /// The way to express the [`BoolFn`] as a boolean function of its arguments.
     ///
     /// It gets used later to generate the [`truth_table`].
     fn eval(&self, values: [bool; ARITY]) -> bool;
 
     /// Returns a [callable object][Operation] which can
-    /// represent the [`TruthFunction`] as a logical operation
+    /// represent the [`BoolFn`] as a logical operation
     /// on simple boolean values.
     fn bool_evaluator(self) -> Operation<ARITY, bool>
     where
@@ -48,23 +26,8 @@ pub trait TruthFunction<const ARITY: usize> {
         Operation::new(Box::new(move |args| self.eval(args)))
     }
 
-    /// Create a [`Formula`] with this [`TruthFunction`].
-    fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>
-    where
-        Self: Sized;
-
-    /// Returns a [callable object][Operation] which can
-    /// be used to [apply][Self::apply] the [`TruthFunction`]
-    /// to a number of [`Formula`]-s.
-    fn formula_connector<T>(self) -> Operation<ARITY, Formula<T>>
-    where
-        Self: Sized + 'static,
-    {
-        Operation::new(Box::new(move |args| self.apply(args)))
-    }
-
     /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
-    /// for a [`TruthFunction`] as the **key** (boolean arguments)-**value** (function result)
+    /// for a [`BoolFn`] as the **key** (boolean arguments)-**value** (function result)
     /// ordered map.
     ///
     /// # Panics
@@ -102,16 +65,59 @@ pub trait TruthFunction<const ARITY: usize> {
     }
 }
 
+/// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
+/// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
+///
+/// The [`ARITY`](https://en.wikipedia.org/wiki/Arity) is the number of arguments which this function accepts.
+///
+/// <https://en.wikipedia.org/wiki/Truth_function>
+pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
+    /// Every [`TruthFn`] is essentially a bunch of _static_ functions
+    /// without the need to create an _instance_. So, as a rule of thumb,
+    /// any instantiated type should have exactly one value (unit type, isomorphic to `()`).
+    ///
+    /// But, in order to use the [`TruthFn`] in a dynamic context
+    /// we have to create some 'dummy' instance.
+    ///
+    /// Unfortunately it is not possible now in stable rust
+    /// to ensure the generic type is ZST, so whenever you use
+    /// the [`TruthFn`] and want to ensure it has zero size,
+    /// you have to:
+    /// 1. Require that the generic [`TruthFn`] is [`ZST`][crate::utils::Zst].
+    ///    This is not used as a supertrait here deliberately to allow to use `dyn TruthFn`,
+    ///    (as the `Zst` trait contains an associated constant preventing the dynamic object to create).
+    /// 2. Use the [`Zst::ASSERT_ZST`][crate::utils::Zst::ASSERT_ZST] in your function accepting
+    ///    generic `TruthFn` to force the compiler to do `size_of` check.
+    fn init() -> Self
+    where
+        Self: Sized;
+
+    /// Create a [`Formula`] with this [`TruthFn`].
+    fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>
+    where
+        Self: Sized;
+
+    /// Returns a [callable object][Operation] which can
+    /// be used to [apply][Self::apply] the [`TruthFn`]
+    /// to a number of [`Formula`]-s.
+    fn formula_connector<T>(self) -> Operation<ARITY, Formula<T>>
+    where
+        Self: Sized + 'static,
+    {
+        Operation::new(Box::new(move |args| self.apply(args)))
+    }
+}
+
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
 ///
 /// Its main usage is to convert to/from string representation of a formula.
 ///
-/// Every [`Connective`] should necessary be a [`TruthFunction`],
+/// Every [`Connective`] should necessary be a [`TruthFn`],
 /// but not the other way around. E.g. the [`LogicalIdentity`]
 /// could not be a connective since it has no string representation
 /// and cannot be used in formulas as a separate entity.
-pub trait Connective<const ARITY: usize>: TruthFunction<ARITY> {
+pub trait Connective<const ARITY: usize>: TruthFn<ARITY> {
     /// The symbol (or name) most commonly used for the operation.
     fn notation(&self) -> FunctionNotation;
 

@@ -1,13 +1,13 @@
-//! Unary operations on the [`TruthFunction`]-s.
+//! Unary operations on the [`TruthFn`]-s.
 use std::ops::Not;
 
-use super::{functions::*, TruthFunction};
+use super::{functions::*, TruthFn};
 
-/// Easily convert a `TruthFunction` into its counterpart in terms
+/// Easily convert a `TruthFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
-pub trait Negate<const ARITY: usize>: TruthFunction<ARITY> {
-    /// Another `TruthFunction` which truth table is a negation of the original one.
-    type Not: TruthFunction<ARITY>;
+pub trait Negate<const ARITY: usize>: TruthFn<ARITY> {
+    /// Another `TruthFn` which truth table is a negation of the original one.
+    type Not: TruthFn<ARITY>;
 }
 
 macro_rules! impl_negate {
@@ -41,13 +41,13 @@ macro_rules! impl_std_not {
     };
 }
 
-/// Easily convert a binary `TruthFunction` into its counterpart in terms
+/// Easily convert a binary `TruthFn` into its counterpart in terms
 /// of swapping its arguments.
 ///
 /// For the _commutative_ operation, the [`Conversion`] preserves the function.
-pub trait Converse: TruthFunction<2> {
-    /// Another `TruthFunction` which truth function is an conversion of the original one.
-    type Conversion: TruthFunction<2>;
+pub trait Converse: TruthFn<2> {
+    /// Another `TruthFn` which truth function is an conversion of the original one.
+    type Conversion: TruthFn<2>;
 }
 
 macro_rules! impl_converse {
@@ -149,7 +149,7 @@ mod tests {
 
     use crate::{arity::two_powers, utils::dependent_array::CheckedArray};
 
-    use super::*;
+    use super::{*, super::BoolFn as _};
 
     fn assert_neg<const ARITY: usize, N: Negate<ARITY>>()
     where
@@ -167,8 +167,8 @@ mod tests {
 
     fn assert_std_not<const ARITY: usize, N, N2>(x: N)
     where
-        N: Not<Output = N2> + TruthFunction<ARITY>,
-        N2: TruthFunction<ARITY>,
+        N: Not<Output = N2> + TruthFn<ARITY>,
+        N2: TruthFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
         let table = x.get_truth_table().into_values();

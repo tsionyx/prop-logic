@@ -13,7 +13,7 @@ use std::{fmt, ops::Deref};
 use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, CheckedArray};
 
 /// A [truth table](https://en.wikipedia.org/wiki/Truth_table)
-/// for arbitrary [`TruthFunction`][super::TruthFunction]
+/// for arbitrary [`TruthFn`][super::TruthFn]
 /// with the values produced by applying
 /// the arguments in default order
 /// (as the sequence of incrementing binary numbers):
@@ -62,7 +62,7 @@ where
         }
     }
 
-    /// Get the ordered sequence of bool results of a [`TruthFunction`][super::TruthFunction].
+    /// Get the ordered sequence of bool results of a [`TruthFn`][super::TruthFn].
     pub fn values(&self) -> Vec<bool>
     where
         <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
@@ -72,7 +72,7 @@ where
     }
 
     /// Convert the whole table into the ordered sequence
-    /// of bool results of a [`TruthFunction`][super::TruthFunction].
+    /// of bool results of a [`TruthFn`][super::TruthFn].
     pub fn into_values(self) -> Vec<bool> {
         self.table
             .into_inner()
@@ -104,7 +104,7 @@ mod tests {
 
     fn get<Op, const ARITY: usize>() -> Vec<bool>
     where
-        Op: TruthFunction<ARITY>,
+        Op: TruthFn<ARITY>,
         D: CheckedArray<ARITY>,
         <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
     {
@@ -116,7 +116,7 @@ mod tests {
 
     fn get_mapping<Op, const ARITY: usize>() -> Vec<Row<ARITY>>
     where
-        Op: TruthFunction<ARITY>,
+        Op: TruthFn<ARITY>,
         D: CheckedArray<ARITY>,
         <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
     {
