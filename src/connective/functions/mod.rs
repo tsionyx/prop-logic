@@ -10,6 +10,7 @@ pub(crate) mod nimply;
 pub(crate) mod nor;
 pub(crate) mod or;
 pub(crate) mod proj;
+pub(crate) mod ternary;
 pub(crate) mod truth;
 pub(crate) mod xnor;
 pub(crate) mod xor;

@@ -149,7 +149,7 @@ mod tests {
 
     use crate::{arity::two_powers, utils::dependent_array::CheckedArray};
 
-    use super::{*, super::BoolFn as _};
+    use super::{super::BoolFn as _, *};
 
     fn assert_neg<const ARITY: usize, N: Negate<ARITY>>()
     where
