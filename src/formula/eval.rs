@@ -81,13 +81,13 @@ impl<T> Formula<T> {
     where
         T: Eq + Hash,
     {
-        match self._interpret(i12n) {
+        match self.try_interpret(i12n) {
             EvaluationResult::Partial(formula) => formula,
             EvaluationResult::Terminal(val) => Self::TruthValue(val),
         }
     }
 
-    fn _interpret(&self, i12n: &Valuation<T>) -> EvaluationResult<T>
+    fn try_interpret(&self, i12n: &Valuation<T>) -> EvaluationResult<T>
     where
         T: Eq + Hash,
     {
@@ -98,11 +98,12 @@ impl<T> Formula<T> {
             Self::Atomic(p) => i12n
                 .get_assignment(p.as_ref())
                 .map_or_else(|| self.clone().into(), E::Terminal),
-            Self::Not(e) => match e._interpret(i12n) {
+            Self::Not(e) => match e.try_interpret(i12n) {
                 E::Partial(e) => e.not().into(),
                 E::Terminal(val) => E::Terminal(!val),
             },
-            Self::And(e1, e2) => match (e1._interpret(i12n), e2._interpret(i12n)) {
+            Self::And(e1, e2) => {
+                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.and(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **conjunction** is _commutative_
@@ -116,8 +117,10 @@ impl<T> Formula<T> {
                 (E::Terminal(e1_val), E::Terminal(e2_val)) => {
                     E::Terminal(e1_val & e2_val)
                 }
-            },
-            Self::Or(e1, e2) => match (e1._interpret(i12n), e2._interpret(i12n)) {
+            }
+            }
+            Self::Or(e1, e2) => {
+                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.or(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **disjunction** is _commutative_
@@ -131,8 +134,10 @@ impl<T> Formula<T> {
                 (E::Terminal(e1_val), E::Terminal(e2_val)) => {
                     E::Terminal(e1_val | e2_val)
                 }
-            },
-            Self::Xor(e1, e2) => match (e1._interpret(i12n), e2._interpret(i12n)) {
+            }
+            }
+            Self::Xor(e1, e2) => {
+                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.xor(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **exclusive disjunction** is _commutative_
@@ -142,28 +147,31 @@ impl<T> Formula<T> {
                 (E::Terminal(e1_val), E::Terminal(e2_val)) => {
                     E::Terminal(e1_val ^ e2_val)
                 }
-            },
-            Self::Implies(e1, e2) => match (e1._interpret(i12n), e2._interpret(i12n)) {
-                (E::Partial(e1), E::Partial(e2)) => e1.implies(e2).into(),
-                (E::Partial(e1), E::Terminal(e2_val)) => {
-                    if e2_val {
-                        E::tautology()
-                    } else {
-                        e1.not().into()
+            }
+            }
+            Self::Implies(e1, e2) => {
+                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                    (E::Partial(e1), E::Partial(e2)) => e1.implies(e2).into(),
+                    (E::Partial(e1), E::Terminal(e2_val)) => {
+                        if e2_val {
+                            E::tautology()
+                        } else {
+                            e1.not().into()
+                        }
                     }
-                }
-                (E::Terminal(e1_val), E::Partial(e2)) => {
-                    if e1_val {
-                        e2.into()
-                    } else {
-                        // <https://en.wikipedia.org/wiki/Vacuous_truth>
-                        E::tautology()
+                    (E::Terminal(e1_val), E::Partial(e2)) => {
+                        if e1_val {
+                            e2.into()
+                        } else {
+                            // <https://en.wikipedia.org/wiki/Vacuous_truth>
+                            E::tautology()
+                        }
                     }
+                    (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(!e1_val | e2_val),
                 }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(!e1_val | e2_val),
-            },
+            }
             Self::Equivalent(e1, e2) => {
-                match (e1._interpret(i12n), e2._interpret(i12n)) {
+                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
                     (E::Partial(e1), E::Partial(e2)) => {
                         e1.equivalent(e2).into()
                     }
