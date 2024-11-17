@@ -1,14 +1,15 @@
-//! Unary operations on the [`TruthFn`]-s.
-use std::ops::Not;
+//! Unary operations and properties of the [`BoolFn`]-s.
+use std::{collections::HashMap as Map, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
 use super::{functions::*, ternary::Ternary, BoolFn, TruthFn};
 
-/// Easily convert a `TruthFn` into its counterpart in terms
+/// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
-pub trait Negate<const ARITY: usize>: TruthFn<ARITY> {
-    /// Another `TruthFn` which truth table is a negation of the original one.
-    type Not: TruthFn<ARITY>;
+#[auto_impl::auto_impl(&, Box)]
+pub trait Negate<const ARITY: usize>: BoolFn<ARITY> {
+    /// Another `BoolFn` which truth table is a negation of the original one.
+    type Not: BoolFn<ARITY>;
 }
 
 macro_rules! impl_negate {
@@ -42,13 +43,14 @@ macro_rules! impl_std_not {
     };
 }
 
-/// Easily convert a binary `TruthFn` into its counterpart in terms
+/// Easily convert a binary `BoolFn` into its counterpart in terms
 /// of swapping its arguments.
 ///
 /// For the _commutative_ operation, the [`Conversion`] preserves the function.
-pub trait Converse: TruthFn<2> {
-    /// Another `TruthFn` which truth function is an conversion of the original one.
-    type Conversion: TruthFn<2>;
+#[auto_impl::auto_impl(&, Box)]
+pub trait Converse: BoolFn<2> {
+    /// Another `BoolFn` which truth function is an conversion of the original one.
+    type Conversion: BoolFn<2>;
 }
 
 macro_rules! impl_converse {
@@ -146,30 +148,32 @@ impl_converse![
 
 /// Allow to check the
 /// [Commutativity property](https://en.wikipedia.org/wiki/Commutative_property#Truth_functional_connectives)
-/// of a binary [`TruthFn`].
+/// of a binary [`BoolFn`].
 pub trait Commutativity {
-    /// Whether the given [`TruthFn`] returns the same result
+    /// Whether the given [`BoolFn`] returns the same result
     /// regardles of its arguments' order.
     fn is_commutative(&self) -> bool;
 }
 
 impl<F> Commutativity for F
 where
-    F: Converse,
+    F: BoolFn<2>,
 {
     fn is_commutative(&self) -> bool {
-        self.get_truth_table().into_values()
-            == <Self as Converse>::Conversion::init()
-                .get_truth_table()
-                .into_values()
+        let table: Map<_, _> = self.get_truth_table().into_inner().into_iter().collect();
+
+        table.iter().all(|(args, val)| {
+            let conversed = [args[1], args[0]];
+            table.get(&conversed) == Some(val)
+        })
     }
 }
 
 /// Allow to check the
 /// [associativity property](https://en.wikipedia.org/wiki/Associative_property#Truth_functional_connectives)
-/// of a binary [`TruthFn`].
+/// of a binary [`BoolFn`].
 pub trait Associativity {
-    /// Whether the given binary [`TruthFn`]
+    /// Whether the given binary [`BoolFn`]
     /// can be evaluated in arbitrary order while chained.
     fn is_associative(&self) -> bool;
 }
@@ -181,6 +185,8 @@ where
     fn is_associative(&self) -> bool {
         let t_left = Ternary::<true, _>::new(self, self);
         let t_right = Ternary::<false, _>::new(self, self);
+        // println!("{}", t_left.get_truth_table());
+        // println!("{}", t_right.get_truth_table());
         t_left.get_truth_table().into_values() == t_right.get_truth_table().into_values()
     }
 }
@@ -193,8 +199,10 @@ mod tests {
 
     use super::*;
 
-    fn assert_neg<const ARITY: usize, N: Negate<ARITY>>()
+    fn assert_neg<const ARITY: usize, N>()
     where
+        N: Negate<ARITY> + TruthFn<ARITY>,
+        N::Not: TruthFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
         let table = N::init().get_truth_table().into_values();
@@ -209,8 +217,8 @@ mod tests {
 
     fn assert_std_not<const ARITY: usize, N, N2>(x: N)
     where
-        N: Not<Output = N2> + TruthFn<ARITY>,
-        N2: TruthFn<ARITY>,
+        N: Not<Output = N2> + BoolFn<ARITY>,
+        N2: BoolFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
         let table = x.get_truth_table().into_values();
@@ -222,7 +230,11 @@ mod tests {
         }
     }
 
-    fn assert_conversion<C: Converse>() {
+    fn assert_conversion<C>()
+    where
+        C: Converse + TruthFn<2>,
+        C::Conversion: TruthFn<2>,
+    {
         let table = C::init().get_truth_table().into_inner();
         let table_conversed: HashMap<_, _> = C::Conversion::init()
             .get_truth_table()
@@ -332,5 +344,65 @@ mod tests {
         assert_conversion::<MaterialImplication>();
         assert_conversion::<NonConjunction>();
         assert_conversion::<Truth>();
+    }
+
+    fn assert_commutativity<F>(holds: bool)
+    where
+        F: TruthFn<2>,
+    {
+        assert_eq!(F::init().is_commutative(), holds);
+    }
+
+    #[test]
+    fn test_all_commutativity() {
+        assert_commutativity::<Falsity>(true);
+        assert_commutativity::<Conjunction>(true);
+        assert_commutativity::<MaterialNonImplication>(false);
+        assert_commutativity::<Projection<0>>(false);
+        assert_commutativity::<ConverseNonImplication>(false);
+        assert_commutativity::<Projection<1>>(false);
+        assert_commutativity::<ExclusiveDisjunction>(true);
+        assert_commutativity::<Disjunction>(true);
+        assert_commutativity::<NonDisjunction>(true);
+        assert_commutativity::<LogicalBiconditional>(true);
+        assert_commutativity::<ProjectAndUnary<1, Negation>>(false);
+        assert_commutativity::<ConverseImplication>(false);
+        assert_commutativity::<ProjectAndUnary<0, Negation>>(false);
+        assert_commutativity::<MaterialImplication>(false);
+        assert_commutativity::<NonConjunction>(true);
+        assert_commutativity::<Truth>(true);
+    }
+
+    fn assert_associativity<F>(holds: bool)
+    where
+        F: TruthFn<2>,
+    {
+        assert_eq!(F::init().is_associative(), holds);
+    }
+
+    #[test]
+    fn test_all_associativity() {
+        assert_associativity::<Falsity>(true);
+        assert_associativity::<Conjunction>(true);
+        assert_associativity::<MaterialNonImplication>(false);
+        assert_associativity::<Projection<0>>(true); // always first
+        assert_associativity::<ConverseNonImplication>(false);
+        assert_associativity::<Projection<1>>(true); // always last
+        assert_associativity::<ExclusiveDisjunction>(true);
+        assert_associativity::<Disjunction>(true);
+        assert_associativity::<NonDisjunction>(false);
+        assert_associativity::<LogicalBiconditional>(true);
+
+        // left is Neg(LAST): F(F(a, b), c) = F(-b, c) = -c
+        // right is Id(LAST): F(a, F(b, c)) = F(a, -c) = --c = c
+        assert_associativity::<ProjectAndUnary<1, Negation>>(false);
+        assert_associativity::<ConverseImplication>(false);
+
+        // left is Id(FIRST): F(F(a, b), c) = F(-a, c) = a
+        // right is Neg(FIRST): F(a, F(b, c)) = F(a, -b) = -a
+        assert_associativity::<ProjectAndUnary<0, Negation>>(false);
+        assert_associativity::<MaterialImplication>(false);
+        assert_associativity::<NonConjunction>(false);
+        assert_associativity::<Truth>(true);
     }
 }

@@ -25,6 +25,7 @@ impl Priority {
 }
 
 /// Defines the priority for a [`Connective`][super::Connective].
+#[auto_impl::auto_impl(&, Box)]
 pub trait Prioritized {
     /// Get the priority.
     fn priority(&self) -> Priority;
