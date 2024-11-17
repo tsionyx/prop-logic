@@ -78,7 +78,7 @@ unstable_features = "warn"
 #  but not used in the main library code.
 #
 #  https://github.com/rust-lang/rust/issues/95513
-unused_crate_dependencies = "warn"
+unused_crate_dependencies = "allow"
 unused_extern_crates = "warn"
 unused_import_braces = "warn"
 unused_lifetimes = "warn"

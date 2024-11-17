@@ -98,6 +98,40 @@ where
     }
 }
 
+impl<const ARITY: usize> fmt::Display for TruthTable<ARITY>
+where
+    D: CheckedArray<ARITY>,
+    <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value_col = "VALUE";
+        let padding_value = value_col.len();
+        let padding_var = value_col.len() - 1;
+        let padding_sep = value_col.len() + 2;
+
+        for i in 0..ARITY {
+            write!(f, "| x{i:<padding_var$} ")?;
+        }
+        writeln!(f, "| {value_col} |")?;
+
+        for _ in 0..=ARITY {
+            write!(f, "|{:-<padding_sep$}", "")?;
+        }
+        write!(f, "|")?;
+
+        let rows = self.table.deref().clone().into_iter();
+        for (args, res) in rows {
+            writeln!(f)?;
+            for arg in args {
+                write!(f, "| {arg:<padding_value$} ")?;
+            }
+            write!(f, "| {res:<padding_value$} |")?;
+        }
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{super::*, *};
