@@ -12,7 +12,7 @@ mod ops;
 mod var;
 
 pub use self::{
-    atom::{Atom, AtomValue},
+    atom::{Assignment, Atom},
     connective::{AnyConnective, DynConnective},
     eval::Valuation,
     formula::Formula,

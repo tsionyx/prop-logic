@@ -1,7 +1,7 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
 use super::{
-    atom::AtomValue,
+    atom::Assignment,
     formula::Formula,
     ops::{And, Equivalent, Implies, Not, Or, Xor},
 };
@@ -12,7 +12,7 @@ use super::{
 ///
 /// <https://en.wikipedia.org/wiki/Valuation_(logic)>
 pub struct Valuation<T> {
-    values: Map<Arc<T>, AtomValue>,
+    values: Map<Arc<T>, Assignment>,
 }
 
 impl<T> Default for Valuation<T> {
@@ -38,12 +38,12 @@ where
         Arc<T>: Borrow<Q>,
         Q: Eq + Hash,
     {
-        self.values.get(key).and_then(AtomValue::get)
+        self.values.get(key).and_then(Assignment::get).copied()
     }
 
     /// Set a truth value to a specific [`Atom`].
     pub fn assign(&mut self, key: Arc<T>, value: bool) {
-        let _previous_value = self.values.insert(key, AtomValue { value: Some(value) });
+        let _previous_value = self.values.insert(key, Assignment::Value(value));
     }
 }
 
@@ -69,7 +69,10 @@ impl<T> From<Formula<T>> for EvaluationResult<T> {
     }
 }
 
-impl<T> Formula<T> {
+impl<T> Formula<T>
+where
+    T: Eq + Hash, // for the `Valuation::get_assignment`
+{
     #[must_use]
     /// Trying to get the value of [`Formula`]
     /// by reducing it using available [Atom]'s [`Valuation`].
@@ -77,20 +80,14 @@ impl<T> Formula<T> {
     /// If the [`Valuation`] is incomplete,
     /// the reduced [`Formula`] is going to be produced
     /// by doing short-circuit calculation wherever possible.
-    pub fn interpret(&self, i12n: &Valuation<T>) -> Self
-    where
-        T: Eq + Hash,
-    {
-        match self.try_interpret(i12n) {
+    pub fn interpret(&self, i12n: &Valuation<T>) -> Self {
+        match self.try_reduce(i12n) {
             EvaluationResult::Partial(formula) => formula,
             EvaluationResult::Terminal(val) => Self::TruthValue(val),
         }
     }
 
-    fn try_interpret(&self, i12n: &Valuation<T>) -> EvaluationResult<T>
-    where
-        T: Eq + Hash,
-    {
+    fn try_reduce(&self, i12n: &Valuation<T>) -> EvaluationResult<T> {
         use EvaluationResult as E;
 
         match self {
@@ -98,12 +95,12 @@ impl<T> Formula<T> {
             Self::Atomic(p) => i12n
                 .get_assignment(p.as_ref())
                 .map_or_else(|| self.clone().into(), E::Terminal),
-            Self::Not(e) => match e.try_interpret(i12n) {
+            Self::Not(e) => match e.try_reduce(i12n) {
                 E::Partial(e) => e.not().into(),
                 E::Terminal(val) => E::Terminal(!val),
             },
             Self::And(e1, e2) => {
-                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.and(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **conjunction** is _commutative_
@@ -120,7 +117,7 @@ impl<T> Formula<T> {
             }
             }
             Self::Or(e1, e2) => {
-                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.or(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **disjunction** is _commutative_
@@ -137,7 +134,7 @@ impl<T> Formula<T> {
             }
             }
             Self::Xor(e1, e2) => {
-                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.xor(e2).into(),
                 (E::Partial(expr), E::Terminal(leaf))
                 | // **exclusive disjunction** is _commutative_
@@ -150,7 +147,7 @@ impl<T> Formula<T> {
             }
             }
             Self::Implies(e1, e2) => {
-                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                     (E::Partial(e1), E::Partial(e2)) => e1.implies(e2).into(),
                     (E::Partial(e1), E::Terminal(e2_val)) => {
                         if e2_val {
@@ -171,7 +168,7 @@ impl<T> Formula<T> {
                 }
             }
             Self::Equivalent(e1, e2) => {
-                match (e1.try_interpret(i12n), e2.try_interpret(i12n)) {
+                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                     (E::Partial(e1), E::Partial(e2)) => {
                         e1.equivalent(e2).into()
                     }
