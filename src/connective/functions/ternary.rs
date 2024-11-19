@@ -1,7 +1,7 @@
 //! Generic ternary function as the composition of two binary functions.
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
-use super::{BoolFn, Formula, TruthFn};
+use super::{super::Evaluation, BoolFn, Formula, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Wrapper for a ternary boolean function which applies
@@ -41,6 +41,20 @@ where
 {
     fn init() -> Self {
         Self::new(Op1::init(), Op2::init())
+    }
+
+    fn reduce<T>(&self, [x, y, z]: [Evaluation<T>; 3]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        if LEFT {
+            let intermediate = self.op1.reduce([x, y])?;
+            self.op2.reduce([intermediate, z])
+        } else {
+            let intermediate = self.op2.reduce([y, z])?;
+            self.op1.reduce([x, intermediate])
+        }
     }
 
     fn apply<T>(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>

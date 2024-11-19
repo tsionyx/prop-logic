@@ -10,7 +10,10 @@ use itertools::Itertools as _;
 
 use crate::{arity::two_powers, formula::Formula, utils::dependent_array::CheckedArray};
 
-use super::truth_table::{Row, TruthTable};
+use super::{
+    evaluation::Evaluation,
+    truth_table::{Row, TruthTable},
+};
 
 #[auto_impl::auto_impl(&, Box)]
 /// A function that accepts `ARITY` [`bool`] values as input
@@ -103,6 +106,15 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     {
         Operation::new(Box::new(move |args| self.eval(args)))
     }
+
+    /// Optional [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation)
+    /// for any intermediate propositional [`Evaluation`].
+    ///
+    /// This is, essentially, a more generic version of [`Self::eval`].
+    fn reduce<T>(&self, values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>;
 
     /// Create a [`Formula`] with this [`TruthFn`].
     fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>

@@ -1,7 +1,7 @@
 //! Nullary logical function (constant) equals to `false`.
 //!
 //! <https://en.wikipedia.org/wiki/False_(logic)>
-use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
+use super::{super::Evaluation, BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// A statement which is always false,
@@ -19,6 +19,14 @@ impl<const ARITY: usize> BoolFn<ARITY> for Falsity {
 impl<const ARITY: usize> TruthFn<ARITY> for Falsity {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, _values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        Some(Evaluation::contradiction())
     }
 
     fn apply<T>(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {

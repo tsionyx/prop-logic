@@ -1,5 +1,7 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
+use crate::connective::Evaluation;
+
 use super::{
     atom::Assignment,
     formula::Formula,
@@ -47,21 +49,7 @@ where
     }
 }
 
-#[derive(Debug)]
-enum EvaluationResult<T> {
-    Partial(Formula<T>),
-    Terminal(bool),
-}
-
-impl<T> EvaluationResult<T> {
-    const fn tautology() -> Self {
-        Self::Terminal(true)
-    }
-
-    const fn contradiction() -> Self {
-        Self::Terminal(false)
-    }
-}
+type EvaluationResult<T> = Evaluation<Formula<T>>;
 
 impl<T> From<Formula<T>> for EvaluationResult<T> {
     fn from(value: Formula<T>) -> Self {
@@ -99,53 +87,35 @@ where
                 E::Partial(e) => e.not().into(),
                 E::Terminal(val) => E::Terminal(!val),
             },
-            Self::And(e1, e2) => {
-                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
+            Self::And(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.and(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf))
-                | // **conjunction** is _commutative_
-                (E::Terminal(leaf), E::Partial(expr)) => {
+                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
                     if leaf {
                         expr.into()
                     } else {
                         E::contradiction()
                     }
                 }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => {
-                    E::Terminal(e1_val & e2_val)
-                }
-            }
-            }
-            Self::Or(e1, e2) => {
-                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
+                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val & e2_val),
+            },
+            Self::Or(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.or(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf))
-                | // **disjunction** is _commutative_
-                (E::Terminal(leaf), E::Partial(expr)) => {
+                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
                     if leaf {
                         E::tautology()
                     } else {
                         expr.into()
                     }
                 }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => {
-                    E::Terminal(e1_val | e2_val)
-                }
-            }
-            }
-            Self::Xor(e1, e2) => {
-                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
+                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val | e2_val),
+            },
+            Self::Xor(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                 (E::Partial(e1), E::Partial(e2)) => e1.xor(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf))
-                | // **exclusive disjunction** is _commutative_
-                (E::Terminal(leaf), E::Partial(expr)) => {
+                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
                     if leaf { expr.not() } else { expr }.into()
                 }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => {
-                    E::Terminal(e1_val ^ e2_val)
-                }
-            }
-            }
+                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val ^ e2_val),
+            },
             Self::Implies(e1, e2) => {
                 match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
                     (E::Partial(e1), E::Partial(e2)) => e1.implies(e2).into(),
@@ -167,21 +137,13 @@ where
                     (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(!e1_val | e2_val),
                 }
             }
-            Self::Equivalent(e1, e2) => {
-                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                    (E::Partial(e1), E::Partial(e2)) => {
-                        e1.equivalent(e2).into()
-                    }
-                    (E::Partial(expr), E::Terminal(leaf))
-                    | // **equivalence** is _commutative_
-                    (E::Terminal(leaf), E::Partial(expr)) => {
-                        if leaf { expr } else { expr.not() }.into()
-                    }
-                    (E::Terminal(e1_val), E::Terminal(e2_val)) => {
-                        E::Terminal(e1_val == e2_val)
-                    }
+            Self::Equivalent(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
+                (E::Partial(e1), E::Partial(e2)) => e1.equivalent(e2).into(),
+                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
+                    if leaf { expr } else { expr.not() }.into()
                 }
-            }
+                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val == e2_val),
+            },
 
             Self::Other { .. } => {
                 todo!("generic short-circuiting for all functions")

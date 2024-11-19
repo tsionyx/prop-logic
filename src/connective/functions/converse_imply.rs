@@ -6,7 +6,7 @@
 //! <https://en.wikipedia.org/wiki/Converse_implication>
 use crate::formula::{Formula, Implies};
 
-use super::{BoolFn, Connective, FunctionNotation, TruthFn};
+use super::{super::Evaluation, BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse implication is an operation on two logical values,
@@ -23,6 +23,32 @@ impl BoolFn<2> for ConverseImplication {
 impl TruthFn<2> for ConverseImplication {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        use Evaluation::{Partial, Terminal};
+        match values {
+            [Partial(_), Partial(_)] => None,
+            [Partial(consequent), Terminal(antecedent)] => {
+                if antecedent {
+                    Some(Partial(consequent))
+                } else {
+                    Some(Evaluation::tautology())
+                }
+            }
+            [Terminal(consequent), Partial(antecedent)] => {
+                if consequent {
+                    Some(Evaluation::tautology())
+                } else {
+                    Some(Partial(!antecedent))
+                }
+            }
+            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+        }
     }
 
     fn apply<T>(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {

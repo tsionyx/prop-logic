@@ -1,6 +1,6 @@
 //! Degenerate unary [`TruthFn`] that simply return its sole argument.
 
-use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
+use super::{super::Evaluation, BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// The unary
@@ -19,6 +19,14 @@ impl BoolFn<1> for LogicalIdentity {
 impl TruthFn<1> for LogicalIdentity {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, [value]: [Evaluation<T>; 1]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        Some(value)
     }
 
     fn apply<T>(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {

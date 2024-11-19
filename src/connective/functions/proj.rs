@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use super::{neg::Negation, BoolFn, Formula, TruthFn};
+use super::{super::Evaluation, neg::Negation, BoolFn, Formula, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// [`Projection`] onto the _I_-th coordinate is a function that
@@ -55,6 +55,15 @@ where
         Self::new()
     }
 
+    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        let expr = Projection::<I>::init().reduce(values)?;
+        UnaryOp::init().reduce([expr])
+    }
+
     fn apply<T>(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
         let expr = Projection::<I>::init().apply(expressions);
         UnaryOp::init().apply([expr])
@@ -78,6 +87,14 @@ impl TruthFn<2> for Projection<0> {
         Self
     }
 
+    fn reduce<T>(&self, [val0, _]: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        Some(val0)
+    }
+
     fn apply<T>(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
         expr0
     }
@@ -86,6 +103,14 @@ impl TruthFn<2> for Projection<0> {
 impl TruthFn<2> for Projection<1> {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, [_, val1]: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        Some(val1)
     }
 
     fn apply<T>(&self, [_, expr1]: [Formula<T>; 2]) -> Formula<T> {

@@ -2,6 +2,7 @@
 //! their operations and mutual dependencies.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_connective>
+mod evaluation;
 pub(crate) mod functions;
 mod ops;
 mod ordering;
@@ -13,6 +14,7 @@ pub mod truth_table;
 use crate::formula::Formula;
 
 pub use self::{
+    evaluation::Evaluation,
     functions::*,
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},

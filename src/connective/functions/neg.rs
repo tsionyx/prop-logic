@@ -2,7 +2,7 @@
 //! is an unary operation that reverse its only argument.
 //!
 //! <https://en.wikipedia.org/wiki/Negation>
-use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
+use super::{super::Evaluation, BoolFn, Connective, Formula, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Unary operation that takes a proposition P
@@ -20,6 +20,14 @@ impl BoolFn<1> for Negation {
 impl TruthFn<1> for Negation {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, [value]: [Evaluation<T>; 1]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        Some(!value)
     }
 
     fn apply<T>(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {

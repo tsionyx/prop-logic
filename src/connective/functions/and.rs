@@ -4,7 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
 use crate::formula::{And, Formula};
 
-use super::{BoolFn, Connective, FunctionNotation, TruthFn};
+use super::{super::Evaluation, BoolFn, Connective, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical conjunction is an operation on two logical values,
@@ -21,6 +21,26 @@ impl BoolFn<2> for Conjunction {
 impl TruthFn<2> for Conjunction {
     fn init() -> Self {
         Self
+    }
+
+    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
+    where
+        Self: Sized,
+        T: std::ops::Not<Output = T>,
+    {
+        use Evaluation::{Partial, Terminal};
+        match values {
+            [Partial(_), Partial(_)] => None,
+            // **conjunction** is _commutative_
+            [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
+                if val {
+                    Some(Partial(x))
+                } else {
+                    Some(Evaluation::contradiction())
+                }
+            }
+            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+        }
     }
 
     fn apply<T>(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
