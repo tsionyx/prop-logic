@@ -132,6 +132,29 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     }
 }
 
+#[auto_impl::auto_impl(&, Box)]
+/// Enables the ability for the boolean connective
+/// to simplify a propositional statement by taking
+/// into account the partial knowledge of its arguments.
+///
+/// This is can also be viewed as
+/// [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation).
+pub trait Reducible<const ARITY: usize, T>: BoolFn<ARITY> {
+    /// Try to reduce the statement.
+    ///
+    /// It is a more general version of [`BoolFn::eval`]
+    /// which can reduce a propositional statement of many arguments
+    /// to the function of its single argument.
+    fn try_reduce(&self, values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>;
+}
+
+#[auto_impl::auto_impl(&, Box)]
+/// Enables the ability for to combine boolean formulas into a single formula.
+pub trait FormulaComposer<const ARITY: usize, T>: Reducible<ARITY, Formula<T>> {
+    /// Compose a [`Formula`] from other [`Formula`]-s using self as a connective.
+    fn compose(&self, formulas: [Formula<T>; ARITY]) -> Formula<T>;
+}
+
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
 ///

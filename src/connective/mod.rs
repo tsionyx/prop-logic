@@ -19,7 +19,9 @@ pub use self::{
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{BoolFn, Connective, FunctionNotation, Operation, TruthFn},
+    traits::{
+        BoolFn, Connective, FormulaComposer, FunctionNotation, Operation, Reducible, TruthFn,
+    },
 };
 
 #[allow(path_statements, clippy::no_effect)]
