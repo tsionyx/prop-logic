@@ -8,7 +8,10 @@
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
 use crate::formula::{And, Formula};
 
-use super::{super::Evaluation, BoolFn, Connective, FunctionNotation, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    BoolFn, Connective, FunctionNotation, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Non-conjunction is an operation on two logical values,
@@ -26,12 +29,13 @@ impl TruthFn<2> for NonConjunction {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<T> Reducible<2, T> for NonConjunction
+where
+    T: std::ops::Not<Output = T>,
+{
+    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         use Evaluation::{Partial, Terminal};
         match values {
             [Partial(_), Partial(_)] => None,
@@ -46,8 +50,10 @@ impl TruthFn<2> for NonConjunction {
             [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
         }
     }
+}
 
-    fn apply<T>(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
+impl<T> FormulaComposer<2, T> for NonConjunction {
+    fn compose(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
         !(conjunct1.and(conjunct2))
     }
 }

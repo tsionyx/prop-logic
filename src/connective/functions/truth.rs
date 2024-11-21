@@ -1,7 +1,10 @@
 //! Nullary logical function (constant) equals to `true`.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_truth>
-use super::{super::Evaluation, BoolFn, Connective, Formula, FunctionNotation, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// A statement which is always true,
@@ -19,16 +22,16 @@ impl<const ARITY: usize> TruthFn<ARITY> for Truth {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, _values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<const ARITY: usize, T> Reducible<ARITY, T> for Truth {
+    fn try_reduce(&self, _values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>> {
         Some(Evaluation::tautology())
     }
+}
 
-    fn apply<T>(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {
+impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for Truth {
+    fn compose(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {
         Formula::tautology()
     }
 }

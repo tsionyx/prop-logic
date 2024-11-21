@@ -3,7 +3,11 @@
 
 use std::marker::PhantomData;
 
-use super::{super::Evaluation, neg::Negation, BoolFn, Formula, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    neg::Negation,
+    BoolFn, Formula, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// [`Projection`] onto the _I_-th coordinate is a function that
@@ -54,19 +58,27 @@ where
     fn init() -> Self {
         Self::new()
     }
+}
 
-    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
-        let expr = Projection::<I>::init().reduce(values)?;
-        UnaryOp::init().reduce([expr])
+impl<const I: usize, UnaryOp, T> Reducible<2, T> for ProjectAndUnary<I, UnaryOp>
+where
+    UnaryOp: TruthFn<1> + Reducible<1, T>,
+    Projection<I>: TruthFn<2> + Reducible<2, T>,
+{
+    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
+        let expr = Projection::<I>::init().try_reduce(values)?;
+        UnaryOp::init().try_reduce([expr])
     }
+}
 
-    fn apply<T>(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
-        let expr = Projection::<I>::init().apply(expressions);
-        UnaryOp::init().apply([expr])
+impl<const I: usize, UnaryOp, T> FormulaComposer<2, T> for ProjectAndUnary<I, UnaryOp>
+where
+    UnaryOp: TruthFn<1> + FormulaComposer<1, T>,
+    Projection<I>: TruthFn<2> + FormulaComposer<2, T>,
+{
+    fn compose(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
+        let expr = Projection::<I>::init().compose(expressions);
+        UnaryOp::init().compose([expr])
     }
 }
 
@@ -86,16 +98,16 @@ impl TruthFn<2> for Projection<0> {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, [val0, _]: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<T> Reducible<2, T> for Projection<0> {
+    fn try_reduce(&self, [val0, _]: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         Some(val0)
     }
+}
 
-    fn apply<T>(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
+impl<T> FormulaComposer<2, T> for Projection<0> {
+    fn compose(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
         expr0
     }
 }
@@ -104,16 +116,16 @@ impl TruthFn<2> for Projection<1> {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, [_, val1]: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<T> Reducible<2, T> for Projection<1> {
+    fn try_reduce(&self, [_, val1]: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         Some(val1)
     }
+}
 
-    fn apply<T>(&self, [_, expr1]: [Formula<T>; 2]) -> Formula<T> {
+impl<T> FormulaComposer<2, T> for Projection<1> {
+    fn compose(&self, [_, expr1]: [Formula<T>; 2]) -> Formula<T> {
         expr1
     }
 }

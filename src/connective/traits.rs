@@ -106,30 +106,6 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     {
         Operation::new(Box::new(move |args| self.eval(args)))
     }
-
-    /// Optional [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation)
-    /// for any intermediate propositional [`Evaluation`].
-    ///
-    /// This is, essentially, a more generic version of [`Self::eval`].
-    fn reduce<T>(&self, values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>;
-
-    /// Create a [`Formula`] with this [`TruthFn`].
-    fn apply<T>(&self, expr: [Formula<T>; ARITY]) -> Formula<T>
-    where
-        Self: Sized;
-
-    /// Returns a [callable object][Operation] which can
-    /// be used to [apply][Self::apply] the [`TruthFn`]
-    /// to a number of [`Formula`]-s.
-    fn formula_connector<T>(self) -> Operation<ARITY, Formula<T>>
-    where
-        Self: Sized + 'static,
-    {
-        Operation::new(Box::new(move |args| self.apply(args)))
-    }
 }
 
 #[auto_impl::auto_impl(&, Box)]
@@ -148,11 +124,19 @@ pub trait Reducible<const ARITY: usize, T>: BoolFn<ARITY> {
     fn try_reduce(&self, values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>;
 }
 
-#[auto_impl::auto_impl(&, Box)]
 /// Enables the ability for to combine boolean formulas into a single formula.
 pub trait FormulaComposer<const ARITY: usize, T>: Reducible<ARITY, Formula<T>> {
     /// Compose a [`Formula`] from other [`Formula`]-s using self as a connective.
     fn compose(&self, formulas: [Formula<T>; ARITY]) -> Formula<T>;
+
+    /// Returns a [callable object][Operation] which can
+    /// be used to [compose][Self::compose] a number of [`Formula`]-s.
+    fn formula_connector(self) -> Operation<ARITY, Formula<T>>
+    where
+        Self: Sized + 'static,
+    {
+        Operation::new(Box::new(move |args| self.compose(args)))
+    }
 }
 
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)

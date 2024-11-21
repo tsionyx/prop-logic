@@ -8,7 +8,10 @@
 //! <https://en.wikipedia.org/wiki/Converse_nonimplication>
 use crate::formula::{Formula, Implies};
 
-use super::{super::Evaluation, BoolFn, Connective, FunctionNotation, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    BoolFn, Connective, FunctionNotation, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse nonimplication is an operation on two logical values,
@@ -26,12 +29,13 @@ impl TruthFn<2> for ConverseNonImplication {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<T> Reducible<2, T> for ConverseNonImplication
+where
+    T: std::ops::Not<Output = T>,
+{
+    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         use Evaluation::{Partial, Terminal};
         match values {
             [Partial(_), Partial(_)] => None,
@@ -52,8 +56,10 @@ impl TruthFn<2> for ConverseNonImplication {
             [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
         }
     }
+}
 
-    fn apply<T>(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
+impl<T> FormulaComposer<2, T> for ConverseNonImplication {
+    fn compose(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
         !(antecedent.implies(consequent))
     }
 }

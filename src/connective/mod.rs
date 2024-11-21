@@ -60,8 +60,9 @@ mod tests {
     use super::*;
 
     #[allow(clippy::needless_pass_by_value)]
-    fn apply_and_eval_is_equivalent<const ARITY: usize>(f: impl TruthFn<ARITY>)
+    fn apply_and_compose_is_equivalent<const ARITY: usize, F>(f: F)
     where
+        F: TruthFn<ARITY> + FormulaComposer<ARITY, ()>,
         two_powers::D: CheckedArray<ARITY>,
     {
         let truth_table = f.get_truth_table().into_inner();
@@ -74,7 +75,7 @@ mod tests {
                 .try_into()
                 .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-            (f.apply(formulas), eval)
+            (f.compose(formulas), eval)
         });
 
         let empty_interpretation = Valuation::new();
@@ -93,32 +94,32 @@ mod tests {
     #[test]
     fn eval_is_sync_with_apply() {
         // nullary
-        apply_and_eval_is_equivalent::<0>(Falsity);
-        apply_and_eval_is_equivalent::<0>(Truth);
+        apply_and_compose_is_equivalent::<0, _>(Falsity);
+        apply_and_compose_is_equivalent::<0, _>(Truth);
 
         // unary
-        apply_and_eval_is_equivalent::<1>(Falsity);
-        apply_and_eval_is_equivalent::<1>(LogicalIdentity);
-        apply_and_eval_is_equivalent::<1>(Negation);
-        apply_and_eval_is_equivalent::<1>(Truth);
+        apply_and_compose_is_equivalent::<1, _>(Falsity);
+        apply_and_compose_is_equivalent::<1, _>(LogicalIdentity);
+        apply_and_compose_is_equivalent::<1, _>(Negation);
+        apply_and_compose_is_equivalent::<1, _>(Truth);
 
         // binary
-        apply_and_eval_is_equivalent::<2>(Falsity);
-        apply_and_eval_is_equivalent::<2>(Conjunction);
-        apply_and_eval_is_equivalent::<2>(MaterialNonImplication);
-        apply_and_eval_is_equivalent::<2>(Projection::<0>);
-        apply_and_eval_is_equivalent::<2>(ConverseNonImplication);
-        apply_and_eval_is_equivalent::<2>(Projection::<1>);
-        apply_and_eval_is_equivalent::<2>(ExclusiveDisjunction);
-        apply_and_eval_is_equivalent::<2>(Disjunction);
+        apply_and_compose_is_equivalent::<2, _>(Falsity);
+        apply_and_compose_is_equivalent::<2, _>(Conjunction);
+        apply_and_compose_is_equivalent::<2, _>(MaterialNonImplication);
+        apply_and_compose_is_equivalent::<2, _>(Projection::<0>);
+        apply_and_compose_is_equivalent::<2, _>(ConverseNonImplication);
+        apply_and_compose_is_equivalent::<2, _>(Projection::<1>);
+        apply_and_compose_is_equivalent::<2, _>(ExclusiveDisjunction);
+        apply_and_compose_is_equivalent::<2, _>(Disjunction);
 
-        apply_and_eval_is_equivalent::<2>(NonDisjunction);
-        apply_and_eval_is_equivalent::<2>(LogicalBiconditional);
-        apply_and_eval_is_equivalent::<2>(ProjectAndUnary::<1, Negation>::new());
-        apply_and_eval_is_equivalent::<2>(ConverseImplication);
-        apply_and_eval_is_equivalent::<2>(ProjectAndUnary::<0, Negation>::new());
-        apply_and_eval_is_equivalent::<2>(MaterialImplication);
-        apply_and_eval_is_equivalent::<2>(NonConjunction);
-        apply_and_eval_is_equivalent::<2>(Truth);
+        apply_and_compose_is_equivalent::<2, _>(NonDisjunction);
+        apply_and_compose_is_equivalent::<2, _>(LogicalBiconditional);
+        apply_and_compose_is_equivalent::<2, _>(ProjectAndUnary::<1, Negation>::new());
+        apply_and_compose_is_equivalent::<2, _>(ConverseImplication);
+        apply_and_compose_is_equivalent::<2, _>(ProjectAndUnary::<0, Negation>::new());
+        apply_and_compose_is_equivalent::<2, _>(MaterialImplication);
+        apply_and_compose_is_equivalent::<2, _>(NonConjunction);
+        apply_and_compose_is_equivalent::<2, _>(Truth);
     }
 }

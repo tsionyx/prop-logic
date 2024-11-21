@@ -4,7 +4,10 @@
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
 use crate::formula::{Formula, Or};
 
-use super::{super::Evaluation, BoolFn, Connective, FunctionNotation, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    BoolFn, Connective, FunctionNotation, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical disjunction is an operation on two logical values,
@@ -22,12 +25,10 @@ impl TruthFn<2> for Disjunction {
     fn init() -> Self {
         Self
     }
+}
 
-    fn reduce<T>(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<T> Reducible<2, T> for Disjunction {
+    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         use Evaluation::{Partial, Terminal};
         match values {
             [Partial(_), Partial(_)] => None,
@@ -42,8 +43,10 @@ impl TruthFn<2> for Disjunction {
             [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
         }
     }
+}
 
-    fn apply<T>(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
+impl<T> FormulaComposer<2, T> for Disjunction {
+    fn compose(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
         disjunct1.or(disjunct2)
     }
 }

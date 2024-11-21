@@ -1,7 +1,10 @@
 //! Generic ternary function as the composition of two binary functions.
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
-use super::{super::Evaluation, BoolFn, Formula, TruthFn};
+use super::{
+    super::{Evaluation, FormulaComposer, Reducible},
+    BoolFn, Formula, TruthFn,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Wrapper for a ternary boolean function which applies
@@ -42,32 +45,41 @@ where
     fn init() -> Self {
         Self::new(Op1::init(), Op2::init())
     }
+}
 
-    fn reduce<T>(&self, [x, y, z]: [Evaluation<T>; 3]) -> Option<Evaluation<T>>
-    where
-        Self: Sized,
-        T: std::ops::Not<Output = T>,
-    {
+impl<const LEFT: bool, Op1, Op2, T> Reducible<3, T> for Ternary<LEFT, Op1, Op2>
+where
+    Op1: TruthFn<2> + Reducible<2, T>,
+    Op2: TruthFn<2> + Reducible<2, T>,
+{
+    fn try_reduce(&self, [x, y, z]: [Evaluation<T>; 3]) -> Option<Evaluation<T>> {
+        // TODO: consider for example the case of (expr1 || expr2 || false)
         if LEFT {
-            let intermediate = self.op1.reduce([x, y])?;
-            self.op2.reduce([intermediate, z])
+            let intermediate = self.op1.try_reduce([x, y])?;
+            self.op2.try_reduce([intermediate, z])
         } else {
-            let intermediate = self.op2.reduce([y, z])?;
-            self.op1.reduce([x, intermediate])
+            let intermediate = self.op2.try_reduce([y, z])?;
+            self.op1.try_reduce([x, intermediate])
         }
     }
+}
 
-    fn apply<T>(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>
+impl<const LEFT: bool, Op1, Op2, T> FormulaComposer<3, T> for Ternary<LEFT, Op1, Op2>
+where
+    Op1: TruthFn<2> + FormulaComposer<2, T>,
+    Op2: TruthFn<2> + FormulaComposer<2, T>,
+{
+    fn compose(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>
     where
         Op1: Sized,
         Op2: Sized,
     {
         if LEFT {
-            let intermediate = self.op1.apply([x, y]);
-            self.op2.apply([intermediate, z])
+            let intermediate = self.op1.compose([x, y]);
+            self.op2.compose([intermediate, z])
         } else {
-            let intermediate = self.op2.apply([y, z]);
-            self.op1.apply([x, intermediate])
+            let intermediate = self.op2.compose([y, z]);
+            self.op1.compose([x, intermediate])
         }
     }
 }
