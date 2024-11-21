@@ -3,11 +3,15 @@
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
 use std::{fmt, sync::Arc};
 
+use derive_where::derive_where;
+
 use crate::connective::{functions, Associativity as _, Connective, Prioritized, Priority};
 
 pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug)]
+#[derive_where(Clone)]
+#[derive_where(PartialEq; T: PartialEq + 'static)]
 /// [`Formula`] is a well-formed expression constructed from
 /// propositions or [variables][Atom]
 /// and [logical operators][super::connective::Connective].
@@ -42,7 +46,7 @@ pub enum Formula<T> {
     Equivalent(Box<Self>, Box<Self>),
 
     /// The operator is specified dynamically.
-    Other(AnyConnective<Box<Self>>),
+    Other(AnyConnective<Box<Self>, T>),
 }
 
 impl<T> From<bool> for Formula<T> {
@@ -78,7 +82,7 @@ impl<T> Formula<T> {
     }
 
     /// Get a top-level connective for a given [`Formula`].
-    pub fn get_connective(&self) -> AnyConnective<&Self> {
+    pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {
             Self::TruthValue(true) => AnyConnective::new_0::<functions::Truth>(),
             Self::TruthValue(false) => AnyConnective::new_0::<functions::Falsity>(),
@@ -97,7 +101,10 @@ impl<T> Formula<T> {
         }
     }
 
-    fn has_same_operation(&self, e: &Self) -> bool {
+    fn has_same_operation(&self, e: &Self) -> bool
+    where
+        T: 'static,
+    {
         self.get_connective().clear_operands() == e.get_connective().clear_operands()
     }
 
@@ -121,30 +128,16 @@ impl<T> Formula<T> {
     where
         C: Connective<2> + Prioritized + fmt::Debug + Copy + 'static,
     {
-        Self::Other(AnyConnective::new_2::<C>((Box::new(op1), Box::new(op2))))
-    }
-}
-
-// implement Clone for Formula<T> no matter whether T is cloned
-impl<T> Clone for Formula<T> {
-    fn clone(&self) -> Self {
-        match self {
-            Self::TruthValue(t) => Self::TruthValue(*t),
-            Self::Atomic(p) => Self::Atomic(p.clone()),
-            Self::Not(e) => Self::Not(e.clone()),
-            Self::And(e1, e2) => Self::And(e1.clone(), e2.clone()),
-            Self::Or(e1, e2) => Self::Or(e1.clone(), e2.clone()),
-            Self::Xor(e1, e2) => Self::Xor(e1.clone(), e2.clone()),
-            Self::Implies(e1, e2) => Self::Implies(e1.clone(), e2.clone()),
-            Self::Equivalent(e1, e2) => Self::Equivalent(e1.clone(), e2.clone()),
-            Self::Other(op) => Self::Other(op.clone()),
-        }
+        Self::Other(AnyConnective::<_, T>::new_2::<C>((
+            Box::new(op1),
+            Box::new(op2),
+        )))
     }
 }
 
 impl<T> fmt::Display for Formula<T>
 where
-    T: fmt::Display,
+    T: fmt::Display + 'static,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Self::Atomic(p) = self {
