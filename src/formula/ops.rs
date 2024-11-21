@@ -1,4 +1,58 @@
+use std::ops;
+
 use super::formula::Formula;
+
+impl<T> ops::Not for Formula<T> {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        Self::Not(Box::new(self))
+    }
+}
+
+impl<RHS, T> ops::BitAnd<RHS> for Formula<T>
+where
+    RHS: Into<Self>,
+{
+    type Output = Self;
+    fn bitand(self, e: RHS) -> Self::Output {
+        self.and(e.into())
+    }
+}
+
+impl<RHS, T> ops::BitOr<RHS> for Formula<T>
+where
+    RHS: Into<Self>,
+{
+    type Output = Self;
+    fn bitor(self, e: RHS) -> Self::Output {
+        self.or(e.into())
+    }
+}
+
+impl<RHS, T> ops::BitXor<RHS> for Formula<T>
+where
+    RHS: Into<Self>,
+{
+    type Output = Self;
+    fn bitxor(self, e: RHS) -> Self::Output {
+        self.xor(e.into())
+    }
+}
+
+/// The logical negation operator.
+pub trait Not<T> {
+    /// Performs the logical negation.
+    fn not(self) -> Formula<T>;
+}
+
+impl<T, F> Not<T> for F
+where
+    F: Into<Formula<T>>,
+{
+    fn not(self) -> Formula<T> {
+        Formula::Not(Box::new(self.into()))
+    }
+}
 
 /// The logical conjunction operator.
 pub trait And<T, RHS> {
