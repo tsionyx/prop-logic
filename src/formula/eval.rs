@@ -1,12 +1,8 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
-use crate::connective::Evaluation;
+use crate::connective::{Evaluation, FormulaComposer as _, Reducible as _};
 
-use super::{
-    atom::Assignment,
-    formula::Formula,
-    ops::{And, Equivalent, Implies, Not, Or, Xor},
-};
+use super::{atom::Assignment, connective::AnyConnective, formula::Formula};
 
 #[derive(Debug)]
 /// Mapping the [`Atoms`]s of a [`Formula`]
@@ -78,75 +74,51 @@ where
     fn try_reduce(&self, i12n: &Valuation<T>) -> EvaluationResult<T> {
         use EvaluationResult as E;
 
-        match self {
-            Self::TruthValue(val) => E::Terminal(*val),
-            Self::Atomic(p) => i12n
+        if let Self::Atomic(p) = self {
+            return i12n
                 .get_assignment(p.as_ref())
-                .map_or_else(|| self.clone().into(), E::Terminal),
-            Self::Not(e) => match e.try_reduce(i12n) {
-                E::Partial(e) => e.not().into(),
-                E::Terminal(val) => E::Terminal(!val),
-            },
-            Self::And(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                (E::Partial(e1), E::Partial(e2)) => e1.and(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
-                    if leaf {
-                        expr.into()
-                    } else {
-                        E::contradiction()
-                    }
-                }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val & e2_val),
-            },
-            Self::Or(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                (E::Partial(e1), E::Partial(e2)) => e1.or(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
-                    if leaf {
-                        E::tautology()
-                    } else {
-                        expr.into()
-                    }
-                }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val | e2_val),
-            },
-            Self::Xor(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                (E::Partial(e1), E::Partial(e2)) => e1.xor(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
-                    if leaf { expr.not() } else { expr }.into()
-                }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val ^ e2_val),
-            },
-            Self::Implies(e1, e2) => {
-                match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                    (E::Partial(e1), E::Partial(e2)) => e1.implies(e2).into(),
-                    (E::Partial(e1), E::Terminal(e2_val)) => {
-                        if e2_val {
-                            E::tautology()
-                        } else {
-                            e1.not().into()
-                        }
-                    }
-                    (E::Terminal(e1_val), E::Partial(e2)) => {
-                        if e1_val {
-                            e2.into()
-                        } else {
-                            // <https://en.wikipedia.org/wiki/Vacuous_truth>
-                            E::tautology()
-                        }
-                    }
-                    (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(!e1_val | e2_val),
-                }
-            }
-            Self::Equivalent(e1, e2) => match (e1.try_reduce(i12n), e2.try_reduce(i12n)) {
-                (E::Partial(e1), E::Partial(e2)) => e1.equivalent(e2).into(),
-                (E::Partial(expr), E::Terminal(leaf)) | (E::Terminal(leaf), E::Partial(expr)) => {
-                    if leaf { expr } else { expr.not() }.into()
-                }
-                (E::Terminal(e1_val), E::Terminal(e2_val)) => E::Terminal(e1_val == e2_val),
-            },
+                .map_or_else(|| self.clone().into(), E::Terminal);
+        }
 
-            Self::Other { .. } => {
-                todo!("generic short-circuiting for all functions")
+        let conn = self.get_connective();
+        match &conn {
+            AnyConnective::Nullary(operator) => operator
+                .try_reduce([])
+                .expect("The nullary operator always reducible"),
+            AnyConnective::Unary { operator, operand } => {
+                let reduced = operand.try_reduce(i12n);
+                operator.try_reduce([reduced.clone()]).unwrap_or_else(|| {
+                    match reduced {
+                        E::Partial(f) => operator.compose([f]).into(),
+                        E::Terminal(val) => {
+                            // should be unreachable
+                            E::Terminal(operator.eval([val]))
+                        }
+                    }
+                })
+            }
+            AnyConnective::Binary {
+                operator,
+                operands: (op1, op2),
+            } => {
+                let (reduced1, reduced2) = (op1.try_reduce(i12n), op2.try_reduce(i12n));
+                operator
+                    .try_reduce([reduced1.clone(), reduced2.clone()])
+                    .unwrap_or_else(|| {
+                        match (reduced1, reduced2) {
+                            (E::Partial(f1), E::Partial(f2)) => operator.compose([f1, f2]).into(),
+                            (E::Partial(_), E::Terminal(_)) => {
+                                unimplemented!("Found non-implemented reduce branch")
+                            }
+                            (E::Terminal(_), E::Partial(_)) => {
+                                unimplemented!("Found non-implemented reduce branch")
+                            }
+                            (E::Terminal(val1), E::Terminal(val2)) => {
+                                // should be unreachable
+                                E::Terminal(operator.eval([val1, val2]))
+                            }
+                        }
+                    })
             }
         }
     }
@@ -156,7 +128,13 @@ where
 mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
 
-    use super::{super::Variable, *};
+    use super::{
+        super::{
+            ops::{And, Equivalent, Implies, Not, Or, Xor},
+            Variable,
+        },
+        *,
+    };
 
     static VAR_ID_COUNTER: AtomicU64 = AtomicU64::new(4);
 

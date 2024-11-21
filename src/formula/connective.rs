@@ -4,12 +4,14 @@ use derive_where::derive_where;
 use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
-    connective::{BoolFn, Connective, Prioritized},
+    connective::{BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible},
     utils::{
         upcast::{Upcast, UpcastFrom},
         Zst,
     },
 };
+
+use super::formula::Formula;
 
 #[derive(Debug)]
 #[derive_where(Clone; OPERAND: Clone)]
@@ -45,7 +47,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new_0<C>() -> Self
     where
-        C: Connective<0> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<0> + FormulaComposer<0, Atom> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Nullary(DynConnective::new::<C>())
     }
@@ -53,7 +55,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<1>`].
     pub fn new_1<C>(operand: OPERAND) -> Self
     where
-        C: Connective<1> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<1> + FormulaComposer<1, Atom> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Unary {
             operator: DynConnective::new::<C>(),
@@ -64,7 +66,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<2>`].
     pub fn new_2<C>(operands: (OPERAND, OPERAND)) -> Self
     where
-        C: Connective<2> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<2> + FormulaComposer<2, Atom> + Prioritized + Zst + Debug + Copy + 'static,
     {
         Self::Binary {
             operator: DynConnective::new::<C>(),
@@ -120,7 +122,13 @@ impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new<C>() -> Self
     where
-        C: Connective<ARITY> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<ARITY>
+            + FormulaComposer<ARITY, Atom>
+            + Prioritized
+            + Zst
+            + Debug
+            + Copy
+            + 'static,
     {
         #[allow(path_statements, clippy::no_effect)]
         {
@@ -155,14 +163,35 @@ impl<const ARITY: usize, Atom> BoolFn<ARITY> for DynConnective<ARITY, Atom> {
     }
 }
 
+impl<const ARITY: usize, T> Reducible<ARITY, Formula<T>> for DynConnective<ARITY, T> {
+    fn try_reduce(
+        &self,
+        values: [Evaluation<Formula<T>>; ARITY],
+    ) -> Option<Evaluation<Formula<T>>> {
+        self.0.try_reduce(values)
+    }
+}
+
+impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for DynConnective<ARITY, T> {
+    fn compose(&self, formulas: [Formula<T>; ARITY]) -> Formula<T> {
+        self.0.compose(formulas)
+    }
+}
+
 /// [`Connective`]'s subtrait with enabled usability for dynamic context.
 trait UsableConnective<const N: usize, Atom>:
-    Connective<N> + Prioritized + Any + Upcast<dyn Connective<N>> + Debug + DynClone
+    Connective<N>
+    + FormulaComposer<N, Atom>
+    + Prioritized
+    + Any
+    + Upcast<dyn Connective<N>>
+    + Debug
+    + DynClone
 {
 }
 
 impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
-    T: Connective<N> + Prioritized + Any + Debug + DynClone + 'static
+    T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone + 'static
 {
 }
 

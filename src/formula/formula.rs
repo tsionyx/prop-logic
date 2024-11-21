@@ -5,7 +5,9 @@ use std::{fmt, sync::Arc};
 
 use derive_where::derive_where;
 
-use crate::connective::{functions, Associativity as _, Connective, Prioritized, Priority};
+use crate::connective::{
+    functions, Associativity as _, Connective, FormulaComposer, Prioritized, Priority,
+};
 
 pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
@@ -126,7 +128,7 @@ impl<T> Formula<T> {
     /// Create a [`Formula`] with the dynamic [`Connective`].
     pub fn with_connective<C>(op1: Self, op2: Self) -> Self
     where
-        C: Connective<2> + Prioritized + fmt::Debug + Copy + 'static,
+        C: Connective<2> + FormulaComposer<2, T> + Prioritized + fmt::Debug + Copy + 'static,
     {
         Self::Other(AnyConnective::<_, T>::new_2::<C>((
             Box::new(op1),
