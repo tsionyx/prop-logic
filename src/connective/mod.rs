@@ -7,6 +7,7 @@ pub(crate) mod functions;
 mod ops;
 mod ordering;
 mod priority;
+mod properties;
 mod storage;
 mod traits;
 mod truth_table;
@@ -18,6 +19,7 @@ pub use self::{
     functions::*,
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
+    properties::BoolFnExt,
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
     traits::{
         BoolFn, Connective, FormulaComposer, FunctionNotation, Operation, Reducible, TruthFn,
