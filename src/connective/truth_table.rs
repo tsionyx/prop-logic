@@ -87,6 +87,19 @@ where
     }
 }
 
+impl<const ARITY: usize> IntoIterator for TruthTable<ARITY>
+where
+    D: CheckedArray<ARITY>,
+{
+    type Item = Row<ARITY>;
+
+    type IntoIter = <<D as CheckedArray<ARITY>>::Array<Row<ARITY>> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.into_inner().into_iter()
+    }
+}
+
 impl<const ARITY: usize> Deref for TruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,

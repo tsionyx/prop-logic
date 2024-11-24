@@ -65,8 +65,8 @@ mod tests {
         F: TruthFn<ARITY> + FormulaComposer<ARITY, ()>,
         two_powers::D: CheckedArray<ARITY>,
     {
-        let truth_table = f.get_truth_table().into_inner();
-        let eval_variants = truth_table.into_iter().map(|(assignment, eval)| {
+        let truth_table = f.get_truth_table().into_iter();
+        let eval_variants = truth_table.map(|(assignment, eval)| {
             let formulas = assignment
                 .into_iter()
                 .map(Formula::<()>::TruthValue)

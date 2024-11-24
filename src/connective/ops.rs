@@ -160,7 +160,7 @@ where
     F: BoolFn<2>,
 {
     fn is_commutative(&self) -> bool {
-        let table: Map<_, _> = self.get_truth_table().into_inner().into_iter().collect();
+        let table: Map<_, _> = self.get_truth_table().into_iter().collect();
 
         table.iter().all(|(args, val)| {
             let conversed = [args[1], args[0]];
@@ -235,10 +235,9 @@ mod tests {
         C: Converse + TruthFn<2>,
         C::Conversion: TruthFn<2>,
     {
-        let table = C::init().get_truth_table().into_inner();
+        let table = C::init().get_truth_table().into_iter();
         let table_conversed: HashMap<_, _> = C::Conversion::init()
             .get_truth_table()
-            .into_inner()
             .into_iter()
             .collect();
         assert_eq!(table_conversed.len(), 4);
