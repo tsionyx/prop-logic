@@ -7,7 +7,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_equality>
 use crate::formula::{Equivalent, Formula};
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation, TruthFn,
 };

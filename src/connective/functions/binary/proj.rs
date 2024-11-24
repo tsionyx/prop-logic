@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     neg::Negation,
     BoolFn, Formula, TruthFn,

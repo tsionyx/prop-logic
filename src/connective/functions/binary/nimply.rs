@@ -5,7 +5,7 @@
 //! <https://en.wikipedia.org/wiki/Material_nonimplication>
 use crate::formula::{Formula, Implies};
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation, TruthFn,
 };

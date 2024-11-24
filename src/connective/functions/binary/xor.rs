@@ -1,41 +1,44 @@
-//! Logical disjunction is a binary operation that
-//! is `true` when either or both of its operands are true.
+//! Exclusive disjunction is a binary operation that
+//! is `true` if and only if its arguments differ.
 //!
-//! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use crate::formula::{Formula, Or};
+//! <https://en.wikipedia.org/wiki/Exclusive_or>
+use crate::formula::{Formula, Xor};
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation, TruthFn,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-/// Logical disjunction is an operation on two logical values,
+/// Exclusive disjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
-/// unless both of its arguments are `false`.
-pub struct Disjunction;
+/// if and only if one is `true` and the other is `false`.
+pub struct ExclusiveDisjunction;
 
-impl BoolFn<2> for Disjunction {
+impl BoolFn<2> for ExclusiveDisjunction {
     fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
-        disjunct1 || disjunct2
+        disjunct1 ^ disjunct2
     }
 }
 
-impl TruthFn<2> for Disjunction {
+impl TruthFn<2> for ExclusiveDisjunction {
     fn init() -> Self {
         Self
     }
 }
 
-impl<T> Reducible<2, T> for Disjunction {
+impl<T> Reducible<2, T> for ExclusiveDisjunction
+where
+    T: std::ops::Not<Output = T>,
+{
     fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         use Evaluation::{Partial, Terminal};
         match values {
             [Partial(_), Partial(_)] => None,
-            // **disjunction** is _commutative_
+            // **exclusive disjunction** is _commutative_
             [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
                 if val {
-                    Some(Evaluation::tautology())
+                    Some(Partial(!x))
                 } else {
                     Some(Partial(x))
                 }
@@ -45,24 +48,29 @@ impl<T> Reducible<2, T> for Disjunction {
     }
 }
 
-impl<T> FormulaComposer<2, T> for Disjunction {
+impl<T> FormulaComposer<2, T> for ExclusiveDisjunction {
     fn compose(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        disjunct1.or(disjunct2)
+        disjunct1.xor(disjunct2)
     }
 }
 
-impl Connective<2> for Disjunction {
+impl Connective<2> for ExclusiveDisjunction {
     fn notation(&self) -> FunctionNotation {
-        '∨'.into()
+        '⊕'.into()
     }
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            '+'.into(),
-            "||".into(),
-            "Apq".into(), // short for Polish `alternatywa`
-            "OR".into(),
-            "or".into(),
+            '^'.into(),
+            '⩛'.into(),
+            '⊻'.into(),
+            '↮'.into(),
+            '≢'.into(),
+            "Jpq".into(), // Polish notation
+            "XOR".into(),
+            "xor".into(),
+            "EOR".into(),
+            "EXOR".into(),
         ])
     }
 }

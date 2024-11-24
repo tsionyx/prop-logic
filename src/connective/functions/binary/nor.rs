@@ -9,7 +9,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_NOR>
 use crate::formula::{Formula, Or};
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation, TruthFn,
 };

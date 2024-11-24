@@ -1,43 +1,50 @@
-//! Logical conjunction is a binary operation that
-//! is `true` if and only if all of its operands are true.
+//! _Sheffer stroke_ is a logical operation that is the
+//! [negation][super::neg] of [conjunction][super::and]
 //!
-//! <https://en.wikipedia.org/wiki/Logical_conjunction>
+//! expressed in ordinary language as "not both".
+//! It is also called _non-conjunction_, or _alternative denial_
+//! since it says in effect that at least one of its operands is `false`.
+//!
+//! <https://en.wikipedia.org/wiki/Sheffer_stroke>
 use crate::formula::{And, Formula};
 
-use super::{
+use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation, TruthFn,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
-/// Logical conjunction is an operation on two logical values,
+/// Non-conjunction is an operation on two logical values,
 /// typically the values of two propositions, that produces a value of `true`
-/// if and only if both of its operands are `true`.
-pub struct Conjunction;
+/// if and only if at least one of the operands is `false`.
+pub struct NonConjunction;
 
-impl BoolFn<2> for Conjunction {
+impl BoolFn<2> for NonConjunction {
     fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
-        conjunct1 && conjunct2
+        !conjunct1 || !conjunct2
     }
 }
 
-impl TruthFn<2> for Conjunction {
+impl TruthFn<2> for NonConjunction {
     fn init() -> Self {
         Self
     }
 }
 
-impl<T> Reducible<2, T> for Conjunction {
+impl<T> Reducible<2, T> for NonConjunction
+where
+    T: std::ops::Not<Output = T>,
+{
     fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         use Evaluation::{Partial, Terminal};
         match values {
             [Partial(_), Partial(_)] => None,
-            // **conjunction** is _commutative_
+            // **Sheffer stroke** is _commutative_
             [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
                 if val {
-                    Some(Partial(x))
+                    Some(Partial(!x))
                 } else {
-                    Some(Evaluation::contradiction())
+                    Some(Evaluation::tautology())
                 }
             }
             [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
@@ -45,26 +52,22 @@ impl<T> Reducible<2, T> for Conjunction {
     }
 }
 
-impl<T> FormulaComposer<2, T> for Conjunction {
+impl<T> FormulaComposer<2, T> for NonConjunction {
     fn compose(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        conjunct1.and(conjunct2)
+        !(conjunct1.and(conjunct2))
     }
 }
 
-impl Connective<2> for Conjunction {
+impl Connective<2> for NonConjunction {
     fn notation(&self) -> FunctionNotation {
-        '∧'.into()
+        '↑'.into()
     }
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            '&'.into(),
-            '×'.into(),
-            '·'.into(),
-            "&&".into(),
-            "Kpq".into(), // short for Polish `koniunkcja`
-            "AND".into(),
-            "and".into(),
+            '|'.into(),
+            "Dpq".into(), // short for Polish `dysjunkcja`
+            "NAND".into(),
         ])
     }
 }
