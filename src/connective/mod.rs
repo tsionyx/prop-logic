@@ -19,7 +19,7 @@ pub use self::{
     functions::*,
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
-    properties::BoolFnExt,
+    properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
     traits::{
         BoolFn, Connective, FormulaComposer, FunctionNotation, Operation, Reducible, TruthFn,

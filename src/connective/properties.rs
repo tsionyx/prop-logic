@@ -118,6 +118,62 @@ pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Upcast<dyn BoolFn<ARITY
     }
 }
 
+/// Tells whether the system of functions is functionally complete
+/// i.e. the functions from this set can be used to generate any formula.
+///
+/// This test could produce positive outcome for redundant set of functions,
+/// i.e. some of the functions could be unnecessary to get the completeness.
+/// To get more accurate result, use the [`is_basis`] with
+/// the additional check that no function could be removed from the set
+/// without losing the completeness property.
+///
+/// Defined using the Post's criterion about **not holding** the five properties:
+/// - [falsity preserving][Self::is_falsity_preserving];
+/// - [truth preserving][Self::is_truth_preserving];
+/// - [monotonness][Self::is_monotonic];
+/// - [affinness][Self::is_affine];
+/// - [self duality][Self::is_self_dual].
+///
+/// More of it: <https://en.wikipedia.org/wiki/Functional_completeness#Characterization_of_functional_completeness>.
+pub fn is_complete<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool {
+    functions.iter().any(|f| !f.is_falsity_preserving())
+        && functions.iter().any(|f| !f.is_truth_preserving())
+        && functions.iter().any(|f| !f.is_monotonic())
+        && functions.iter().any(|f| !f.is_affine())
+        && functions.iter().any(|f| !f.is_self_dual())
+}
+
+/// Tells whether the system of functions is functionally complete
+/// i.e. the functions from this set can be used to generate any formula.
+///
+/// Also, the additional check is made that ensures
+/// no function could be removed from the set
+/// without losing the completeness property.
+///
+/// Defined using the Post's criterion about **not holding** the five properties:
+/// - [falsity preserving][Self::is_falsity_preserving];
+/// - [truth preserving][Self::is_truth_preserving];
+/// - [monotonness][Self::is_monotonic];
+/// - [affinness][Self::is_affine];
+/// - [self duality][Self::is_self_dual].
+///
+/// More of it: <https://en.wikipedia.org/wiki/Functional_completeness#Characterization_of_functional_completeness>.
+pub fn is_basis<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool {
+    let complete = is_complete(functions);
+    if complete {
+        (0..functions.len()).all(|index| {
+            let smaller: Vec<_> = functions
+                .iter()
+                .enumerate()
+                .filter_map(|(i, f)| (i != index).then_some(*f))
+                .collect();
+            !is_complete(&smaller)
+        })
+    } else {
+        false
+    }
+}
+
 impl<const ARITY: usize, T> BoolFnExt<ARITY> for T
 where
     T: BoolFn<ARITY> + 'static,
@@ -674,5 +730,314 @@ mod tests {
         assert_prop!(MaterialImplication: ! is_sheffer);
         assert_prop!(NonConjunction: is_sheffer);
         assert_prop!(Truth, 2: ! is_sheffer);
+    }
+}
+
+#[cfg(test)]
+/// <https://en.wikipedia.org/wiki/Functional_completeness#Minimal_functionally_complete_operator_sets>
+mod tests_completeness {
+    use crate::connective::BINARY_FUNCTIONS;
+
+    use super::{super::functions::*, *};
+
+    const SHEFFER_FNS: [&dyn BoolFnExt<2>; 2] = [&NonConjunction, &NonDisjunction];
+
+    #[test]
+    fn test_only_nand_and_nor_is_sole_complete() {
+        let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
+
+        let mut found_sheffers = 0;
+        for f in BINARY_FUNCTIONS.iter() {
+            if truly_sheffer_ids.contains(&(**f).type_id()) {
+                assert!(f.is_sheffer());
+                assert!(is_basis(&[f]));
+                found_sheffers += 1;
+            } else {
+                assert!(!f.is_sheffer());
+                assert!(!is_complete(&[f]));
+            }
+        }
+
+        assert_eq!(found_sheffers, 2);
+    }
+
+    type F = &'static dyn BoolFnExt<2>;
+    const NP0: ProjectAndUnary<0, Negation> = ProjectAndUnary::<0, Negation>::new();
+    const NP1: ProjectAndUnary<1, Negation> = ProjectAndUnary::<1, Negation>::new();
+    const PAIR_BASIS: [[F; 2]; 24] = [
+        [&Disjunction, &NP0],
+        [&Disjunction, &NP1],
+        [&Conjunction, &NP0],
+        [&Conjunction, &NP1],
+        [&MaterialImplication, &NP0],
+        [&MaterialImplication, &NP1],
+        [&ConverseImplication, &NP0],
+        [&ConverseImplication, &NP1],
+        [&MaterialImplication, &Falsity],
+        [&ConverseImplication, &Falsity],
+        [&MaterialImplication, &ExclusiveDisjunction],
+        [&ConverseImplication, &ExclusiveDisjunction],
+        [&MaterialImplication, &MaterialNonImplication],
+        [&MaterialImplication, &ConverseNonImplication],
+        [&ConverseImplication, &MaterialNonImplication],
+        [&ConverseImplication, &ConverseNonImplication],
+        [&MaterialNonImplication, &NP0],
+        [&MaterialNonImplication, &NP1],
+        [&ConverseNonImplication, &NP0],
+        [&ConverseNonImplication, &NP1],
+        [&MaterialNonImplication, &Truth],
+        [&ConverseNonImplication, &Truth],
+        [&MaterialNonImplication, &LogicalBiconditional],
+        [&ConverseNonImplication, &LogicalBiconditional],
+    ];
+
+    #[test]
+    fn two_element_basis() {
+        for fs in &PAIR_BASIS {
+            assert!(is_complete(fs));
+            assert!(is_basis(fs));
+        }
+
+        let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
+        dbg!(truly_sheffer_ids);
+        let truly_sheffer_pair_ids: Vec<_> = truly_sheffer_ids
+            .into_iter()
+            .cartesian_product(truly_sheffer_ids)
+            .map(<[std::any::TypeId; 2]>::from)
+            .collect();
+
+        let pair_basis_type_ids: Vec<_> = PAIR_BASIS
+            .iter()
+            .flat_map(|&[f1, f2]| {
+                // both forward and reverse
+                [
+                    [(*f1).type_id(), (*f2).type_id()],
+                    [(*f2).type_id(), (*f1).type_id()],
+                ]
+            })
+            .collect();
+
+        let all_ids: Vec<_> = BINARY_FUNCTIONS.iter().map(|f| (**f).type_id()).collect();
+        dbg!(all_ids);
+
+        let all_pairs: Vec<_> = BINARY_FUNCTIONS
+            .iter()
+            .cartesian_product(BINARY_FUNCTIONS.iter())
+            .map(|(f1, f2)| [*f1, *f2])
+            .collect();
+        assert_eq!(all_pairs.len(), 256);
+
+        let mut found_pair_basis = 0;
+        let mut found_sheffers = 0;
+        let mut found_sheffers_plus = 0;
+        let mut found_incomplete = 0;
+        for fs in all_pairs {
+            let ids = fs.map(|f| (*f).type_id());
+            dbg!(ids);
+            if pair_basis_type_ids.contains(&ids) {
+                // if pair_basis_type_ids
+                assert!(is_complete(&fs));
+                assert!(is_basis(&fs));
+                found_pair_basis += 1;
+            } else if truly_sheffer_pair_ids.contains(&ids) {
+                assert!(is_complete(&fs));
+                assert!(
+                    !is_basis(&fs),
+                    "Found a pair of identical sheffer function, it is complete but redundant"
+                );
+                found_sheffers += 1;
+            } else if truly_sheffer_ids
+                .iter()
+                .any(|sheffer| ids.contains(sheffer))
+            {
+                assert!(is_complete(&fs));
+                assert!(
+                    !is_basis(&fs),
+                    "Found a pair sheffer function plus some more, it is complete but redundant"
+                );
+                found_sheffers_plus += 1;
+            } else {
+                assert!(!is_complete(&fs));
+                assert!(!is_basis(&fs));
+                found_incomplete += 1;
+            }
+        }
+
+        // both forward and backward
+        assert_eq!(found_pair_basis, PAIR_BASIS.len() * 2);
+
+        // (NOR, NOR), (NAND, NAND)
+        assert_eq!(found_sheffers, 4);
+
+        // all pairs of (NOR, X), (X, NOR), (NAND, X), (X, NAND) where X not in (NOR, NAND)
+        assert_eq!(found_sheffers_plus, 56);
+
+        // all what is left
+        assert_eq!(found_incomplete, 256 - 48 - 60);
+    }
+
+    const TRIPLE_BASIS: [[F; 3]; 6] = [
+        [&Disjunction, &LogicalBiconditional, &Falsity],
+        [&Disjunction, &LogicalBiconditional, &ExclusiveDisjunction],
+        [&Disjunction, &ExclusiveDisjunction, &Truth],
+        [&Conjunction, &LogicalBiconditional, &Falsity],
+        [&Conjunction, &LogicalBiconditional, &ExclusiveDisjunction],
+        [&Conjunction, &ExclusiveDisjunction, &Truth],
+    ];
+
+    #[test]
+    fn three_element_basis() {
+        for fs in &TRIPLE_BASIS {
+            assert!(is_complete(fs));
+            assert!(is_basis(fs));
+        }
+
+        let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
+
+        let pair_basis_type_ids: Vec<_> = PAIR_BASIS
+            .iter()
+            .map(|&[f1, f2]| {
+                let mut ids = [(*f1).type_id(), (*f2).type_id()];
+                ids.sort();
+                ids
+            })
+            .collect();
+
+        let triple_basis_type_ids: Vec<_> = TRIPLE_BASIS
+            .iter()
+            .map(|&[f1, f2, f3]| {
+                let mut ids = [(*f1).type_id(), (*f2).type_id(), (*f3).type_id()];
+                ids.sort();
+                ids
+            })
+            .collect();
+
+        let all_triples: Vec<_> = BINARY_FUNCTIONS
+            .iter()
+            .combinations(3)
+            .map(|x| {
+                let x: Vec<_> = x.into_iter().copied().collect();
+                <[_; 3]>::try_from(x)
+                    .unwrap_or_else(|_| unreachable!("combinations produce Vec-s of size 3"))
+            })
+            .collect();
+        assert_eq!(all_triples.len(), 560); // C(16, 3)
+
+        let mut found_sheffers = 0;
+        let mut found_pair_basis = 0;
+        let mut found_triple_basis = 0;
+        let mut found_incomplete = 0;
+        for fs in all_triples {
+            let mut ids = fs.map(|f| (*f).type_id());
+            ids.sort();
+
+            if truly_sheffer_ids
+                .iter()
+                .any(|sheffer| ids.contains(sheffer))
+            {
+                assert!(is_complete(&fs));
+                assert!(
+                    !is_basis(&fs),
+                    "Found a combination with a sheffer function, it is complete but redundant"
+                );
+                found_sheffers += 1;
+            } else if pair_basis_type_ids
+                .iter()
+                .any(|pt| pt.iter().all(|pair_id| ids.contains(pair_id)))
+            {
+                assert!(is_complete(&fs));
+                assert!(
+                    !is_basis(&fs),
+                    "Found a pair basis, it is complete but not minimal"
+                );
+                found_pair_basis += 1;
+            } else if triple_basis_type_ids.contains(&ids) {
+                assert!(is_complete(&fs));
+                assert!(
+                    is_basis(&fs),
+                    "Found a triple basis, it is complete and minimal"
+                );
+                found_triple_basis += 1;
+            } else {
+                assert!(!is_complete(&fs));
+                assert!(!is_basis(&fs), "Found incomplete");
+                found_incomplete += 1;
+            }
+        }
+
+        // twice C(15, 2) minus duplicates where NAND and NOR appeared both (14)
+        assert_eq!(found_sheffers, 2 * (15 * 14 / 2) - 14);
+
+        // 24 * (every possible of 16 - 2(shefer) - 2(pair itself)) = 24 * 12 = 288
+        // ???
+        assert_eq!(found_pair_basis, 200);
+        assert_eq!(found_triple_basis, TRIPLE_BASIS.len());
+
+        // all what is left
+        assert_eq!(found_incomplete, 560 - 196 - 200 - 6);
+    }
+
+    #[test]
+    fn no_basis_in_quadruples() {
+        let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
+
+        let pair_basis_type_ids: Vec<_> = PAIR_BASIS
+            .iter()
+            .map(|&[f1, f2]| {
+                let mut ids = [(*f1).type_id(), (*f2).type_id()];
+                ids.sort();
+                ids
+            })
+            .collect();
+
+        let triple_basis_type_ids: Vec<_> = TRIPLE_BASIS
+            .iter()
+            .map(|&[f1, f2, f3]| {
+                let mut ids = [(*f1).type_id(), (*f2).type_id(), (*f3).type_id()];
+                ids.sort();
+                ids
+            })
+            .collect();
+
+        let all_quadruples: Vec<_> = BINARY_FUNCTIONS
+            .iter()
+            .combinations(4)
+            .map(|x| {
+                let x: Vec<_> = x.into_iter().copied().collect();
+                <[_; 4]>::try_from(x)
+                    .unwrap_or_else(|_| unreachable!("combinations produce Vec-s of size 3"))
+            })
+            .collect();
+        assert_eq!(all_quadruples.len(), 1820); // C(16, 4)
+
+        for fs in all_quadruples {
+            assert!(!is_basis(&fs));
+            let mut ids = fs.map(|f| (*f).type_id());
+            ids.sort();
+
+            let is_sheffer = || {
+                truly_sheffer_ids
+                    .iter()
+                    .any(|sheffer| ids.contains(sheffer))
+            };
+
+            let is_pair_basis = || {
+                pair_basis_type_ids
+                    .iter()
+                    .any(|pt| pt.iter().all(|pair_id| ids.contains(pair_id)))
+            };
+
+            let is_triple_basis = || {
+                triple_basis_type_ids
+                    .iter()
+                    .any(|pt| pt.iter().all(|pair_id| ids.contains(pair_id)))
+            };
+
+            if is_sheffer() || is_pair_basis() || is_triple_basis() {
+                assert!(is_complete(&fs));
+            } else {
+                assert!(!is_complete(&fs));
+            }
+        }
     }
 }
