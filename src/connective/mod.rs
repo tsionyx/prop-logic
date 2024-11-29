@@ -9,7 +9,7 @@ mod ordering;
 mod priority;
 mod storage;
 mod traits;
-pub mod truth_table;
+mod truth_table;
 
 use crate::formula::Formula;
 
@@ -22,6 +22,7 @@ pub use self::{
     traits::{
         BoolFn, Connective, FormulaComposer, FunctionNotation, Operation, Reducible, TruthFn,
     },
+    truth_table::TruthTable,
 };
 
 #[allow(path_statements, clippy::no_effect)]

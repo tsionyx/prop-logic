@@ -49,7 +49,7 @@ where
     }
 }
 
-pub(crate) type Row<const ARITY: usize> = ([bool; ARITY], bool);
+pub(super) type Row<const ARITY: usize> = ([bool; ARITY], bool);
 
 impl<const ARITY: usize> TruthTable<ARITY>
 where
