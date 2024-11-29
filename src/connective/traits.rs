@@ -8,7 +8,11 @@ use std::{
 
 use itertools::Itertools as _;
 
-use crate::{arity::two_powers, formula::Formula, utils::dependent_array::CheckedArray};
+use crate::{
+    arity::two_powers,
+    formula::Formula,
+    utils::{dependent_array::CheckedArray, upcast::UpcastFrom},
+};
 
 use super::{
     evaluation::Evaluation,
@@ -64,6 +68,15 @@ pub trait BoolFn<const ARITY: usize> {
         table
             .try_into()
             .map_or_else(|_| panic!("Size checked before"), TruthTable::new)
+    }
+}
+
+impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn<ARITY> + 'a {
+    fn up_from(value: &T) -> &(dyn BoolFn<ARITY> + 'a) {
+        value
+    }
+    fn up_from_mut(value: &mut T) -> &mut (dyn BoolFn<ARITY> + 'a) {
+        value
     }
 }
 

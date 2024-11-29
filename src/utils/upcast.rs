@@ -20,16 +20,24 @@
 
 /// Implement this trait explicitly for `dyn Super`.
 pub trait UpcastFrom<T: ?Sized> {
+    /// Convert the value of T: &dyn Subtrait into &dyn Supertrait.
     fn up_from(value: &T) -> &Self;
 
+    /// Convert the value of T: &mut dyn Subtrait into &mut dyn Supertrait.
     fn up_from_mut(value: &mut T) -> &mut Self;
 }
 
 /// Require this in your subtrait: `trait Sub: Upcast<dyn Super>`.
 pub trait Upcast<U: ?Sized> {
+    /// Convert the value of T: &dyn Subtrait into &dyn Supertrait.
+    ///
+    /// Consider relying on the blanket implementation by implementing the [`UpcastFrom`] for `dyn Supertrait`.
     fn up(&self) -> &U;
 
     #[allow(dead_code)]
+    /// Convert the value of T: &mut dyn Subtrait into &mut dyn Supertrait.
+    ///
+    /// Consider relying on the blanket implementation by implementing the [`UpcastFrom`] for `dyn Supertrait`.
     fn up_mut(&mut self) -> &mut U;
 }
 

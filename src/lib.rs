@@ -22,6 +22,7 @@ pub use self::{
     formula::{Formula, Var, Variable},
     utils::{
         dependent_array::{CheckedArray, CheckedStorage, Discriminant, SizedArray, VerifySize},
+        upcast::{Upcast, UpcastFrom},
         zst::{Void, Zst},
     },
 };
