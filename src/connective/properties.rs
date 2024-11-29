@@ -1,4 +1,4 @@
-use std::collections::BTreeMap as Map;
+use std::{any::Any, collections::BTreeMap as Map};
 
 use itertools::Itertools;
 
@@ -6,7 +6,10 @@ use super::BoolFn;
 
 use crate::{
     arity::two_powers,
-    utils::dependent_array::{CheckedArray, Discriminant},
+    utils::{
+        dependent_array::{CheckedArray, Discriminant},
+        upcast::Upcast,
+    },
 };
 
 /// Defines the important properies of a [`BoolFn`]
@@ -20,7 +23,9 @@ use crate::{
 ///
 /// Also, some other properties introduced, that could describe the function's behaviour.
 /// See more at <https://en.wikipedia.org/wiki/Boolean_function#Properties>.
-pub trait BoolFnExt<const ARITY: usize> {
+///
+/// Requires [`std::any::Any`] as a supertrait to enable `Any::type_id` in dyn context.
+pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Upcast<dyn BoolFn<ARITY>> + Any {
     /// The constant connective is always *T* or always *F* regardless of its arguments.
     fn is_constant(&self) -> bool;
 
@@ -115,7 +120,7 @@ pub trait BoolFnExt<const ARITY: usize> {
 
 impl<const ARITY: usize, T> BoolFnExt<ARITY> for T
 where
-    T: BoolFn<ARITY>,
+    T: BoolFn<ARITY> + 'static,
     two_powers::D: CheckedArray<ARITY>,
 {
     fn is_constant(&self) -> bool {
