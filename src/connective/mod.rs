@@ -21,9 +21,7 @@ pub use self::{
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{
-        BoolFn, Connective, FormulaComposer, FunctionNotation, Operation, Reducible, TruthFn,
-    },
+    traits::{BoolFn, Connective, FormulaComposer, FunctionNotation, Reducible, TruthFn},
     truth_table::TruthTable,
 };
 

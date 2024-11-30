@@ -1,5 +1,6 @@
 pub mod dependent_array;
 mod macros;
+pub mod operation;
 pub mod upcast;
 pub mod zst;
 

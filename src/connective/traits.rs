@@ -2,7 +2,6 @@ use std::{
     collections::BTreeMap as Map,
     fmt::{self, Write},
     iter,
-    ops::Deref,
     sync::Arc,
 };
 
@@ -11,7 +10,7 @@ use itertools::Itertools as _;
 use crate::{
     arity::two_powers,
     formula::Formula,
-    utils::{dependent_array::CheckedArray, upcast::UpcastFrom},
+    utils::{dependent_array::CheckedArray, operation::Operation, upcast::UpcastFrom},
 };
 
 use super::{
@@ -216,37 +215,5 @@ impl fmt::Display for FunctionNotation {
             Self::Name(name) => f.write_str(name),
             Self::Symbol(s) => f.write_char(*s),
         }
-    }
-}
-
-/// Represents the most general form of
-/// [homogeneous operation](https://en.wikipedia.org/wiki/Binary_operation).
-///
-/// It also works as a workaround emulating `impl Fn` behaviour
-/// by allowing to 'call' it through [`Deref`]-ing.
-pub struct Operation<const ARITY: usize, T> {
-    func: Box<dyn Fn([T; ARITY]) -> T>,
-}
-
-impl<const ARITY: usize, T> fmt::Debug for Operation<ARITY, T> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{ARITY}-ary Operation")
-    }
-}
-
-impl<const ARITY: usize, T> Operation<ARITY, T> {
-    fn new(func: Box<dyn Fn([T; ARITY]) -> T>) -> Self {
-        Self { func }
-    }
-}
-
-impl<const ARITY: usize, T> Deref for Operation<ARITY, T>
-where
-    T: 'static,
-{
-    type Target = dyn Fn([T; ARITY]) -> T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.func
     }
 }
