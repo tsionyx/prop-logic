@@ -68,11 +68,14 @@ impl Connective<2> for MaterialImplication {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
+            '≤'.into(),
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '⊃'.into(),
             '⇒'.into(),
-            '≤'.into(),
-            "Cpq".into(), // Polish notation
-            "IMPLY".into(),
+            FunctionNotation::symbolic_str("->"),
+            FunctionNotation::Polish('C'),
+            // https://en.wikipedia.org/wiki/IMPLY_gate
+            FunctionNotation::scheme_gate("IMPLY"),
         ])
     }
 }

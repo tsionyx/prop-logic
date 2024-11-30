@@ -71,9 +71,11 @@ impl Connective<2> for ConverseNonImplication {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            '⊄'.into(),
             '<'.into(),
-            "Mpq".into(), // Polish notation
+            '⊄'.into(),
+            // https://en.wikipedia.org/wiki/Arrows_(Unicode_block)
+            '⇍'.into(),
+            FunctionNotation::Polish('M'),
         ])
     }
 }

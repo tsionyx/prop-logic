@@ -69,9 +69,12 @@ impl Connective<2> for ConverseImplication {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            '⊂'.into(),
             '≥'.into(),
-            "Bpq".into(), // Polish notation
+            '⊂'.into(),
+            // https://en.wikipedia.org/wiki/Arrows_(Unicode_block)
+            '⇐'.into(),
+            FunctionNotation::symbolic_str("<-"),
+            FunctionNotation::Polish('B'),
         ])
     }
 }

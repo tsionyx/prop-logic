@@ -58,13 +58,16 @@ impl Connective<2> for Conjunction {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '&'.into(),
             '×'.into(),
             '·'.into(),
-            "&&".into(),
-            "Kpq".into(), // short for Polish `koniunkcja`
-            "AND".into(),
-            "and".into(),
+            FunctionNotation::symbolic_str("&&"),
+            FunctionNotation::common("and"),
+            // https://en.wikipedia.org/wiki/AND_gate
+            FunctionNotation::scheme_gate("AND"),
+            // short for Polish `koniunkcja`
+            FunctionNotation::Polish('K'),
         ])
     }
 }

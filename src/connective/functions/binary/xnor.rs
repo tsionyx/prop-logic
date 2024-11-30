@@ -65,17 +65,21 @@ impl Connective<2> for LogicalBiconditional {
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '='.into(),
-            '∼'.into(),
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '⇔'.into(),
             '≡'.into(),
-            "⊃⊂".into(),
-            "⊂⊃".into(),
-            "Epq".into(), // short for Polish `ekwiwalencja`
-            "Qpq".into(), // alternate Polish notation
-            "XNOR".into(),
-            "IFF".into(),
-            "EQ".into(),
-            "EQV".into(),
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Advanced_or_rarely_used_logical_symbols
+            '⊙'.into(),
+            FunctionNotation::symbolic_str("⊃⊂"),
+            FunctionNotation::symbolic_str("⊂⊃"),
+            FunctionNotation::common("iff"),
+            FunctionNotation::common("eq"),
+            // https://en.wikipedia.org/wiki/XOR_gate
+            FunctionNotation::scheme_gate("XNOR"),
+            // short for Polish `ekwiwalencja` (1929)
+            FunctionNotation::Polish('E'),
+            // alternate Polish notation (1951)
+            FunctionNotation::Polish('Q'),
         ])
     }
 }

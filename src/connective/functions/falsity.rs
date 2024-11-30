@@ -45,6 +45,13 @@ impl Connective<0> for Falsity {
     }
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
-        Some(vec!["False".into(), "false".into(), "Opq".into()])
+        Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
+            'F'.into(),
+            '0'.into(),
+            FunctionNotation::common("false"),
+            // probably derived from visual similarity to '0'
+            FunctionNotation::Polish('O'),
+        ])
     }
 }

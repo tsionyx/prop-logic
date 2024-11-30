@@ -68,10 +68,13 @@ impl Connective<2> for MaterialNonImplication {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            '⊅'.into(),
             '>'.into(),
-            "Lpq".into(), // Polish notation
-            "NIMPLY".into(),
+            '⊅'.into(),
+            // https://en.wikipedia.org/wiki/Arrows_(Unicode_block)
+            '⇏'.into(),
+            FunctionNotation::Polish('L'),
+            // https://en.wikipedia.org/wiki/NIMPLY_gate
+            FunctionNotation::scheme_gate("NIMPLY"),
         ])
     }
 }

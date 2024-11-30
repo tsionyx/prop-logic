@@ -58,11 +58,15 @@ impl Connective<2> for Disjunction {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '+'.into(),
-            "||".into(),
-            "Apq".into(), // short for Polish `alternatywa`
-            "OR".into(),
-            "or".into(),
+            '∥'.into(),
+            FunctionNotation::symbolic_str("||"),
+            FunctionNotation::common("or"),
+            // https://en.wikipedia.org/wiki/OR_gate
+            FunctionNotation::scheme_gate("OR"),
+            // short for Polish `alternatywa`
+            FunctionNotation::Polish('A'),
         ])
     }
 }

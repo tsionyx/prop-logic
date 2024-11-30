@@ -44,6 +44,13 @@ impl Connective<0> for Truth {
     }
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
-        Some(vec!["True".into(), "true".into(), "Vpq".into()])
+        Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
+            'T'.into(),
+            '1'.into(),
+            FunctionNotation::common("true"),
+            // probably derived from https://en.wikipedia.org/wiki/Veritas
+            FunctionNotation::Polish('V'),
+        ])
     }
 }

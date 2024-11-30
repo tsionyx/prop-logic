@@ -48,12 +48,15 @@ impl Connective<1> for Negation {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '~'.into(),
-            '-'.into(),
+            '−'.into(),
             '!'.into(),
-            "Npq".into(), // short for Polish `negacja`
-            "NOT".into(),
-            "not".into(),
+            FunctionNotation::common("not"),
+            // https://en.wikipedia.org/wiki/NOT_gate
+            FunctionNotation::scheme_gate("NOT"),
+            // short for Polish `negacja`
+            FunctionNotation::Polish('N'),
         ])
     }
 }

@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
     neg::Negation,
-    BoolFn, Formula, TruthFn,
+    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -130,39 +130,45 @@ impl<T> FormulaComposer<2, T> for Projection<1> {
     }
 }
 
-// === The following implementations are degenerate ===
-// impl Connective<2> for Projection<0> {
-//     fn notation(&self) -> FunctionNotation {
-//         "π1".into()
-//     }
-//
-//     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
-//         Some(vec!["πl".into(), "Ipq".into()])
-//     }
-// }
-// impl Connective<2> for Projection<1> {
-//     fn notation(&self) -> FunctionNotation {
-//         "π2".into()
-//     }
-//
-//     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
-//         Some(vec!["πr".into(), "Hpq".into()])
-//     }
-// }
-// impl Connective<2> for ProjectAndUnary<0, Negation> {
-//     fn notation(&self) -> FunctionNotation {
-//         // only the polish notation available
-//         // <https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique>
-//         "Fpq".into()
-//     }
-// }
-// impl Connective<2> for ProjectAndUnary<1, Negation> {
-//     fn notation(&self) -> FunctionNotation {
-//         // only the polish notation available
-//         // <https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique>
-//         "Gpq".into()
-//     }
-// }
+impl Connective<2> for Projection<0> {
+    fn notation(&self) -> FunctionNotation {
+        FunctionNotation::symbolic_str("π1")
+    }
+
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
+        Some(vec![
+            FunctionNotation::symbolic_str("πl"),
+            FunctionNotation::common("left projection"),
+            FunctionNotation::Polish('I'),
+        ])
+    }
+}
+
+impl Connective<2> for Projection<1> {
+    fn notation(&self) -> FunctionNotation {
+        FunctionNotation::symbolic_str("π2")
+    }
+
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
+        Some(vec![
+            FunctionNotation::symbolic_str("πr"),
+            FunctionNotation::common("right projection"),
+            FunctionNotation::Polish('H'),
+        ])
+    }
+}
+
+impl Connective<2> for ProjectAndUnary<0, Negation> {
+    fn notation(&self) -> FunctionNotation {
+        FunctionNotation::Polish('F')
+    }
+}
+
+impl Connective<2> for ProjectAndUnary<1, Negation> {
+    fn notation(&self) -> FunctionNotation {
+        FunctionNotation::Polish('G')
+    }
+}
 
 #[cfg(test)]
 mod tests {

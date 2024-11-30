@@ -65,9 +65,13 @@ impl Connective<2> for NonConjunction {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Advanced_or_rarely_used_logical_symbols
             '|'.into(),
-            "Dpq".into(), // short for Polish `dysjunkcja`
-            "NAND".into(),
+            '⊼'.into(),
+            // short for Polish `dysjunkcja`
+            FunctionNotation::Polish('D'),
+            // https://en.wikipedia.org/wiki/NAND_gate
+            FunctionNotation::scheme_gate("NAND"),
         ])
     }
 }

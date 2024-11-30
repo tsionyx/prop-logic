@@ -39,7 +39,14 @@ impl<T> FormulaComposer<1, T> for LogicalIdentity {
 
 impl Connective<1> for LogicalIdentity {
     fn notation(&self) -> FunctionNotation {
-        // degenerate implementation
-        "".into()
+        FunctionNotation::Empty
+    }
+
+    fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
+        Some(vec![
+            FunctionNotation::common("identity"),
+            // https://en.wikipedia.org/wiki/Buffer_gate
+            FunctionNotation::scheme_gate("Buffer"),
+        ])
     }
 }

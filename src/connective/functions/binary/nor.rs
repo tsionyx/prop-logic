@@ -66,8 +66,11 @@ impl Connective<2> for NonDisjunction {
 
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
-            "Xpq".into(), // Polish notation
-            "NOR".into(),
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Advanced_or_rarely_used_logical_symbols
+            '⊽'.into(),
+            FunctionNotation::Polish('X'),
+            // https://en.wikipedia.org/wiki/NOR_gate
+            FunctionNotation::scheme_gate("NOR"),
         ])
     }
 }

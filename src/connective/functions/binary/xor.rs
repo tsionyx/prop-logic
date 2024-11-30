@@ -62,15 +62,14 @@ impl Connective<2> for ExclusiveDisjunction {
     fn alternate_notations(&self) -> Option<Vec<FunctionNotation>> {
         Some(vec![
             '^'.into(),
-            '⩛'.into(),
+            // https://en.wikipedia.org/wiki/List_of_logic_symbols#Basic_logic_symbols
             '⊻'.into(),
             '↮'.into(),
             '≢'.into(),
-            "Jpq".into(), // Polish notation
-            "XOR".into(),
-            "xor".into(),
-            "EOR".into(),
-            "EXOR".into(),
+            FunctionNotation::common("xor"),
+            // https://en.wikipedia.org/wiki/XOR_gate
+            FunctionNotation::scheme_gate("XOR"),
+            FunctionNotation::Polish('J'),
         ])
     }
 }
