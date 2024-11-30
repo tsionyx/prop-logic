@@ -4,6 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_connective>
 mod evaluation;
 pub(crate) mod functions;
+mod notation;
 mod ops;
 mod ordering;
 mod priority;
@@ -17,11 +18,12 @@ use crate::formula::Formula;
 pub use self::{
     evaluation::Evaluation,
     functions::*,
+    notation::FunctionNotation,
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{BoolFn, Connective, FormulaComposer, FunctionNotation, Reducible, TruthFn},
+    traits::{BoolFn, Connective, FormulaComposer, Reducible, TruthFn},
     truth_table::TruthTable,
 };
 
