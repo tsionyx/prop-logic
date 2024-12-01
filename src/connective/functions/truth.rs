@@ -29,7 +29,7 @@ impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for Truth {
     }
 }
 
-impl Connective<0> for Truth {
+impl<const ARITY: usize> Connective<ARITY> for Truth {
     fn notation(&self) -> FunctionNotation {
         // _tee_ or _verum_
         // <https://en.wikipedia.org/wiki/Tee_(symbol)>

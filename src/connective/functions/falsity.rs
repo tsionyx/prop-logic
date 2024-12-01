@@ -30,7 +30,7 @@ impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for Falsity {
     }
 }
 
-impl Connective<0> for Falsity {
+impl<const ARITY: usize> Connective<ARITY> for Falsity {
     fn notation(&self) -> FunctionNotation {
         // _falsum_ or _absurdum_
         // <https://en.wikipedia.org/wiki/Up_tack>
