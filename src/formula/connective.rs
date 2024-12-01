@@ -1,4 +1,4 @@
-use std::{any::Any, fmt::Debug, ops::Deref};
+use std::{any::Any, fmt::Debug};
 
 use derive_where::derive_where;
 use dyn_clone::{clone_trait_object, DynClone};
@@ -163,11 +163,11 @@ impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
     }
 }
 
-impl<const ARITY: usize, Atom> Deref for DynConnective<ARITY, Atom> {
-    type Target = dyn Connective<ARITY>;
-
-    fn deref(&self) -> &Self::Target {
-        self.0.as_ref().up()
+impl<'a, const ARITY: usize, Atom: 'a> AsRef<dyn Connective<ARITY> + 'a>
+    for DynConnective<ARITY, Atom>
+{
+    fn as_ref(&self) -> &(dyn Connective<ARITY> + 'a) {
+        self.0.up()
     }
 }
 

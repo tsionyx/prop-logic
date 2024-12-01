@@ -7,7 +7,7 @@
 //! that the table represents (for example, A XOR B).
 //! Each row of the truth table contains one possible configuration of the input variables
 //! (for instance, A=true, B=false), and the result of the operation for those values.
-use std::{fmt, ops::Deref};
+use std::fmt;
 
 use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, CheckedArray};
 
@@ -67,7 +67,7 @@ where
     where
         <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
     {
-        let v = self.table.deref().clone().into();
+        let v = self.table.clone().into_inner();
         v.into_iter().map(|(_k, v)| v).collect()
     }
 
@@ -100,17 +100,6 @@ where
     }
 }
 
-impl<const ARITY: usize> Deref for TruthTable<ARITY>
-where
-    D: CheckedArray<ARITY>,
-{
-    type Target = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.table
-    }
-}
-
 impl<const ARITY: usize> fmt::Display for TruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
@@ -132,7 +121,7 @@ where
         }
         write!(f, "|")?;
 
-        let rows = self.table.deref().clone().into_iter();
+        let rows = self.table.clone().into_inner();
         for (args, res) in rows {
             writeln!(f)?;
             for arg in args {
@@ -153,7 +142,6 @@ mod tests {
     where
         Op: TruthFn<ARITY>,
         D: CheckedArray<ARITY>,
-        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
     {
         get_mapping::<Op, ARITY>()
             .into_iter()
@@ -165,10 +153,9 @@ mod tests {
     where
         Op: TruthFn<ARITY>,
         D: CheckedArray<ARITY>,
-        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
     {
         let table = Op::init().get_truth_table();
-        table.clone().into()
+        table.table.into_inner().into()
     }
 
     #[test]

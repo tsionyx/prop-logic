@@ -92,7 +92,7 @@ where
                         E::Partial(f) => operator.compose([f]).into(),
                         E::Terminal(val) => {
                             // should be unreachable
-                            E::Terminal(operator.eval([val]))
+                            E::Terminal(operator.as_ref().eval([val]))
                         }
                     }
                 })
@@ -115,7 +115,7 @@ where
                             }
                             (E::Terminal(val1), E::Terminal(val2)) => {
                                 // should be unreachable
-                                E::Terminal(operator.eval([val1, val2]))
+                                E::Terminal(operator.as_ref().eval([val1, val2]))
                             }
                         }
                     })

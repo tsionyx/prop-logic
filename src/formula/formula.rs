@@ -155,12 +155,13 @@ where
         let conn = self.get_connective();
 
         match &conn {
-            AnyConnective::Nullary(operator) => write!(f, "{}", operator.notation()),
+            AnyConnective::Nullary(operator) => write!(f, "{}", operator.as_ref().notation()),
             AnyConnective::Unary { operator, operand } => {
+                let notation = operator.as_ref().notation();
                 if operand.has_obvious_priority_over(self) || operand.has_same_operation(self) {
-                    write!(f, "{}{}", operator.notation(), operand)
+                    write!(f, "{notation}{operand}")
                 } else {
-                    write!(f, "{}({})", operator.notation(), operand)
+                    write!(f, "{notation}({operand})")
                 }
             }
             AnyConnective::Binary {
@@ -168,12 +169,13 @@ where
                 operands: (op1, op2),
             } => {
                 let is_associative = operator.is_associative();
+                let notation = operator.as_ref().notation();
                 if op1.has_obvious_priority_over(self)
                     || (is_associative && op1.has_same_operation(self))
                 {
-                    write!(f, "{op1}{}", operator.notation())
+                    write!(f, "{op1}{notation}")
                 } else {
-                    write!(f, "({op1}){}", operator.notation())
+                    write!(f, "({op1}){notation}")
                 }?;
                 if op2.has_obvious_priority_over(self)
                     || (is_associative && op2.has_same_operation(self))
