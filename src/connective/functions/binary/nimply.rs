@@ -7,7 +7,7 @@ use crate::formula::{Formula, Implies};
 
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation, TruthFn,
+    BoolFn, Connective, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -19,12 +19,6 @@ pub struct MaterialNonImplication;
 impl BoolFn<2> for MaterialNonImplication {
     fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
         antecedent && !consequent
-    }
-}
-
-impl TruthFn<2> for MaterialNonImplication {
-    fn init() -> Self {
-        Self
     }
 }
 

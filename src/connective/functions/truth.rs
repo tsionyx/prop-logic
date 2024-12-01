@@ -3,7 +3,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_truth>
 use super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
+    BoolFn, Connective, Formula, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -14,13 +14,6 @@ pub struct Truth;
 impl<const ARITY: usize> BoolFn<ARITY> for Truth {
     fn eval(&self, _values: [bool; ARITY]) -> bool {
         true
-    }
-}
-
-// allow to use the `False` constant in unary or binary on N-ary context
-impl<const ARITY: usize> TruthFn<ARITY> for Truth {
-    fn init() -> Self {
-        Self
     }
 }
 

@@ -8,7 +8,7 @@ use crate::formula::{Formula, Implies};
 
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation, TruthFn,
+    BoolFn, Connective, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -20,12 +20,6 @@ pub struct ConverseImplication;
 impl BoolFn<2> for ConverseImplication {
     fn eval(&self, [consequent, antecedent]: [bool; 2]) -> bool {
         consequent || !antecedent
-    }
-}
-
-impl TruthFn<2> for ConverseImplication {
-    fn init() -> Self {
-        Self
     }
 }
 

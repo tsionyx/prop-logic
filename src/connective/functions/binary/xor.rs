@@ -6,7 +6,7 @@ use crate::formula::{Formula, Xor};
 
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation, TruthFn,
+    BoolFn, Connective, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -18,12 +18,6 @@ pub struct ExclusiveDisjunction;
 impl BoolFn<2> for ExclusiveDisjunction {
     fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
         disjunct1 ^ disjunct2
-    }
-}
-
-impl TruthFn<2> for ExclusiveDisjunction {
-    fn init() -> Self {
-        Self
     }
 }
 

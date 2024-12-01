@@ -116,6 +116,15 @@ pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
     }
 }
 
+impl<const ARITY: usize, T> TruthFn<ARITY> for T
+where
+    T: BoolFn<ARITY> + Default,
+{
+    fn init() -> Self {
+        Self::default()
+    }
+}
+
 #[auto_impl::auto_impl(&, Box)]
 /// Enables the ability for the boolean connective
 /// to simplify a propositional statement by taking

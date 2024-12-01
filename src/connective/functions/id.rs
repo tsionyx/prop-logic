@@ -2,7 +2,7 @@
 
 use super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
+    BoolFn, Connective, Formula, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -16,12 +16,6 @@ impl BoolFn<1> for LogicalIdentity {
         // the truth value of the single given proposition
         // <https://en.wikipedia.org/wiki/Truth_value>
         value
-    }
-}
-
-impl TruthFn<1> for LogicalIdentity {
-    fn init() -> Self {
-        Self
     }
 }
 

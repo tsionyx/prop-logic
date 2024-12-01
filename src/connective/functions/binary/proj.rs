@@ -51,15 +51,6 @@ where
     }
 }
 
-impl<const I: usize, UnaryOp: TruthFn<1>> TruthFn<2> for ProjectAndUnary<I, UnaryOp>
-where
-    Projection<I>: TruthFn<2>,
-{
-    fn init() -> Self {
-        Self::new()
-    }
-}
-
 impl<const I: usize, UnaryOp, T> Reducible<2, T> for ProjectAndUnary<I, UnaryOp>
 where
     UnaryOp: TruthFn<1> + Reducible<1, T>,
@@ -94,12 +85,6 @@ impl BoolFn<2> for Projection<1> {
     }
 }
 
-impl TruthFn<2> for Projection<0> {
-    fn init() -> Self {
-        Self
-    }
-}
-
 impl<T> Reducible<2, T> for Projection<0> {
     fn try_reduce(&self, [val0, _]: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
         Some(val0)
@@ -109,12 +94,6 @@ impl<T> Reducible<2, T> for Projection<0> {
 impl<T> FormulaComposer<2, T> for Projection<0> {
     fn compose(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
         expr0
-    }
-}
-
-impl TruthFn<2> for Projection<1> {
-    fn init() -> Self {
-        Self
     }
 }
 

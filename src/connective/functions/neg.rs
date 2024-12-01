@@ -4,7 +4,7 @@
 //! <https://en.wikipedia.org/wiki/Negation>
 use super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
+    BoolFn, Connective, Formula, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -17,12 +17,6 @@ pub struct Negation;
 impl BoolFn<1> for Negation {
     fn eval(&self, [value]: [bool; 1]) -> bool {
         !value
-    }
-}
-
-impl TruthFn<1> for Negation {
-    fn init() -> Self {
-        Self
     }
 }
 

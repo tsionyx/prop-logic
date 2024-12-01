@@ -3,7 +3,7 @@
 //! <https://en.wikipedia.org/wiki/False_(logic)>
 use super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
+    BoolFn, Connective, Formula, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -15,13 +15,6 @@ pub struct Falsity;
 impl<const ARITY: usize> BoolFn<ARITY> for Falsity {
     fn eval(&self, _values: [bool; ARITY]) -> bool {
         false
-    }
-}
-
-// allow to use the `False` constant in unary or binary on N-ary context
-impl<const ARITY: usize> TruthFn<ARITY> for Falsity {
-    fn init() -> Self {
-        Self
     }
 }
 

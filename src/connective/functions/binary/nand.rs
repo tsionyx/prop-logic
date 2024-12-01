@@ -10,7 +10,7 @@ use crate::formula::{And, Formula};
 
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation, TruthFn,
+    BoolFn, Connective, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -22,12 +22,6 @@ pub struct NonConjunction;
 impl BoolFn<2> for NonConjunction {
     fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
         !conjunct1 || !conjunct2
-    }
-}
-
-impl TruthFn<2> for NonConjunction {
-    fn init() -> Self {
-        Self
     }
 }
 

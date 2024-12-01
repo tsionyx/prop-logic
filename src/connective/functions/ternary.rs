@@ -37,16 +37,6 @@ where
     }
 }
 
-impl<const LEFT: bool, Op1, Op2> TruthFn<3> for Ternary<LEFT, Op1, Op2>
-where
-    Op1: TruthFn<2>,
-    Op2: TruthFn<2>,
-{
-    fn init() -> Self {
-        Self::new(Op1::init(), Op2::init())
-    }
-}
-
 impl<const LEFT: bool, Op1, Op2, T> Reducible<3, T> for Ternary<LEFT, Op1, Op2>
 where
     Op1: TruthFn<2> + Reducible<2, T>,

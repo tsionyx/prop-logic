@@ -9,7 +9,7 @@ use crate::formula::{Equivalent, Formula};
 
 use super::super::{
     super::{Evaluation, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation, TruthFn,
+    BoolFn, Connective, FunctionNotation,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -21,12 +21,6 @@ pub struct LogicalBiconditional;
 impl BoolFn<2> for LogicalBiconditional {
     fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
         antecedent == consequent
-    }
-}
-
-impl TruthFn<2> for LogicalBiconditional {
-    fn init() -> Self {
-        Self
     }
 }
 
