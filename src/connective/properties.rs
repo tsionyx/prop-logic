@@ -146,11 +146,11 @@ impl<const ARITY: usize, T: BoolFnExt<ARITY>> UpcastFrom<T> for dyn BoolFnExt<AR
 ///
 /// More of it: <https://en.wikipedia.org/wiki/Functional_completeness#Characterization_of_functional_completeness>.
 pub fn is_complete<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool {
-    functions.iter().any(|f| !f.is_falsity_preserving())
-        && functions.iter().any(|f| !f.is_truth_preserving())
-        && functions.iter().any(|f| !f.is_monotonic())
-        && functions.iter().any(|f| !f.is_affine())
-        && functions.iter().any(|f| !f.is_self_dual())
+    functions.iter().any(|&f| !f.is_falsity_preserving())
+        && functions.iter().any(|&f| !f.is_truth_preserving())
+        && functions.iter().any(|&f| !f.is_monotonic())
+        && functions.iter().any(|&f| !f.is_affine())
+        && functions.iter().any(|&f| !f.is_self_dual())
 }
 
 /// Tells whether the system of functions is functionally complete
