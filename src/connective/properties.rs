@@ -8,7 +8,7 @@ use crate::{
     arity::two_powers,
     utils::{
         dependent_array::{CheckedArray, Discriminant},
-        upcast::Upcast,
+        upcast::{Upcast, UpcastFrom},
     },
 };
 
@@ -115,6 +115,16 @@ pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Upcast<dyn BoolFn<ARITY
             && !self.is_monotonic()
             && !self.is_affine()
             && !self.is_self_dual()
+    }
+}
+
+impl<const ARITY: usize, T: BoolFnExt<ARITY>> UpcastFrom<T> for dyn BoolFnExt<ARITY> {
+    fn up_from(value: &T) -> &Self {
+        value
+    }
+
+    fn up_from_mut(value: &mut T) -> &mut Self {
+        value
     }
 }
 
