@@ -67,10 +67,11 @@ pub trait BoolFn<const ARITY: usize> {
 }
 
 impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn<ARITY> + 'a {
-    fn up_from(value: &T) -> &(dyn BoolFn<ARITY> + 'a) {
+    fn up_from(value: &T) -> &Self {
         value
     }
-    fn up_from_mut(value: &mut T) -> &mut (dyn BoolFn<ARITY> + 'a) {
+
+    fn up_from_mut(value: &mut T) -> &mut Self {
         value
     }
 }

@@ -9,8 +9,8 @@
 //!
 //! // a necessary boilerplate
 //! impl<'a, T: Super + 'a> UpcastFrom<T> for dyn Super + 'a {
-//!     fn up_from(value: &T) -> &(dyn Super + 'a) { value }
-//!     fn up_from_mut(value: &mut T) -> &mut (dyn Super + 'a) { value }
+//!     fn up_from(value: &T) -> &Self { value }
+//!     fn up_from_mut(value: &mut T) -> &mut Self { value }
 //! }
 //! ```
 //!
@@ -34,7 +34,6 @@ pub trait Upcast<U: ?Sized> {
     /// Consider relying on the blanket implementation by implementing the [`UpcastFrom`] for `dyn Supertrait`.
     fn up(&self) -> &U;
 
-    #[allow(dead_code)]
     /// Convert the value of T: &mut dyn Subtrait into &mut dyn Supertrait.
     ///
     /// Consider relying on the blanket implementation by implementing the [`UpcastFrom`] for `dyn Supertrait`.

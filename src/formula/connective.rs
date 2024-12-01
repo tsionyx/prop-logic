@@ -198,11 +198,11 @@ impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
 clone_trait_object!(<const N: usize, Atom> UsableConnective<N, Atom>);
 
 impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Connective<N> + 'a {
-    fn up_from(value: &Atom) -> &(dyn Connective<N> + 'a) {
+    fn up_from(value: &Atom) -> &Self {
         value
     }
 
-    fn up_from_mut(value: &mut Atom) -> &mut (dyn Connective<N> + 'a) {
+    fn up_from_mut(value: &mut Atom) -> &mut Self {
         value
     }
 }
