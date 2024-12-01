@@ -22,7 +22,7 @@ pub use self::{
     ops::{Associativity, Commutativity, Converse, Negate},
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
-    storage::{AllFunctions, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
+    storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
     traits::{BoolFn, Connective, FormulaComposer, Reducible, TruthFn},
     truth_table::TruthTable,
 };

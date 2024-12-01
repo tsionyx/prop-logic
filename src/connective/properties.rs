@@ -757,8 +757,9 @@ mod tests_completeness {
         let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
 
         let mut found_sheffers = 0;
-        for f in BINARY_FUNCTIONS.iter() {
-            if truly_sheffer_ids.contains(&(**f).type_id()) {
+        for &f in BINARY_FUNCTIONS.iter() {
+            let f: &dyn BoolFnExt<2> = f.up();
+            if truly_sheffer_ids.contains(&(*f).type_id()) {
                 assert!(f.is_sheffer());
                 assert!(is_basis(&[f]));
                 found_sheffers += 1;
@@ -830,10 +831,10 @@ mod tests_completeness {
         let all_ids: Vec<_> = BINARY_FUNCTIONS.iter().map(|f| (**f).type_id()).collect();
         dbg!(all_ids);
 
-        let all_pairs: Vec<_> = BINARY_FUNCTIONS
+        let all_pairs: Vec<[&dyn BoolFnExt<2>; 2]> = BINARY_FUNCTIONS
             .iter()
             .cartesian_product(BINARY_FUNCTIONS.iter())
-            .map(|(f1, f2)| [*f1, *f2])
+            .map(|(&f1, &f2)| [f1.up(), f2.up()])
             .collect();
         assert_eq!(all_pairs.len(), 256);
 
@@ -926,8 +927,8 @@ mod tests_completeness {
             .iter()
             .combinations(3)
             .map(|x| {
-                let x: Vec<_> = x.into_iter().copied().collect();
-                <[_; 3]>::try_from(x)
+                let x: Vec<_> = x.into_iter().copied().map(Upcast::up).collect();
+                <[&dyn BoolFnExt<2>; 3]>::try_from(x)
                     .unwrap_or_else(|_| unreachable!("combinations produce Vec-s of size 3"))
             })
             .collect();
@@ -1013,8 +1014,8 @@ mod tests_completeness {
             .iter()
             .combinations(4)
             .map(|x| {
-                let x: Vec<_> = x.into_iter().copied().collect();
-                <[_; 4]>::try_from(x)
+                let x: Vec<_> = x.into_iter().copied().map(Upcast::up).collect();
+                <[&dyn BoolFnExt<2>; 4]>::try_from(x)
                     .unwrap_or_else(|_| unreachable!("combinations produce Vec-s of size 3"))
             })
             .collect();
