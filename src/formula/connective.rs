@@ -4,7 +4,9 @@ use derive_where::derive_where;
 use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
-    connective::{BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible},
+    connective::{
+        BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible, TruthFn,
+    },
     utils::{
         upcast::{Upcast, UpcastFrom},
         Zst,
@@ -47,7 +49,14 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new_0<C>() -> Self
     where
-        C: Connective<0> + FormulaComposer<0, Atom> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<0>
+            + FormulaComposer<0, Atom>
+            + Prioritized
+            + Zst
+            + Debug
+            + Default
+            + Copy
+            + 'static,
     {
         Self::Nullary(DynConnective::new::<C>())
     }
@@ -55,7 +64,14 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<1>`].
     pub fn new_1<C>(operand: OPERAND) -> Self
     where
-        C: Connective<1> + FormulaComposer<1, Atom> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<1>
+            + FormulaComposer<1, Atom>
+            + Prioritized
+            + Zst
+            + Debug
+            + Default
+            + Copy
+            + 'static,
     {
         Self::Unary {
             operator: DynConnective::new::<C>(),
@@ -66,7 +82,14 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<2>`].
     pub fn new_2<C>(operands: (OPERAND, OPERAND)) -> Self
     where
-        C: Connective<2> + FormulaComposer<2, Atom> + Prioritized + Zst + Debug + Copy + 'static,
+        C: Connective<2>
+            + FormulaComposer<2, Atom>
+            + Prioritized
+            + Zst
+            + Debug
+            + Default
+            + Copy
+            + 'static,
     {
         Self::Binary {
             operator: DynConnective::new::<C>(),
@@ -127,6 +150,7 @@ impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
             + Prioritized
             + Zst
             + Debug
+            + Default
             + Copy
             + 'static,
     {
