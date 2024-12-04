@@ -3,42 +3,24 @@ use std::fmt::Debug;
 use derive_where::derive_where;
 
 use crate::{
-    connective::{BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible},
+    connective::{Connective, FormulaComposer, Prioritized},
     utils::{upcast::Upcast as _, Zst},
 };
-
-use super::formula::Formula;
 
 use self::usable::UsableConnective;
 
 #[derive(Debug)]
 #[derive_where(Clone; OPERAND: Clone)]
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
+#[derive_where(Eq; OPERAND: Eq, Atom: 'static)]
 /// [`Connective`] + [`FormulaComposer`] of ARITY from {0, 1, 2} along with their operands.
 pub enum AnyConnective<OPERAND, Atom> {
     /// Nullary [`Connective`].
-    Nullary(DynConnective<0, Atom>),
+    Nullary(DynConnective<0, OPERAND, Atom>),
     /// Unary [`Connective`].
-    Unary {
-        /// The unary [`Connective`].
-        operator: DynConnective<1, Atom>,
-        /// The single operand.
-        operand: OPERAND,
-    },
+    Unary(DynConnective<1, OPERAND, Atom>),
     /// Binary [`Connective`].
-    Binary {
-        /// The binary [`Connective`].
-        operator: DynConnective<2, Atom>,
-        /// Two operands for a [`Connective`].
-        operands: (OPERAND, OPERAND),
-    },
-}
-
-impl<OPERAND, Atom> Eq for AnyConnective<OPERAND, Atom>
-where
-    OPERAND: PartialEq,
-    Atom: 'static,
-{
+    Binary(DynConnective<2, OPERAND, Atom>),
 }
 
 impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
@@ -53,7 +35,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
             + PartialEq
             + 'static,
     {
-        Self::Nullary(DynConnective::new(connective))
+        Self::Nullary(DynConnective::new(connective, []))
     }
 
     /// Create a [`DynConnective`] with a [`Connective<1>`].
@@ -67,10 +49,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
             + PartialEq
             + 'static,
     {
-        Self::Unary {
-            operator: DynConnective::new(connective),
-            operand,
-        }
+        Self::Unary(DynConnective::new(connective, [operand]))
     }
 
     /// Create a [`DynConnective`] with a [`Connective<2>`].
@@ -84,24 +63,15 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
             + PartialEq
             + 'static,
     {
-        Self::Binary {
-            operator: DynConnective::new(connective),
-            operands,
-        }
+        Self::Binary(DynConnective::new(connective, operands.into()))
     }
 
     /// Forget the operands and return 'only-operator' version of [`AnyConnective`].
     pub fn clear_operands(&self) -> AnyConnective<(), Atom> {
         match self {
-            Self::Nullary(operator) => AnyConnective::Nullary(operator.clone()),
-            Self::Unary { operator, .. } => AnyConnective::Unary {
-                operator: operator.clone(),
-                operand: (),
-            },
-            Self::Binary { operator, .. } => AnyConnective::Binary {
-                operator: operator.clone(),
-                operands: ((), ()),
-            },
+            Self::Nullary(x) => AnyConnective::Nullary(x.clear_operands()),
+            Self::Unary(x) => AnyConnective::Unary(x.clear_operands()),
+            Self::Binary(x) => AnyConnective::Binary(x.clear_operands()),
         }
     }
 
@@ -111,27 +81,27 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
         OPERAND: AsRef<U>,
     {
         match self {
-            Self::Nullary(operator) => AnyConnective::Nullary(operator.clone()),
-            Self::Unary { operator, operand } => AnyConnective::Unary {
-                operator: operator.clone(),
-                operand: operand.as_ref(),
-            },
-            Self::Binary { operator, operands } => AnyConnective::Binary {
-                operator: operator.clone(),
-                operands: (operands.0.as_ref(), operands.1.as_ref()),
-            },
+            Self::Nullary(x) => AnyConnective::Nullary(x.as_ref()),
+            Self::Unary(x) => AnyConnective::Unary(x.as_ref()),
+            Self::Binary(x) => AnyConnective::Binary(x.as_ref()),
         }
     }
 }
 
 #[derive(Debug)]
-#[derive_where(Clone)]
-/// Wrapper for dynamic [`Connective`] and [`FormulaComposer`].
-pub struct DynConnective<const ARITY: usize, Atom>(Box<dyn UsableConnective<ARITY, Atom>>);
+#[derive_where(Clone; OPERAND: Clone)]
+// requires `Atom: 'static` because of the `UsableConnective`: `DynCompare`: `AsDynCompare`: `Any`: `'static`
+#[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
+#[derive_where(Eq; OPERAND: Eq, Atom: 'static)]
+/// Wrapper for dynamic [`Connective`] and [`FormulaComposer`] with operands attached.
+pub struct DynConnective<const ARITY: usize, OPERAND, Atom> {
+    pub(super) connective: Box<dyn UsableConnective<ARITY, Atom>>,
+    pub(super) operands: [OPERAND; ARITY],
+}
 
-impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
+impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
-    pub fn new<C>(connective: C) -> Self
+    pub fn new<C>(connective: C, operands: [OPERAND; ARITY]) -> Self
     where
         C: Connective<ARITY>
             + FormulaComposer<ARITY, Atom>
@@ -146,44 +116,41 @@ impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
             C::ASSERT_ZST; // `Sized` ensured by `Clone`
         }
 
-        Self(Box::new(connective))
+        Self {
+            connective: Box::new(connective),
+            operands,
+        }
+    }
+
+    /// Forget the operands and return 'only-operator' version of [`DynConnective`].
+    pub fn clear_operands(&self) -> DynConnective<ARITY, (), Atom> {
+        DynConnective {
+            connective: self.connective.clone(),
+            operands: [(); ARITY],
+        }
+    }
+
+    /// The 'reference' version of [`DynConnective`].
+    pub fn as_ref<U: ?Sized>(&self) -> DynConnective<ARITY, &U, Atom>
+    where
+        OPERAND: AsRef<U>,
+    {
+        // TODO: use `each_ref` stabilized in 1.77 to do conversion without allocating `Vec`
+        let operands: Vec<_> = self.operands.iter().map(OPERAND::as_ref).collect();
+        DynConnective {
+            connective: self.connective.clone(),
+            operands: operands
+                .try_into()
+                .unwrap_or_else(|_| unreachable!("the size of ARITY is preserved")),
+        }
     }
 }
 
-impl<'a, const ARITY: usize, Atom: 'a> AsRef<dyn Connective<ARITY> + 'a>
-    for DynConnective<ARITY, Atom>
+impl<'a, const ARITY: usize, OPERAND, Atom: 'a> AsRef<dyn Connective<ARITY> + 'a>
+    for DynConnective<ARITY, OPERAND, Atom>
 {
     fn as_ref(&self) -> &(dyn Connective<ARITY> + 'a) {
-        self.0.up()
-    }
-}
-
-impl<const ARITY: usize, Atom: 'static> PartialEq for DynConnective<ARITY, Atom> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == &other.0
-    }
-}
-
-impl<const ARITY: usize, Atom: 'static> Eq for DynConnective<ARITY, Atom> {}
-
-impl<const ARITY: usize, Atom> BoolFn<ARITY> for DynConnective<ARITY, Atom> {
-    fn eval(&self, values: [bool; ARITY]) -> bool {
-        self.0.eval(values)
-    }
-}
-
-impl<const ARITY: usize, T> Reducible<ARITY, Formula<T>> for DynConnective<ARITY, T> {
-    fn try_reduce(
-        &self,
-        values: [Evaluation<Formula<T>>; ARITY],
-    ) -> Option<Evaluation<Formula<T>>> {
-        self.0.try_reduce(values)
-    }
-}
-
-impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for DynConnective<ARITY, T> {
-    fn compose(&self, formulas: [Formula<T>; ARITY]) -> Formula<T> {
-        self.0.compose(formulas)
+        self.connective.up()
     }
 }
 
@@ -197,7 +164,7 @@ mod usable {
     use super::{Connective, FormulaComposer, Prioritized};
 
     /// [`Connective`]'s marker subtrait to be used in [`DynConnective`][super::DynConnective].
-    pub(super) trait UsableConnective<const N: usize, Atom>:
+    pub(in super::super) trait UsableConnective<const N: usize, Atom>:
         Connective<N> + FormulaComposer<N, Atom> + Prioritized + Debug + DynClone + DynCompare
     {
     }
@@ -211,15 +178,17 @@ mod usable {
 
     // Need `Atom: 'static` to ensure conversion to `AsDynCompare`
     // and the `AsDynCompare` requires `Any`, that in turn requires `'static`.
-    impl<const N: usize, Atom: 'static> PartialEq<&Self> for Box<dyn UsableConnective<N, Atom> + '_> {
-        fn eq(&self, other: &&Self) -> bool {
+    impl<const N: usize, Atom: 'static> PartialEq for Box<dyn UsableConnective<N, Atom> + '_> {
+        fn eq(&self, other: &Self) -> bool {
             self.as_dyn_compare() == other.as_dyn_compare()
         }
     }
+
+    impl<const N: usize, Atom: 'static> Eq for Box<dyn UsableConnective<N, Atom> + '_> {}
 }
 
 mod impls {
-    use super::{AnyConnective, DynConnective};
+    use super::AnyConnective;
 
     #[allow(clippy::wildcard_imports)]
     use crate::connective::{functions::*, Prioritized, Priority};
@@ -246,18 +215,12 @@ mod impls {
     impl_priority!(MaterialImplication, LogicalBiconditional: 90);
     impl_priority!(NonConjunction, NonDisjunction: 80);
 
-    impl<const ARITY: usize, Atom> Prioritized for DynConnective<ARITY, Atom> {
-        fn priority(&self) -> Priority {
-            self.0.priority()
-        }
-    }
-
     impl<OPERAND, Atom> Prioritized for AnyConnective<OPERAND, Atom> {
         fn priority(&self) -> Priority {
             match self {
-                Self::Nullary(operator) => operator.priority(),
-                Self::Unary { operator, .. } => operator.priority(),
-                Self::Binary { operator, .. } => operator.priority(),
+                Self::Nullary(op) => op.connective.priority(),
+                Self::Unary(op) => op.connective.priority(),
+                Self::Binary(op) => op.connective.priority(),
             }
         }
     }
@@ -271,9 +234,9 @@ mod tests {
 
     #[test]
     fn dyn_equality() {
-        let x = DynConnective::<2, ()>::new(Conjunction);
-        let y = DynConnective::new(Disjunction);
-        let z = DynConnective::new(Conjunction);
+        let x = DynConnective::<2, _, ()>::new(Conjunction, [(), ()]);
+        let y = DynConnective::new(Disjunction, [(), ()]);
+        let z = DynConnective::new(Conjunction, [(), ()]);
 
         assert_ne!(x, y);
         assert_eq!(x, z);
@@ -281,18 +244,9 @@ mod tests {
 
     #[test]
     fn any_equality_with_clearing_operands() {
-        let x = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Conjunction),
-            operands: ((), ()),
-        };
-        let y = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Disjunction),
-            operands: ((), ()),
-        };
-        let z = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Conjunction),
-            operands: ((), ()),
-        };
+        let x = AnyConnective::<_, ()>::Binary(DynConnective::new(Conjunction, [(), ()]));
+        let y = AnyConnective::<_, ()>::Binary(DynConnective::new(Disjunction, [(), ()]));
+        let z = AnyConnective::<_, ()>::Binary(DynConnective::new(Conjunction, [(), ()]));
 
         assert_ne!(x, y);
         assert_eq!(x, z);
@@ -307,18 +261,18 @@ mod tests {
 
     #[test]
     fn any_equality_with_ref() {
-        let x = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Conjunction),
-            operands: ("a".to_string(), "b".to_string()),
-        };
-        let y = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Disjunction),
-            operands: ("a".to_string(), "b".to_string()),
-        };
-        let z = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new(Conjunction),
-            operands: ("a".to_string(), "b".to_string()),
-        };
+        let x = AnyConnective::<_, ()>::Binary(DynConnective::new(
+            Conjunction,
+            ["a".to_string(), "b".to_string()],
+        ));
+        let y = AnyConnective::<_, ()>::Binary(DynConnective::new(
+            Disjunction,
+            ["a".to_string(), "b".to_string()],
+        ));
+        let z = AnyConnective::<_, ()>::Binary(DynConnective::new(
+            Conjunction,
+            ["a".to_string(), "b".to_string()],
+        ));
 
         assert_ne!(x, y);
         assert_eq!(x, z);
