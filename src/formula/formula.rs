@@ -126,7 +126,13 @@ impl<T> Formula<T> {
     /// Create a [`Formula`] with the dynamic [`Connective`].
     pub fn with_connective<C>(connective: C, op1: Self, op2: Self) -> Self
     where
-        C: Connective<2> + FormulaComposer<2, T> + Prioritized + fmt::Debug + Clone + 'static,
+        C: Connective<2>
+            + FormulaComposer<2, T>
+            + Prioritized
+            + fmt::Debug
+            + Clone
+            + PartialEq
+            + 'static,
     {
         Self::Other(AnyConnective::new_2(
             connective,

@@ -1,4 +1,5 @@
 pub mod dependent_array;
+pub mod dyn_eq;
 mod macros;
 pub mod operation;
 pub mod upcast;
