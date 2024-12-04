@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
-use crate::connective::{Evaluation, FormulaComposer as _, Reducible as _};
+use crate::connective::{Evaluation, Reducible as _};
 
 use super::{atom::Assignment, connective::AnyConnective, formula::Formula};
 
@@ -83,9 +83,13 @@ where
         let conn = self.get_connective();
         match &conn {
             AnyConnective::Nullary(operator) => operator
+                .connective
                 .try_reduce([])
                 .expect("The nullary operator always reducible"),
-            AnyConnective::Unary { operator, operand } => {
+            AnyConnective::Unary(conn) => {
+                let operator = &conn.connective;
+                let [operand] = &conn.operands;
+
                 let reduced = operand.try_reduce(i12n);
                 operator.try_reduce([reduced.clone()]).unwrap_or_else(|| {
                     match reduced {
@@ -97,10 +101,10 @@ where
                     }
                 })
             }
-            AnyConnective::Binary {
-                operator,
-                operands: (op1, op2),
-            } => {
+            AnyConnective::Binary(conn) => {
+                let operator = &conn.connective;
+                let [op1, op2] = &conn.operands;
+
                 let (reduced1, reduced2) = (op1.try_reduce(i12n), op2.try_reduce(i12n));
                 operator
                     .try_reduce([reduced1.clone(), reduced2.clone()])
