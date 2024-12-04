@@ -1,7 +1,6 @@
-use std::{any::Any, fmt::Debug};
+use std::fmt::Debug;
 
 use derive_where::derive_where;
-use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
     connective::{BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible},
@@ -10,10 +9,12 @@ use crate::{
 
 use super::formula::Formula;
 
+use self::usable::UsableConnective;
+
 #[derive(Debug)]
 #[derive_where(Clone; OPERAND: Clone)]
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
-/// Wrapper for [`Connective`] of ARITY from {0, 1, 2} with more traits enabled for usability.
+/// [`Connective`] + [`FormulaComposer`] of ARITY from {0, 1, 2} along with their operands.
 pub enum AnyConnective<OPERAND, Atom> {
     /// Nullary [`Connective`].
     Nullary(DynConnective<0, Atom>),
@@ -44,7 +45,13 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new_0<C>(connective: C) -> Self
     where
-        C: Connective<0> + FormulaComposer<0, Atom> + Prioritized + Debug + Clone + 'static,
+        C: Connective<0>
+            + FormulaComposer<0, Atom>
+            + Prioritized
+            + Debug
+            + Clone
+            + PartialEq
+            + 'static,
     {
         Self::Nullary(DynConnective::new(connective))
     }
@@ -52,7 +59,13 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<1>`].
     pub fn new_1<C>(connective: C, operand: OPERAND) -> Self
     where
-        C: Connective<1> + FormulaComposer<1, Atom> + Prioritized + Debug + Clone + 'static,
+        C: Connective<1>
+            + FormulaComposer<1, Atom>
+            + Prioritized
+            + Debug
+            + Clone
+            + PartialEq
+            + 'static,
     {
         Self::Unary {
             operator: DynConnective::new(connective),
@@ -63,7 +76,13 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<2>`].
     pub fn new_2<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
     where
-        C: Connective<2> + FormulaComposer<2, Atom> + Prioritized + Debug + Clone + 'static,
+        C: Connective<2>
+            + FormulaComposer<2, Atom>
+            + Prioritized
+            + Debug
+            + Clone
+            + PartialEq
+            + 'static,
     {
         Self::Binary {
             operator: DynConnective::new(connective),
@@ -107,18 +126,24 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
 
 #[derive(Debug)]
 #[derive_where(Clone)]
-/// Wrapper for dynamic [`Connective`] with more traits enabled for usability
+/// Wrapper for dynamic [`Connective`] and [`FormulaComposer`].
 pub struct DynConnective<const ARITY: usize, Atom>(Box<dyn UsableConnective<ARITY, Atom>>);
 
 impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn new<C>(connective: C) -> Self
     where
-        C: Connective<ARITY> + FormulaComposer<ARITY, Atom> + Prioritized + Debug + Clone + 'static,
+        C: Connective<ARITY>
+            + FormulaComposer<ARITY, Atom>
+            + Prioritized
+            + Debug
+            + Clone
+            + PartialEq
+            + 'static,
     {
         #[allow(path_statements, clippy::no_effect)]
         {
-            C::ASSERT_ZST;
+            C::ASSERT_ZST; // `Sized` ensured by `Clone`
         }
 
         Self(Box::new(connective))
@@ -133,11 +158,9 @@ impl<'a, const ARITY: usize, Atom: 'a> AsRef<dyn Connective<ARITY> + 'a>
     }
 }
 
-// TODO: try to get rid of T: 'static
 impl<const ARITY: usize, Atom: 'static> PartialEq for DynConnective<ARITY, Atom> {
     fn eq(&self, other: &Self) -> bool {
-        // use the `Any` supertrait under the hood
-        (*self.0).type_id() == (*other.0).type_id()
+        self.0 == &other.0
     }
 }
 
@@ -164,18 +187,36 @@ impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for DynConnective<ARITY, T
     }
 }
 
-/// [`Connective`]'s subtrait with enabled usability for dynamic context.
-trait UsableConnective<const N: usize, Atom>:
-    Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone
-{
-}
+mod usable {
+    use std::fmt::Debug;
 
-impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
-    T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone
-{
-}
+    use dyn_clone::{clone_trait_object, DynClone};
 
-clone_trait_object!(<const N: usize, Atom> UsableConnective<N, Atom>);
+    use crate::utils::dyn_eq::DynCompare;
+
+    use super::{Connective, FormulaComposer, Prioritized};
+
+    /// [`Connective`]'s marker subtrait to be used in [`DynConnective`][super::DynConnective].
+    pub(super) trait UsableConnective<const N: usize, Atom>:
+        Connective<N> + FormulaComposer<N, Atom> + Prioritized + Debug + DynClone + DynCompare
+    {
+    }
+
+    impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
+        T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Debug + DynClone + DynCompare
+    {
+    }
+
+    clone_trait_object!(<const N: usize, Atom> UsableConnective<N, Atom>);
+
+    // Need `Atom: 'static` to ensure conversion to `AsDynCompare`
+    // and the `AsDynCompare` requires `Any`, that in turn requires `'static`.
+    impl<const N: usize, Atom: 'static> PartialEq<&Self> for Box<dyn UsableConnective<N, Atom> + '_> {
+        fn eq(&self, other: &&Self) -> bool {
+            self.as_dyn_compare() == other.as_dyn_compare()
+        }
+    }
+}
 
 mod impls {
     use super::{AnyConnective, DynConnective};
