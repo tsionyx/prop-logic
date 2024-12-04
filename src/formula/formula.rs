@@ -86,18 +86,16 @@ impl<T> Formula<T> {
     /// Get a top-level connective for a given [`Formula`].
     pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {
-            Self::TruthValue(true) => AnyConnective::new_0::<functions::Truth>(),
-            Self::TruthValue(false) => AnyConnective::new_0::<functions::Falsity>(),
-            Self::Atomic(_) => AnyConnective::new_1::<functions::LogicalIdentity>(self),
-            Self::Not(x) => AnyConnective::new_1::<functions::Negation>(x),
-            Self::And(x1, x2) => AnyConnective::new_2::<functions::Conjunction>((x1, x2)),
-            Self::Or(x1, x2) => AnyConnective::new_2::<functions::Disjunction>((x1, x2)),
-            Self::Xor(x1, x2) => AnyConnective::new_2::<functions::ExclusiveDisjunction>((x1, x2)),
-            Self::Implies(x1, x2) => {
-                AnyConnective::new_2::<functions::MaterialImplication>((x1, x2))
-            }
+            Self::TruthValue(true) => AnyConnective::new_0(functions::Truth),
+            Self::TruthValue(false) => AnyConnective::new_0(functions::Falsity),
+            Self::Atomic(_) => AnyConnective::new_1(functions::LogicalIdentity, self),
+            Self::Not(x) => AnyConnective::new_1(functions::Negation, x),
+            Self::And(x1, x2) => AnyConnective::new_2(functions::Conjunction, (x1, x2)),
+            Self::Or(x1, x2) => AnyConnective::new_2(functions::Disjunction, (x1, x2)),
+            Self::Xor(x1, x2) => AnyConnective::new_2(functions::ExclusiveDisjunction, (x1, x2)),
+            Self::Implies(x1, x2) => AnyConnective::new_2(functions::MaterialImplication, (x1, x2)),
             Self::Equivalent(x1, x2) => {
-                AnyConnective::new_2::<functions::LogicalBiconditional>((x1, x2))
+                AnyConnective::new_2(functions::LogicalBiconditional, (x1, x2))
             }
             Self::Other(inner) => inner.as_ref(),
         }
@@ -126,20 +124,14 @@ impl<T> Formula<T> {
 
 impl<T> Formula<T> {
     /// Create a [`Formula`] with the dynamic [`Connective`].
-    pub fn with_connective<C>(op1: Self, op2: Self) -> Self
+    pub fn with_connective<C>(connective: C, op1: Self, op2: Self) -> Self
     where
-        C: Connective<2>
-            + FormulaComposer<2, T>
-            + Prioritized
-            + fmt::Debug
-            + Default
-            + Copy
-            + 'static,
+        C: Connective<2> + FormulaComposer<2, T> + Prioritized + fmt::Debug + Clone + 'static,
     {
-        Self::Other(AnyConnective::<_, T>::new_2::<C>((
-            Box::new(op1),
-            Box::new(op2),
-        )))
+        Self::Other(AnyConnective::new_2(
+            connective,
+            (Box::new(op1), Box::new(op2)),
+        ))
     }
 }
 

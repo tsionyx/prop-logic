@@ -4,13 +4,8 @@ use derive_where::derive_where;
 use dyn_clone::{clone_trait_object, DynClone};
 
 use crate::{
-    connective::{
-        BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible, TruthFn,
-    },
-    utils::{
-        upcast::{Upcast, UpcastFrom},
-        Zst,
-    },
+    connective::{BoolFn, Connective, Evaluation, FormulaComposer, Prioritized, Reducible},
+    utils::{upcast::Upcast as _, Zst},
 };
 
 use super::formula::Formula;
@@ -47,52 +42,31 @@ where
 
 impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
-    pub fn new_0<C>() -> Self
+    pub fn new_0<C>(connective: C) -> Self
     where
-        C: Connective<0>
-            + FormulaComposer<0, Atom>
-            + Prioritized
-            + Zst
-            + Debug
-            + Default
-            + Copy
-            + 'static,
+        C: Connective<0> + FormulaComposer<0, Atom> + Prioritized + Debug + Clone + 'static,
     {
-        Self::Nullary(DynConnective::new::<C>())
+        Self::Nullary(DynConnective::new(connective))
     }
 
     /// Create a [`DynConnective`] with a [`Connective<1>`].
-    pub fn new_1<C>(operand: OPERAND) -> Self
+    pub fn new_1<C>(connective: C, operand: OPERAND) -> Self
     where
-        C: Connective<1>
-            + FormulaComposer<1, Atom>
-            + Prioritized
-            + Zst
-            + Debug
-            + Default
-            + Copy
-            + 'static,
+        C: Connective<1> + FormulaComposer<1, Atom> + Prioritized + Debug + Clone + 'static,
     {
         Self::Unary {
-            operator: DynConnective::new::<C>(),
+            operator: DynConnective::new(connective),
             operand,
         }
     }
 
     /// Create a [`DynConnective`] with a [`Connective<2>`].
-    pub fn new_2<C>(operands: (OPERAND, OPERAND)) -> Self
+    pub fn new_2<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
     where
-        C: Connective<2>
-            + FormulaComposer<2, Atom>
-            + Prioritized
-            + Zst
-            + Debug
-            + Default
-            + Copy
-            + 'static,
+        C: Connective<2> + FormulaComposer<2, Atom> + Prioritized + Debug + Clone + 'static,
     {
         Self::Binary {
-            operator: DynConnective::new::<C>(),
+            operator: DynConnective::new(connective),
             operands,
         }
     }
@@ -132,34 +106,22 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
 }
 
 #[derive(Debug)]
+#[derive_where(Clone)]
 /// Wrapper for dynamic [`Connective`] with more traits enabled for usability
 pub struct DynConnective<const ARITY: usize, Atom>(Box<dyn UsableConnective<ARITY, Atom>>);
 
-impl<const ARITY: usize, Atom> Clone for DynConnective<ARITY, Atom> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
-}
-
 impl<const ARITY: usize, Atom> DynConnective<ARITY, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
-    pub fn new<C>() -> Self
+    pub fn new<C>(connective: C) -> Self
     where
-        C: Connective<ARITY>
-            + FormulaComposer<ARITY, Atom>
-            + Prioritized
-            + Zst
-            + Debug
-            + Default
-            + Copy
-            + 'static,
+        C: Connective<ARITY> + FormulaComposer<ARITY, Atom> + Prioritized + Debug + Clone + 'static,
     {
         #[allow(path_statements, clippy::no_effect)]
         {
             C::ASSERT_ZST;
         }
 
-        Self(Box::new(C::init()))
+        Self(Box::new(connective))
     }
 }
 
@@ -204,32 +166,16 @@ impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for DynConnective<ARITY, T
 
 /// [`Connective`]'s subtrait with enabled usability for dynamic context.
 trait UsableConnective<const N: usize, Atom>:
-    Connective<N>
-    + FormulaComposer<N, Atom>
-    + Prioritized
-    + Any
-    + Upcast<dyn Connective<N>>
-    + Debug
-    + DynClone
+    Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone
 {
 }
 
 impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
-    T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone + 'static
+    T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Any + Debug + DynClone
 {
 }
 
 clone_trait_object!(<const N: usize, Atom> UsableConnective<N, Atom>);
-
-impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Connective<N> + 'a {
-    fn up_from(value: &Atom) -> &Self {
-        value
-    }
-
-    fn up_from_mut(value: &mut Atom) -> &mut Self {
-        value
-    }
-}
 
 mod impls {
     use super::{AnyConnective, DynConnective};
@@ -284,9 +230,9 @@ mod tests {
 
     #[test]
     fn dyn_equality() {
-        let x = DynConnective::<2, ()>::new::<Conjunction>();
-        let y = DynConnective::<2, ()>::new::<Disjunction>();
-        let z = DynConnective::<2, ()>::new::<Conjunction>();
+        let x = DynConnective::<2, ()>::new(Conjunction);
+        let y = DynConnective::new(Disjunction);
+        let z = DynConnective::new(Conjunction);
 
         assert_ne!(x, y);
         assert_eq!(x, z);
@@ -295,15 +241,15 @@ mod tests {
     #[test]
     fn any_equality_with_clearing_operands() {
         let x = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Conjunction>(),
+            operator: DynConnective::new(Conjunction),
             operands: ((), ()),
         };
         let y = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Disjunction>(),
+            operator: DynConnective::new(Disjunction),
             operands: ((), ()),
         };
         let z = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Conjunction>(),
+            operator: DynConnective::new(Conjunction),
             operands: ((), ()),
         };
 
@@ -321,15 +267,15 @@ mod tests {
     #[test]
     fn any_equality_with_ref() {
         let x = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Conjunction>(),
+            operator: DynConnective::new(Conjunction),
             operands: ("a".to_string(), "b".to_string()),
         };
         let y = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Disjunction>(),
+            operator: DynConnective::new(Disjunction),
             operands: ("a".to_string(), "b".to_string()),
         };
         let z = AnyConnective::<_, ()>::Binary {
-            operator: DynConnective::new::<Conjunction>(),
+            operator: DynConnective::new(Conjunction),
             operands: ("a".to_string(), "b".to_string()),
         };
 

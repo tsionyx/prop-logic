@@ -149,6 +149,16 @@ pub trait Connective<const ARITY: usize>: BoolFn<ARITY> {
     }
 }
 
+impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Connective<N> + 'a {
+    fn up_from(value: &Atom) -> &Self {
+        value
+    }
+
+    fn up_from_mut(value: &mut Atom) -> &mut Self {
+        value
+    }
+}
+
 /// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
 /// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
 ///
