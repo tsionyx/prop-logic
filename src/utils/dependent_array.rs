@@ -40,8 +40,7 @@ impl<const IN: usize, ARR> VerifySize<IN, ARR> for ARR
 where
     ARR: CheckedArray<IN>,
 {
-    const ASSERT_SIZE: () =
-        assert!(<ARR::Array<()> as SizedArray>::SIZE == <ARR as Discriminant<IN>>::ARR_SIZE);
+    const ASSERT_SIZE: () = assert!(<ARR::Array<()> as SizedArray>::SIZE == ARR::ARR_SIZE);
 }
 
 #[derive(Debug, Copy, Clone)]

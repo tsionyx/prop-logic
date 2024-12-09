@@ -7,7 +7,7 @@ use super::BoolFn;
 use crate::{
     arity::two_powers,
     utils::{
-        dependent_array::{CheckedArray, Discriminant},
+        dependent_array::{CheckedArray, Discriminant as _},
         upcast::{Upcast, UpcastFrom},
     },
 };
@@ -265,7 +265,7 @@ where
     }
 
     fn is_balanced(&self) -> bool {
-        let expected_size = <two_powers::D as Discriminant<ARITY>>::ARR_SIZE;
+        let expected_size = two_powers::D::ARR_SIZE;
         let balanced = self.hamming_weight() * 2 == expected_size;
         if balanced {
             // TODO: consider checking the
