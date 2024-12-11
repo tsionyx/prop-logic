@@ -9,6 +9,7 @@ mod eval;
 #[allow(clippy::module_inception)]
 mod formula;
 mod lit;
+pub mod normal_forms;
 mod ops;
 mod var;
 
