@@ -1,36 +1,46 @@
 use std::ops::Not;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Represent the intermediate result of boolean operations.
-pub enum Evaluation<T> {
-    /// Contains some term that is going to be evaluated.
-    Partial(T),
-    /// Resolved bool value.
-    Terminal(bool),
-}
+pub trait Evaluation<T> {
+    /// Create a 'terminal' bool result of evaluation.
+    fn terminal(value: bool) -> Self;
 
-impl<T> Evaluation<T> {
+    /// Create a 'partial' evaluation which contains
+    /// some term that is going to be evaluated but not ready yet.
+    fn partial(val: T) -> Self;
+
     /// Terminal result equivalent to [`Truth`][super::Truth].
-    pub const fn tautology() -> Self {
-        Self::Terminal(true)
+    fn tautology() -> Self {
+        Self::terminal(true)
     }
 
     /// Terminal result equivalent to [`Falsity`][super::Falsity].
-    pub const fn contradiction() -> Self {
-        Self::Terminal(false)
+    fn contradiction() -> Self {
+        Self::terminal(false)
     }
-}
 
-impl<T> Not for Evaluation<T>
-where
-    T: Not<Output = T>,
-{
-    type Output = Self;
+    /// Convert the [`Evaluation`] into bool result
+    /// or return the partial term instead.
+    fn into_terminal(self) -> Result<bool, T>;
 
-    fn not(self) -> Self::Output {
-        match self {
-            Self::Partial(x) => Self::Partial(!x),
-            Self::Terminal(x) => Self::Terminal(!x),
+    /// Convert the [`Evaluation`] into partial term
+    /// or return bool terminal result instead.
+    fn into_partial(self) -> Result<T, bool>;
+
+    /// Reverse the evaluation.
+    ///
+    /// This should be a
+    ///
+    /// `impl<T: Not<Output = T>, E: Evaluation<T>> Not for E { ... }`
+    ///
+    /// but the latter cannot be defined because of the 'orphan' rule.
+    fn not(self) -> Self
+    where
+        T: Not,
+    {
+        match self.into_terminal() {
+            Ok(x) => Self::terminal(!x),
+            Err(partial) => Self::partial(!partial),
         }
     }
 }
