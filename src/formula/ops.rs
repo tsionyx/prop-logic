@@ -5,7 +5,7 @@ use super::formula::Formula;
 impl<T> ops::Not for Formula<T> {
     type Output = Self;
     fn not(self) -> Self::Output {
-        Self::Not(Box::new(self))
+        Not::not(self)
     }
 }
 
@@ -50,7 +50,14 @@ where
     F: Into<Formula<T>>,
 {
     fn not(self) -> Formula<T> {
-        Formula::Not(Box::new(self.into()))
+        let f = self.into();
+
+        // break the recursion while using it in the `Evaluable::not`
+        // since it recursively calls the same function again
+        match f {
+            Formula::TruthValue(value) => Formula::TruthValue(!value),
+            f => Formula::Not(Box::new(f)),
+        }
     }
 }
 
