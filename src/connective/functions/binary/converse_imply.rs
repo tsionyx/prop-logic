@@ -7,7 +7,7 @@
 use crate::formula::{Formula, Implies};
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation,
 };
 
@@ -23,29 +23,28 @@ impl BoolFn<2> for ConverseImplication {
     }
 }
 
-impl<T> Reducible<2, T> for ConverseImplication
+impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for ConverseImplication
 where
     T: std::ops::Not<Output = T>,
 {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
-        use Evaluation::{Partial, Terminal};
-        match values {
-            [Partial(_), Partial(_)] => None,
-            [Partial(consequent), Terminal(antecedent)] => {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Option<E> {
+        match (x.into_terminal(), y.into_terminal()) {
+            (Err(_), Err(_)) => None,
+            (Err(consequent), Ok(antecedent)) => {
                 if antecedent {
-                    Some(Partial(consequent))
+                    Some(E::partial(consequent))
                 } else {
-                    Some(Evaluation::tautology())
+                    Some(E::tautology())
                 }
             }
-            [Terminal(consequent), Partial(antecedent)] => {
+            (Ok(consequent), Err(antecedent)) => {
                 if consequent {
-                    Some(Evaluation::tautology())
+                    Some(E::tautology())
                 } else {
-                    Some(Partial(!antecedent))
+                    Some(E::partial(!antecedent))
                 }
             }
-            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Some(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

@@ -9,7 +9,7 @@
 use crate::formula::{And, Formula};
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation,
 };
 
@@ -25,23 +25,22 @@ impl BoolFn<2> for NonConjunction {
     }
 }
 
-impl<T> Reducible<2, T> for NonConjunction
+impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for NonConjunction
 where
     T: std::ops::Not<Output = T>,
 {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
-        use Evaluation::{Partial, Terminal};
-        match values {
-            [Partial(_), Partial(_)] => None,
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Option<E> {
+        match (x.into_terminal(), y.into_terminal()) {
+            (Err(_), Err(_)) => None,
             // **Sheffer stroke** is _commutative_
-            [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
+            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
                 if val {
-                    Some(Partial(!x))
+                    Some(E::partial(!x))
                 } else {
-                    Some(Evaluation::tautology())
+                    Some(E::tautology())
                 }
             }
-            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Some(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

@@ -4,7 +4,7 @@
 use std::marker::PhantomData;
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     neg::Negation,
     BoolFn, Connective, Formula, FunctionNotation, TruthFn,
 };
@@ -51,12 +51,13 @@ where
     }
 }
 
-impl<const I: usize, UnaryOp, T> Reducible<2, T> for ProjectAndUnary<I, UnaryOp>
+impl<const I: usize, E, UnaryOp> Reducible<2, E> for ProjectAndUnary<I, UnaryOp>
 where
-    UnaryOp: TruthFn<1> + Reducible<1, T>,
-    Projection<I>: TruthFn<2> + Reducible<2, T>,
+    E: Evaluable,
+    UnaryOp: TruthFn<1> + Reducible<1, E>,
+    Projection<I>: TruthFn<2> + Reducible<2, E>,
 {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
+    fn try_reduce(&self, values: [E; 2]) -> Option<E> {
         let expr = Projection::<I>::init().try_reduce(values)?;
         UnaryOp::init().try_reduce([expr])
     }
@@ -85,8 +86,8 @@ impl BoolFn<2> for Projection<1> {
     }
 }
 
-impl<T> Reducible<2, T> for Projection<0> {
-    fn try_reduce(&self, [val0, _]: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
+impl<E: Evaluable> Reducible<2, E> for Projection<0> {
+    fn try_reduce(&self, [val0, _]: [E; 2]) -> Option<E> {
         Some(val0)
     }
 }
@@ -97,8 +98,8 @@ impl<T> FormulaComposer<2, T> for Projection<0> {
     }
 }
 
-impl<T> Reducible<2, T> for Projection<1> {
-    fn try_reduce(&self, [_, val1]: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
+impl<E: Evaluable> Reducible<2, E> for Projection<1> {
+    fn try_reduce(&self, [_, val1]: [E; 2]) -> Option<E> {
         Some(val1)
     }
 }

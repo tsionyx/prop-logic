@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    evaluation::Evaluation,
+    evaluation::Evaluable,
     notation::FunctionNotation,
     truth_table::{Row, TruthTable},
 };
@@ -103,13 +103,14 @@ impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn
 ///
 /// This is can also be viewed as
 /// [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation).
-pub trait Reducible<const ARITY: usize, T>: BoolFn<ARITY> {
+pub trait Reducible<const ARITY: usize, E: Evaluable>: BoolFn<ARITY> {
     /// Try to reduce the statement.
     ///
     /// It is a more general version of [`BoolFn::eval`]
     /// which can reduce a propositional statement of many arguments
     /// to the function of its single argument.
-    fn try_reduce(&self, values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>>;
+    fn try_reduce(&self, values: [E; ARITY]) -> Option<E>;
+    // TODO: Result<E, [E; ARITY]>
 }
 
 /// Enables the ability for to combine boolean formulas into a single formula.

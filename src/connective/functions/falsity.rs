@@ -2,7 +2,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/False_(logic)>
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, Formula, FunctionNotation,
 };
 
@@ -18,9 +18,9 @@ impl<const ARITY: usize> BoolFn<ARITY> for Falsity {
     }
 }
 
-impl<const ARITY: usize, T> Reducible<ARITY, T> for Falsity {
-    fn try_reduce(&self, _values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>> {
-        Some(Evaluation::contradiction())
+impl<const ARITY: usize, E: Evaluable> Reducible<ARITY, E> for Falsity {
+    fn try_reduce(&self, _values: [E; ARITY]) -> Option<E> {
+        Some(E::contradiction())
     }
 }
 

@@ -71,18 +71,6 @@ impl<T: Atom> Formula<T> {
 }
 
 impl<T> Formula<T> {
-    /// Create a 'constant' [`Formula`] without any variables
-    /// always holding a `true` value.
-    pub const fn tautology() -> Self {
-        Self::TruthValue(true)
-    }
-
-    /// Create a 'constant' [`Formula`] without any variables
-    /// always holding a `false` value.
-    pub const fn contradiction() -> Self {
-        Self::TruthValue(false)
-    }
-
     /// Get a top-level connective for a given [`Formula`].
     pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {

@@ -3,7 +3,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/Negation>
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, Formula, FunctionNotation,
 };
 
@@ -20,11 +20,11 @@ impl BoolFn<1> for Negation {
     }
 }
 
-impl<T> Reducible<1, T> for Negation
+impl<E, T> Reducible<1, E> for Negation
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable<Partial = T> + std::ops::Not<Output = E>,
 {
-    fn try_reduce(&self, [value]: [Evaluation<T>; 1]) -> Option<Evaluation<T>> {
+    fn try_reduce(&self, [value]: [E; 1]) -> Option<E> {
         Some(!value)
     }
 }

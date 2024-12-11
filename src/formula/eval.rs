@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
 
-use crate::connective::{Evaluation, Reducible as _};
+use crate::connective::{Evaluable, Reducible as _};
 
 use super::{atom::Assignment, connective::AnyConnective, formula::Formula};
 
@@ -45,11 +45,23 @@ where
     }
 }
 
-type EvaluationResult<T> = Evaluation<Formula<T>>;
+impl<T> Evaluable for Formula<T> {
+    type Partial = Self;
 
-impl<T> From<Formula<T>> for EvaluationResult<T> {
-    fn from(value: Formula<T>) -> Self {
-        Self::Partial(value)
+    fn terminal(value: bool) -> Self {
+        Self::TruthValue(value)
+    }
+
+    fn partial(val: Self) -> Self {
+        val
+    }
+
+    fn into_terminal(self) -> Result<bool, Self> {
+        if let Self::TruthValue(value) = self {
+            Ok(value)
+        } else {
+            Err(self)
+        }
     }
 }
 
@@ -65,19 +77,14 @@ where
     /// the reduced [`Formula`] is going to be produced
     /// by doing short-circuit calculation wherever possible.
     pub fn interpret(&self, i12n: &Valuation<T>) -> Self {
-        match self.try_reduce(i12n) {
-            EvaluationResult::Partial(formula) => formula,
-            EvaluationResult::Terminal(val) => Self::TruthValue(val),
-        }
+        self.try_reduce(i12n)
     }
 
-    fn try_reduce(&self, i12n: &Valuation<T>) -> EvaluationResult<T> {
-        use EvaluationResult as E;
-
+    fn try_reduce(&self, i12n: &Valuation<T>) -> Self {
         if let Self::Atomic(p) = self {
             return i12n
                 .get_assignment(p.as_ref())
-                .map_or_else(|| self.clone().into(), E::Terminal);
+                .map_or_else(|| self.clone(), Self::terminal);
         }
 
         let conn = self.get_connective();
@@ -92,11 +99,11 @@ where
 
                 let reduced = operand.try_reduce(i12n);
                 operator.try_reduce([reduced.clone()]).unwrap_or_else(|| {
-                    match reduced {
-                        E::Partial(f) => operator.compose([f]).into(),
-                        E::Terminal(val) => {
+                    match reduced.into_partial() {
+                        Ok(f) => operator.compose([f]),
+                        Err(val) => {
                             // should be unreachable
-                            E::Terminal(operator.as_ref().eval([val]))
+                            Self::terminal(operator.as_ref().eval([val]))
                         }
                     }
                 })
@@ -109,17 +116,19 @@ where
                 operator
                     .try_reduce([reduced1.clone(), reduced2.clone()])
                     .unwrap_or_else(|| {
-                        match (reduced1, reduced2) {
-                            (E::Partial(f1), E::Partial(f2)) => operator.compose([f1, f2]).into(),
-                            (E::Partial(_), E::Terminal(_)) => {
-                                unimplemented!("Found non-implemented reduce branch")
+                        match (reduced1.into_partial(), reduced2.into_partial()) {
+                            (Ok(f1), Ok(f2)) => operator.compose([f1, f2]),
+                            (Ok(f), Err(val)) => {
+                                // unreachable!("This branch should be catched by `operator.try_reduce`")
+                                operator.compose([f, Self::TruthValue(val)])
                             }
-                            (E::Terminal(_), E::Partial(_)) => {
-                                unimplemented!("Found non-implemented reduce branch")
+                            (Err(val), Ok(f)) => {
+                                // unreachable!("This branch should be catched by `operator.try_reduce`")
+                                operator.compose([Self::TruthValue(val), f])
                             }
-                            (E::Terminal(val1), E::Terminal(val2)) => {
+                            (Err(val1), Err(val2)) => {
                                 // should be unreachable
-                                E::Terminal(operator.as_ref().eval([val1, val2]))
+                                Self::terminal(operator.as_ref().eval([val1, val2]))
                             }
                         }
                     })
@@ -255,20 +264,17 @@ mod tests {
         let f: Formula<_> = var1.clone().and(var2.clone()).and(var3.clone().not());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone()).not()
+            !Formula::Atomic(var3.clone())
         );
 
         let f: Formula<_> = var2.clone().and(var3.clone().not()).and(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone()).not()
+            !Formula::Atomic(var3.clone())
         );
 
         let f: Formula<_> = var2.and(var3.clone().not().and(var1));
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::Atomic(var3).not()
-        );
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3));
     }
 
     #[test]
@@ -325,10 +331,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f: Formula<_> = var1.xor(var2).xor(var3.clone());
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::Atomic(var3).not()
-        );
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3),);
     }
 
     #[test]
@@ -375,10 +378,7 @@ mod tests {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
         let f: Formula<_> = var2.clone().implies(var1);
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::Atomic(var2).not()
-        );
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2));
     }
 
     #[test]
@@ -430,14 +430,11 @@ mod tests {
         let f: Formula<_> = var1.clone().equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var2.clone()).not()
+            !Formula::Atomic(var2.clone()),
         );
 
         let f: Formula<_> = var2.clone().equivalent(var1);
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::Atomic(var2).not()
-        );
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2),);
     }
 
     #[test]

@@ -2,7 +2,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_truth>
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, Formula, FunctionNotation,
 };
 
@@ -17,9 +17,9 @@ impl<const ARITY: usize> BoolFn<ARITY> for Truth {
     }
 }
 
-impl<const ARITY: usize, T> Reducible<ARITY, T> for Truth {
-    fn try_reduce(&self, _values: [Evaluation<T>; ARITY]) -> Option<Evaluation<T>> {
-        Some(Evaluation::tautology())
+impl<const ARITY: usize, E: Evaluable> Reducible<ARITY, E> for Truth {
+    fn try_reduce(&self, _values: [E; ARITY]) -> Option<E> {
+        Some(E::tautology())
     }
 }
 

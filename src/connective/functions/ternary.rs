@@ -2,7 +2,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Formula, TruthFn,
 };
 
@@ -37,12 +37,13 @@ where
     }
 }
 
-impl<const LEFT: bool, Op1, Op2, T> Reducible<3, T> for Ternary<LEFT, Op1, Op2>
+impl<const LEFT: bool, E, Op1, Op2> Reducible<3, E> for Ternary<LEFT, Op1, Op2>
 where
-    Op1: TruthFn<2> + Reducible<2, T>,
-    Op2: TruthFn<2> + Reducible<2, T>,
+    E: Evaluable,
+    Op1: TruthFn<2> + Reducible<2, E>,
+    Op2: TruthFn<2> + Reducible<2, E>,
 {
-    fn try_reduce(&self, [x, y, z]: [Evaluation<T>; 3]) -> Option<Evaluation<T>> {
+    fn try_reduce(&self, [x, y, z]: [E; 3]) -> Option<E> {
         // TODO: consider for example the case of (expr1 || expr2 || false)
         if LEFT {
             let intermediate = self.op1.try_reduce([x, y])?;

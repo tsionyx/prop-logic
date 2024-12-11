@@ -1,3 +1,5 @@
+use crate::{connective::Evaluable, utils::zst::Void};
+
 /// An atomic entity with no deeper propositional structure.
 ///
 /// For propositional logic, a [propositional variable][Variable]
@@ -42,5 +44,37 @@ impl<T> Assignment<T> {
             Self::Value(x) => Some(x),
             Self::Unknown => None,
         }
+    }
+}
+
+impl Evaluable for Assignment<bool> {
+    type Partial = ();
+
+    fn terminal(value: bool) -> Self {
+        Self::Value(value)
+    }
+
+    fn partial(_empty: ()) -> Self {
+        Self::Unknown
+    }
+
+    fn into_terminal(self) -> Result<bool, ()> {
+        self.get().copied().ok_or(())
+    }
+}
+
+impl Evaluable for bool {
+    type Partial = Void;
+
+    fn terminal(value: bool) -> Self {
+        value
+    }
+
+    fn partial(_: Void) -> Self {
+        unreachable!("This function cannot be called")
+    }
+
+    fn into_terminal(self) -> Result<bool, Void> {
+        Ok(self)
     }
 }

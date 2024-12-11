@@ -16,7 +16,7 @@ mod truth_table;
 use crate::formula::Formula;
 
 pub use self::{
-    evaluation::Evaluation,
+    evaluation::Evaluable,
     functions::*,
     notation::FunctionNotation,
     ops::{Associativity, Commutativity, Converse, Negate},

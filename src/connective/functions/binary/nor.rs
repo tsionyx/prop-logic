@@ -10,7 +10,7 @@
 use crate::formula::{Formula, Or};
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation,
 };
 
@@ -26,23 +26,22 @@ impl BoolFn<2> for NonDisjunction {
     }
 }
 
-impl<T> Reducible<2, T> for NonDisjunction
+impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for NonDisjunction
 where
     T: std::ops::Not<Output = T>,
 {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
-        use Evaluation::{Partial, Terminal};
-        match values {
-            [Partial(_), Partial(_)] => None,
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Option<E> {
+        match (x.into_terminal(), y.into_terminal()) {
+            (Err(_), Err(_)) => None,
             // **Peirce arrow** is _commutative_
-            [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
+            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
                 if val {
-                    Some(Evaluation::contradiction())
+                    Some(E::contradiction())
                 } else {
-                    Some(Partial(!x))
+                    Some(E::partial(!x))
                 }
             }
-            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Some(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

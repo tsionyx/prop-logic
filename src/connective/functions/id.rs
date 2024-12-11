@@ -1,7 +1,7 @@
 //! Degenerate unary [`TruthFn`] that simply return its sole argument.
 
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, Formula, FunctionNotation,
 };
 
@@ -19,8 +19,8 @@ impl BoolFn<1> for LogicalIdentity {
     }
 }
 
-impl<T> Reducible<1, T> for LogicalIdentity {
-    fn try_reduce(&self, [value]: [Evaluation<T>; 1]) -> Option<Evaluation<T>> {
+impl<E: Evaluable> Reducible<1, E> for LogicalIdentity {
+    fn try_reduce(&self, [value]: [E; 1]) -> Option<E> {
         Some(value)
     }
 }
