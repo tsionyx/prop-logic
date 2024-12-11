@@ -4,8 +4,9 @@ use super::formula::Formula;
 
 impl<T> ops::Not for Formula<T> {
     type Output = Self;
+
     fn not(self) -> Self::Output {
-        Self::Not(Box::new(self))
+        Not::not(self)
     }
 }
 
@@ -14,6 +15,7 @@ where
     RHS: Into<Self>,
 {
     type Output = Self;
+
     fn bitand(self, e: RHS) -> Self::Output {
         self.and(e.into())
     }
@@ -24,6 +26,7 @@ where
     RHS: Into<Self>,
 {
     type Output = Self;
+
     fn bitor(self, e: RHS) -> Self::Output {
         self.or(e.into())
     }
@@ -34,6 +37,7 @@ where
     RHS: Into<Self>,
 {
     type Output = Self;
+
     fn bitxor(self, e: RHS) -> Self::Output {
         self.xor(e.into())
     }
@@ -50,7 +54,13 @@ where
     F: Into<Formula<T>>,
 {
     fn not(self) -> Formula<T> {
-        Formula::Not(Box::new(self.into()))
+        let f = self.into();
+
+        // try to reduce the formulas into a degenerate case, if possible
+        match f {
+            Formula::TruthValue(x) => Formula::TruthValue(!x),
+            _ => Formula::Not(Box::new(f)),
+        }
     }
 }
 
@@ -66,7 +76,22 @@ where
     LHS: Into<Formula<T>>,
 {
     fn and(self, e: RHS) -> Formula<T> {
-        Formula::And(Box::new(self.into()), Box::new(e.into()))
+        let f1 = self.into();
+        let f2 = e.into();
+
+        // TODO: reuse the `Reducible` trait
+        // try to reduce the formulas into a single one, if possible
+        match (f1, f2) {
+            (Formula::TruthValue(x), Formula::TruthValue(y)) => Formula::TruthValue(x && y),
+            (Formula::TruthValue(x), f) | (f, Formula::TruthValue(x)) => {
+                if x {
+                    f
+                } else {
+                    Formula::contradiction()
+                }
+            }
+            (f1, f2) => Formula::And(Box::new(f1), Box::new(f2)),
+        }
     }
 }
 
@@ -82,7 +107,21 @@ where
     LHS: Into<Formula<T>>,
 {
     fn or(self, e: RHS) -> Formula<T> {
-        Formula::Or(Box::new(self.into()), Box::new(e.into()))
+        let f1 = self.into();
+        let f2 = e.into();
+
+        // try to reduce the formulas into a single one, if possible
+        match (f1, f2) {
+            (Formula::TruthValue(x), Formula::TruthValue(y)) => Formula::TruthValue(x || y),
+            (Formula::TruthValue(x), f) | (f, Formula::TruthValue(x)) => {
+                if x {
+                    Formula::tautology()
+                } else {
+                    f
+                }
+            }
+            (f1, f2) => Formula::Or(Box::new(f1), Box::new(f2)),
+        }
     }
 }
 
@@ -98,7 +137,21 @@ where
     LHS: Into<Formula<T>>,
 {
     fn xor(self, e: RHS) -> Formula<T> {
-        Formula::Xor(Box::new(self.into()), Box::new(e.into()))
+        let f1 = self.into();
+        let f2 = e.into();
+
+        // try to reduce the formulas into a single one, if possible
+        match (f1, f2) {
+            (Formula::TruthValue(x), Formula::TruthValue(y)) => Formula::TruthValue(x ^ y),
+            (Formula::TruthValue(x), f) | (f, Formula::TruthValue(x)) => {
+                if x {
+                    f.not()
+                } else {
+                    f
+                }
+            }
+            (f1, f2) => Formula::Xor(Box::new(f1), Box::new(f2)),
+        }
     }
 }
 
@@ -114,7 +167,30 @@ where
     LHS: Into<Formula<T>>,
 {
     fn implies(self, e: RHS) -> Formula<T> {
-        Formula::Implies(Box::new(self.into()), Box::new(e.into()))
+        let f1 = self.into();
+        let f2 = e.into();
+
+        // try to reduce the formulas into a single one, if possible
+        match (f1, f2) {
+            (Formula::TruthValue(antecedent), Formula::TruthValue(consequent)) => {
+                Formula::TruthValue(!antecedent || consequent)
+            }
+            (Formula::TruthValue(antecedent), consequent) => {
+                if antecedent {
+                    consequent
+                } else {
+                    Formula::tautology()
+                }
+            }
+            (antecedent, Formula::TruthValue(consequent)) => {
+                if consequent {
+                    Formula::tautology()
+                } else {
+                    antecedent.not()
+                }
+            }
+            (f1, f2) => Formula::Implies(Box::new(f1), Box::new(f2)),
+        }
     }
 }
 
@@ -130,6 +206,20 @@ where
     LHS: Into<Formula<T>>,
 {
     fn equivalent(self, e: RHS) -> Formula<T> {
-        Formula::Equivalent(Box::new(self.into()), Box::new(e.into()))
+        let f1 = self.into();
+        let f2 = e.into();
+
+        // try to reduce the formulas into a single one, if possible
+        match (f1, f2) {
+            (Formula::TruthValue(x), Formula::TruthValue(y)) => Formula::TruthValue(x == y),
+            (Formula::TruthValue(x), f) | (f, Formula::TruthValue(x)) => {
+                if x {
+                    f
+                } else {
+                    f.not()
+                }
+            }
+            (f1, f2) => Formula::Equivalent(Box::new(f1), Box::new(f2)),
+        }
     }
 }
