@@ -7,6 +7,7 @@ mod assign;
 mod eval;
 mod general;
 mod lit;
+pub mod normal_forms;
 mod ops;
 mod var;
 
