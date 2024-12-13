@@ -98,19 +98,23 @@ impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn
 
 #[auto_impl::auto_impl(&, Box)]
 /// Enables the ability for the boolean connective
-/// to simplify a propositional statement by taking
-/// into account the partial knowledge of its arguments.
+/// to simplify a set of propositional [`Evaluable`]-s by taking
+/// into account the partial knowledge of them.
 ///
 /// This is can also be viewed as
 /// [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation).
 pub trait Reducible<const ARITY: usize, E: Evaluable>: BoolFn<ARITY> {
-    /// Try to reduce the statement.
+    /// Try to reduce the propistional structure.
     ///
     /// It is a more general version of [`BoolFn::eval`]
-    /// which can reduce a propositional statement of many arguments
-    /// to the function of its single argument.
-    fn try_reduce(&self, values: [E; ARITY]) -> Option<E>;
-    // TODO: Result<E, [E; ARITY]>
+    /// which can reduce a set of propositional [`Evaluable`]-s
+    /// to a single one, if possible.
+    ///
+    /// # Errors
+    ///
+    /// If the set of [`Evaluable`]-s is not reducible,
+    /// produce the original ones as a last resort.
+    fn try_reduce(&self, values: [E; ARITY]) -> Result<E, [E; ARITY]>;
 }
 
 /// Enables the ability for to combine boolean formulas into a single formula.

@@ -19,8 +19,8 @@ impl<const ARITY: usize> BoolFn<ARITY> for Falsity {
 }
 
 impl<const ARITY: usize, E: Evaluable> Reducible<ARITY, E> for Falsity {
-    fn try_reduce(&self, _values: [E; ARITY]) -> Option<E> {
-        Some(E::contradiction())
+    fn try_reduce(&self, _values: [E; ARITY]) -> Result<E, [E; ARITY]> {
+        Ok(E::contradiction())
     }
 }
 

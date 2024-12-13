@@ -20,8 +20,8 @@ impl BoolFn<1> for LogicalIdentity {
 }
 
 impl<E: Evaluable> Reducible<1, E> for LogicalIdentity {
-    fn try_reduce(&self, [value]: [E; 1]) -> Option<E> {
-        Some(value)
+    fn try_reduce(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
+        Ok(value)
     }
 }
 

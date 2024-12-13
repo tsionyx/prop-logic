@@ -22,18 +22,18 @@ impl BoolFn<2> for Conjunction {
 }
 
 impl<E: Evaluable> Reducible<2, E> for Conjunction {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Option<E> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(_), Err(_)) => None,
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
             // **conjunction** is _commutative_
             (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
                 if val {
-                    Some(E::partial(x))
+                    Ok(E::partial(x))
                 } else {
-                    Some(E::contradiction())
+                    Ok(E::contradiction())
                 }
             }
-            (Ok(val1), Ok(val2)) => Some(E::terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

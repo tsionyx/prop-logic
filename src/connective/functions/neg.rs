@@ -24,8 +24,8 @@ impl<E, T> Reducible<1, E> for Negation
 where
     E: Evaluable<Partial = T> + std::ops::Not<Output = E>,
 {
-    fn try_reduce(&self, [value]: [E; 1]) -> Option<E> {
-        Some(!value)
+    fn try_reduce(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
+        Ok(!value)
     }
 }
 

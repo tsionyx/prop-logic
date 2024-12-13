@@ -39,19 +39,25 @@ where
 
 impl<const LEFT: bool, E, Op1, Op2> Reducible<3, E> for Ternary<LEFT, Op1, Op2>
 where
-    E: Evaluable,
+    E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
     Op1: TruthFn<2> + Reducible<2, E>,
     Op2: TruthFn<2> + Reducible<2, E>,
 {
-    fn try_reduce(&self, [x, y, z]: [E; 3]) -> Option<E> {
+    fn try_reduce(&self, values: [E; 3]) -> Result<E, [E; 3]> {
+        let [x, y, z] = values.clone();
+
         // TODO: consider for example the case of (expr1 || expr2 || false)
-        if LEFT {
-            let intermediate = self.op1.try_reduce([x, y])?;
-            self.op2.try_reduce([intermediate, z])
-        } else {
-            let intermediate = self.op2.try_reduce([y, z])?;
-            self.op1.try_reduce([x, intermediate])
-        }
+        let optional = || {
+            if LEFT {
+                let intermediate = self.op1.try_reduce([x, y]).ok()?;
+                self.op2.try_reduce([intermediate, z]).ok()
+            } else {
+                let intermediate = self.op2.try_reduce([y, z]).ok()?;
+                self.op1.try_reduce([x, intermediate]).ok()
+            }
+        };
+
+        optional().ok_or(values)
     }
 }
 

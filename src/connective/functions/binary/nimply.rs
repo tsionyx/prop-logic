@@ -26,24 +26,24 @@ impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for MaterialNonImplication
 where
     T: std::ops::Not<Output = T>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Option<E> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(_), Err(_)) => None,
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
             (Err(antecedent), Ok(consequent)) => {
                 if consequent {
-                    Some(E::contradiction())
+                    Ok(E::contradiction())
                 } else {
-                    Some(E::partial(antecedent))
+                    Ok(E::partial(antecedent))
                 }
             }
             (Ok(antecedent), Err(consequent)) => {
                 if antecedent {
-                    Some(E::partial(!consequent))
+                    Ok(E::partial(!consequent))
                 } else {
-                    Some(E::contradiction())
+                    Ok(E::contradiction())
                 }
             }
-            (Ok(val1), Ok(val2)) => Some(E::terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

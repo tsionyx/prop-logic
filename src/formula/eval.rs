@@ -92,14 +92,15 @@ where
             AnyConnective::Nullary(operator) => operator
                 .connective
                 .try_reduce([])
+                .ok()
                 .expect("The nullary operator always reducible"),
             AnyConnective::Unary(conn) => {
                 let operator = &conn.connective;
                 let [operand] = &conn.operands;
 
                 let reduced = operand.try_reduce(i12n);
-                operator.try_reduce([reduced.clone()]).unwrap_or_else(|| {
-                    match reduced.into_partial() {
+                operator.try_reduce([reduced]).unwrap_or_else(|[f]| {
+                    match f.into_partial() {
                         Ok(f) => operator.compose([f]),
                         Err(val) => {
                             // should be unreachable
@@ -112,26 +113,24 @@ where
                 let operator = &conn.connective;
                 let [op1, op2] = &conn.operands;
 
-                let (reduced1, reduced2) = (op1.try_reduce(i12n), op2.try_reduce(i12n));
-                operator
-                    .try_reduce([reduced1.clone(), reduced2.clone()])
-                    .unwrap_or_else(|| {
-                        match (reduced1.into_partial(), reduced2.into_partial()) {
-                            (Ok(f1), Ok(f2)) => operator.compose([f1, f2]),
-                            (Ok(f), Err(val)) => {
-                                // unreachable!("This branch should be catched by `operator.try_reduce`")
-                                operator.compose([f, Self::TruthValue(val)])
-                            }
-                            (Err(val), Ok(f)) => {
-                                // unreachable!("This branch should be catched by `operator.try_reduce`")
-                                operator.compose([Self::TruthValue(val), f])
-                            }
-                            (Err(val1), Err(val2)) => {
-                                // should be unreachable
-                                Self::terminal(operator.as_ref().eval([val1, val2]))
-                            }
+                let reduced = [op1.try_reduce(i12n), op2.try_reduce(i12n)];
+                operator.try_reduce(reduced).unwrap_or_else(|[f1, f2]| {
+                    match (f1.into_partial(), f2.into_partial()) {
+                        (Ok(f1), Ok(f2)) => operator.compose([f1, f2]),
+                        (Ok(f), Err(val)) => {
+                            // unreachable!("This branch should be catched by `operator.try_reduce`")
+                            operator.compose([f, Self::TruthValue(val)])
                         }
-                    })
+                        (Err(val), Ok(f)) => {
+                            // unreachable!("This branch should be catched by `operator.try_reduce`")
+                            operator.compose([Self::TruthValue(val), f])
+                        }
+                        (Err(val1), Err(val2)) => {
+                            // should be unreachable
+                            Self::terminal(operator.as_ref().eval([val1, val2]))
+                        }
+                    }
+                })
             }
         }
     }

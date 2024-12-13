@@ -53,13 +53,13 @@ where
 
 impl<const I: usize, E, UnaryOp> Reducible<2, E> for ProjectAndUnary<I, UnaryOp>
 where
-    E: Evaluable,
+    E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
     UnaryOp: TruthFn<1> + Reducible<1, E>,
     Projection<I>: TruthFn<2> + Reducible<2, E>,
 {
-    fn try_reduce(&self, values: [E; 2]) -> Option<E> {
-        let expr = Projection::<I>::init().try_reduce(values)?;
-        UnaryOp::init().try_reduce([expr])
+    fn try_reduce(&self, values: [E; 2]) -> Result<E, [E; 2]> {
+        let expr = Projection::<I>::init().try_reduce(values.clone())?;
+        UnaryOp::init().try_reduce([expr]).map_err(|_| values)
     }
 }
 
@@ -87,8 +87,8 @@ impl BoolFn<2> for Projection<1> {
 }
 
 impl<E: Evaluable> Reducible<2, E> for Projection<0> {
-    fn try_reduce(&self, [val0, _]: [E; 2]) -> Option<E> {
-        Some(val0)
+    fn try_reduce(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
+        Ok(val0)
     }
 }
 
@@ -99,8 +99,8 @@ impl<T> FormulaComposer<2, T> for Projection<0> {
 }
 
 impl<E: Evaluable> Reducible<2, E> for Projection<1> {
-    fn try_reduce(&self, [_, val1]: [E; 2]) -> Option<E> {
-        Some(val1)
+    fn try_reduce(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
+        Ok(val1)
     }
 }
 
