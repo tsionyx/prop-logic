@@ -65,6 +65,7 @@ impl<const LEFT: bool, Op1, Op2, T> FormulaComposer<3, T> for Ternary<LEFT, Op1,
 where
     Op1: TruthFn<2> + FormulaComposer<2, T>,
     Op2: TruthFn<2> + FormulaComposer<2, T>,
+    T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
 {
     fn compose(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>
     where
