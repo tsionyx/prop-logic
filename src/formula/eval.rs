@@ -76,11 +76,17 @@ where
     /// If the [`Valuation`] is incomplete,
     /// the reduced [`Formula`] is going to be produced
     /// by doing short-circuit calculation wherever possible.
-    pub fn interpret(&self, i12n: &Valuation<T>) -> Self {
+    pub fn interpret<K>(&self, i12n: &Valuation<K>) -> Self
+    where
+        K: Borrow<T> + Eq + Hash, // for the `Valuation::get_assignment`
+    {
         self.try_reduce(i12n)
     }
 
-    fn try_reduce(&self, i12n: &Valuation<T>) -> Self {
+    fn try_reduce<K>(&self, i12n: &Valuation<K>) -> Self
+    where
+        K: Borrow<T> + Eq + Hash, // for the `Valuation::get_assignment`
+    {
         if let Self::Atomic(p) = self {
             return i12n
                 .get_assignment(p)
@@ -185,13 +191,13 @@ mod tests {
 
     #[test]
     fn tautology() {
-        let f = Formula::tautology();
+        let f: Formula<Arc<Variable<char>>> = Formula::tautology();
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
     }
 
     #[test]
     fn contradiction() {
-        let f = Formula::contradiction();
+        let f: Formula<Arc<Variable<char>>> = Formula::contradiction();
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
