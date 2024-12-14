@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash, sync::Arc};
+use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash};
 
 use crate::connective::{Evaluable, Reducible as _};
 
@@ -10,7 +10,7 @@ use super::{atom::Assignment, connective::AnyConnective, formula::Formula};
 ///
 /// <https://en.wikipedia.org/wiki/Valuation_(logic)>
 pub struct Valuation<T> {
-    values: Map<Arc<T>, Assignment>,
+    values: Map<T, Assignment>,
 }
 
 impl<T> Default for Valuation<T> {
@@ -33,14 +33,14 @@ where
     /// Retrieve a truth value of a specific [`Atom`] if any.
     pub fn get_assignment<Q>(&self, key: &Q) -> Option<bool>
     where
-        Arc<T>: Borrow<Q>,
+        T: Borrow<Q>,
         Q: Eq + Hash,
     {
         self.values.get(key).and_then(Assignment::get).copied()
     }
 
     /// Set a truth value to a specific [`Atom`].
-    pub fn assign(&mut self, key: Arc<T>, value: bool) {
+    pub fn assign(&mut self, key: T, value: bool) {
         let _previous_value = self.values.insert(key, Assignment::Value(value));
     }
 }
@@ -65,7 +65,7 @@ impl<T> Evaluable<Self> for Formula<T> {
 
 impl<T> Formula<T>
 where
-    T: Eq + Hash, // for the `Valuation::get_assignment`
+    T: Eq + Hash + Clone, // for the `Valuation::get_assignment` and `Formula::clone`.
 {
     #[must_use]
     /// Trying to get the value of [`Formula`]
@@ -81,7 +81,7 @@ where
     fn try_reduce(&self, i12n: &Valuation<T>) -> Self {
         if let Self::Atomic(p) = self {
             return i12n
-                .get_assignment(p.as_ref())
+                .get_assignment(p)
                 .map_or_else(|| self.clone(), Self::terminal);
         }
 
@@ -141,7 +141,7 @@ mod tests {
     use super::{
         super::{
             ops::{And, Equivalent, Implies, Not, Or, Xor},
-            Variable,
+            Atom, Variable,
         },
         *,
     };
@@ -160,7 +160,17 @@ mod tests {
         Variable::with_data(id, name)
     }
 
-    fn partial_valuation() -> Valuation<Variable<char>> {
+    // emulate std::sync::Arc
+    #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+    struct Arc<T>(T);
+
+    impl<T> Arc<T> {
+        const fn new(x: T) -> Self {
+            Self(x)
+        }
+    }
+
+    fn partial_valuation() -> Valuation<Arc<Variable<char>>> {
         let mut val = Valuation::new();
         val.assign(Arc::new(get_var('a')), true);
         val.assign(Arc::new(get_var('b')), false);
@@ -168,6 +178,8 @@ mod tests {
         val.assign(Arc::new(get_var('d')), true);
         val
     }
+
+    impl<T> Atom for Arc<Variable<T>> {}
 
     #[test]
     fn tautology() {
@@ -186,10 +198,10 @@ mod tests {
 
     #[test]
     fn known_atom() {
-        let f = Formula::atomic(get_var('a'));
+        let f = Formula::atomic(Arc::new(get_var('a')));
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
 
-        let f = Formula::atomic(get_var('b'));
+        let f = Formula::atomic(Arc::new(get_var('b')));
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
@@ -199,7 +211,7 @@ mod tests {
     #[test]
     fn unknown_atom() {
         let var = get_var('p');
-        let f = Formula::atomic(var);
+        let f = Formula::atomic(Arc::new(var));
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(Arc::new(var))

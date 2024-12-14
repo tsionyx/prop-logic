@@ -67,6 +67,7 @@ impl<const I: usize, UnaryOp, T> FormulaComposer<2, T> for ProjectAndUnary<I, Un
 where
     UnaryOp: TruthFn<1> + FormulaComposer<1, T>,
     Projection<I>: TruthFn<2> + FormulaComposer<2, T>,
+    T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
 {
     fn compose(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
         let expr = Projection::<I>::init().compose(expressions);

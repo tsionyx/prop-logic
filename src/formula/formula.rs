@@ -1,7 +1,7 @@
 //! A [Formula](https://en.wikipedia.org/wiki/Propositional_formula) is a Boolean-valued
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
-use std::{fmt, sync::Arc};
+use std::fmt;
 
 use derive_where::derive_where;
 
@@ -11,8 +11,7 @@ use crate::connective::{
 
 pub use super::{atom::Atom, connective::AnyConnective, ops::*};
 
-#[derive(Debug)]
-#[derive_where(Clone)]
+#[derive(Debug, Clone)]
 #[derive_where(PartialEq; T: PartialEq + 'static)]
 /// [`Formula`] is a well-formed expression constructed from
 /// propositions or [variables][Atom]
@@ -27,7 +26,7 @@ pub enum Formula<T> {
 
     /// The simplest type of [`Formula`] with no deeper propositional structure.
     /// <https://en.wikipedia.org/wiki/Atomic_formula>
-    Atomic(Arc<T>),
+    Atomic(T),
 
     /// <https://en.wikipedia.org/wiki/Negation>
     Not(Box<Self>),
@@ -57,16 +56,16 @@ impl<T> From<bool> for Formula<T> {
     }
 }
 
-impl<T: Atom> From<Arc<T>> for Formula<T> {
-    fn from(value: Arc<T>) -> Self {
+impl<T: Atom> From<T> for Formula<T> {
+    fn from(value: T) -> Self {
         Self::Atomic(value)
     }
 }
 
 impl<T: Atom> Formula<T> {
     /// Create an [atomic][Atom] formula.
-    pub fn atomic(atom: T) -> Self {
-        Self::Atomic(Arc::new(atom))
+    pub const fn atomic(atom: T) -> Self {
+        Self::Atomic(atom)
     }
 }
 
@@ -199,7 +198,7 @@ mod tests {
 
     #[test]
     fn clone() {
-        #[derive(Debug, Eq, PartialEq)]
+        #[derive(Debug, Eq, PartialEq, Clone)]
         struct A(i32);
 
         impl Atom for A {}
