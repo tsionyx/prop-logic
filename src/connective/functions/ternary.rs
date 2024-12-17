@@ -2,7 +2,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
 use super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Formula, TruthFn,
 };
 
@@ -37,20 +37,27 @@ where
     }
 }
 
-impl<const LEFT: bool, Op1, Op2, T> Reducible<3, T> for Ternary<LEFT, Op1, Op2>
+impl<const LEFT: bool, E, Op1, Op2, T> Reducible<3, E, T> for Ternary<LEFT, Op1, Op2>
 where
-    Op1: TruthFn<2> + Reducible<2, T>,
-    Op2: TruthFn<2> + Reducible<2, T>,
+    E: Evaluable<T> + Clone, // TODO: try to get rid of this `Clone` requirement
+    Op1: TruthFn<2> + Reducible<2, E, T>,
+    Op2: TruthFn<2> + Reducible<2, E, T>,
 {
-    fn try_reduce(&self, [x, y, z]: [Evaluation<T>; 3]) -> Option<Evaluation<T>> {
+    fn try_reduce(&self, values: [E; 3]) -> Result<E, [E; 3]> {
+        let [x, y, z] = values.clone();
+
         // TODO: consider for example the case of (expr1 || expr2 || false)
-        if LEFT {
-            let intermediate = self.op1.try_reduce([x, y])?;
-            self.op2.try_reduce([intermediate, z])
-        } else {
-            let intermediate = self.op2.try_reduce([y, z])?;
-            self.op1.try_reduce([x, intermediate])
-        }
+        let optional = || {
+            if LEFT {
+                let intermediate = self.op1.try_reduce([x, y]).ok()?;
+                self.op2.try_reduce([intermediate, z]).ok()
+            } else {
+                let intermediate = self.op2.try_reduce([y, z]).ok()?;
+                self.op1.try_reduce([x, intermediate]).ok()
+            }
+        };
+
+        optional().ok_or(values)
     }
 }
 
@@ -58,6 +65,7 @@ impl<const LEFT: bool, Op1, Op2, T> FormulaComposer<3, T> for Ternary<LEFT, Op1,
 where
     Op1: TruthFn<2> + FormulaComposer<2, T>,
     Op2: TruthFn<2> + FormulaComposer<2, T>,
+    T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
 {
     fn compose(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>
     where

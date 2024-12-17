@@ -17,7 +17,7 @@ pub use self::{
         nimply::MaterialNonImplication,
         nor::NonDisjunction,
         or::Disjunction,
-        proj::{ProjectAndUnary, Projection},
+        proj::{First, Last, NotFirst, NotSecond, ProjectAndUnary, Projection},
         xnor::LogicalBiconditional,
         xor::ExclusiveDisjunction,
     },

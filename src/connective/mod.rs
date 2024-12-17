@@ -16,7 +16,7 @@ mod truth_table;
 use crate::formula::Formula;
 
 pub use self::{
-    evaluation::Evaluation,
+    evaluation::Evaluable,
     functions::*,
     notation::FunctionNotation,
     ops::{Associativity, Commutativity, Converse, Negate},
@@ -40,16 +40,16 @@ const _ASSERT_ZST: () = {
     // then binary
     Conjunction::ASSERT_ZST;
     MaterialNonImplication::ASSERT_ZST;
-    Projection::<0>::ASSERT_ZST;
+    First::ASSERT_ZST;
     ConverseNonImplication::ASSERT_ZST;
-    Projection::<1>::ASSERT_ZST;
+    Last::ASSERT_ZST;
     ExclusiveDisjunction::ASSERT_ZST;
     Disjunction::ASSERT_ZST;
     NonDisjunction::ASSERT_ZST;
     LogicalBiconditional::ASSERT_ZST;
-    ProjectAndUnary::<1, Negation>::ASSERT_ZST;
+    NotSecond::ASSERT_ZST;
     ConverseImplication::ASSERT_ZST;
-    ProjectAndUnary::<0, Negation>::ASSERT_ZST;
+    NotFirst::ASSERT_ZST;
     MaterialImplication::ASSERT_ZST;
     NonConjunction::ASSERT_ZST;
 };
@@ -81,7 +81,7 @@ mod tests {
             (f.compose(formulas), eval)
         });
 
-        let empty_interpretation = Valuation::new();
+        let empty_interpretation: Valuation<()> = Valuation::new();
         for (fully_interpreted_formula, expected_eval) in eval_variants {
             eprintln!("{fully_interpreted_formula:?} -> {expected_eval:?}");
             if let Formula::TruthValue(val) =
@@ -110,17 +110,17 @@ mod tests {
         apply_and_compose_is_equivalent::<2, _>(Falsity);
         apply_and_compose_is_equivalent::<2, _>(Conjunction);
         apply_and_compose_is_equivalent::<2, _>(MaterialNonImplication);
-        apply_and_compose_is_equivalent::<2, _>(Projection::<0>);
+        apply_and_compose_is_equivalent::<2, _>(First {});
         apply_and_compose_is_equivalent::<2, _>(ConverseNonImplication);
-        apply_and_compose_is_equivalent::<2, _>(Projection::<1>);
+        apply_and_compose_is_equivalent::<2, _>(Last {});
         apply_and_compose_is_equivalent::<2, _>(ExclusiveDisjunction);
         apply_and_compose_is_equivalent::<2, _>(Disjunction);
 
         apply_and_compose_is_equivalent::<2, _>(NonDisjunction);
         apply_and_compose_is_equivalent::<2, _>(LogicalBiconditional);
-        apply_and_compose_is_equivalent::<2, _>(ProjectAndUnary::<1, Negation>::new());
+        apply_and_compose_is_equivalent::<2, _>(NotSecond::new());
         apply_and_compose_is_equivalent::<2, _>(ConverseImplication);
-        apply_and_compose_is_equivalent::<2, _>(ProjectAndUnary::<0, Negation>::new());
+        apply_and_compose_is_equivalent::<2, _>(NotFirst::new());
         apply_and_compose_is_equivalent::<2, _>(MaterialImplication);
         apply_and_compose_is_equivalent::<2, _>(NonConjunction);
         apply_and_compose_is_equivalent::<2, _>(Truth);

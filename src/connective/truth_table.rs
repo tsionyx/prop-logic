@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn left_projection() {
-        type T = Projection<0>;
+        type T = First;
         let table = get::<T, 2>();
         assert_eq!(table, [false, false, true, true]);
 
@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn right_projection() {
-        type T = Projection<1>;
+        type T = Last;
         let table = get::<T, 2>();
         assert_eq!(table, [false, true, false, true]);
 
@@ -292,7 +292,7 @@ mod tests {
 
     #[test]
     fn neg_left_projection() {
-        type T = ProjectAndUnary<0, Negation>;
+        type T = NotFirst;
         let table = get::<T, 2>();
         assert_eq!(table, [true, true, false, false]);
 
@@ -310,7 +310,7 @@ mod tests {
 
     #[test]
     fn neg_right_projection() {
-        type T = ProjectAndUnary<1, Negation>;
+        type T = NotSecond;
         let table = get::<T, 2>();
         assert_eq!(table, [true, false, true, false]);
 

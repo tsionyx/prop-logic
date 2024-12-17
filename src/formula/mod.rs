@@ -8,6 +8,8 @@ mod connective;
 mod eval;
 #[allow(clippy::module_inception)]
 mod formula;
+mod lit;
+pub mod normal_forms;
 mod ops;
 mod var;
 
@@ -16,6 +18,7 @@ pub use self::{
     connective::{AnyConnective, DynConnective},
     eval::Valuation,
     formula::Formula,
+    lit::{Lit, Literal},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},
 };

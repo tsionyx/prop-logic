@@ -6,7 +6,7 @@
 use crate::formula::{Formula, Implies};
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation,
 };
 
@@ -22,29 +22,28 @@ impl BoolFn<2> for MaterialImplication {
     }
 }
 
-impl<T> Reducible<2, T> for MaterialImplication
+impl<E: Evaluable<T>, T> Reducible<2, E, T> for MaterialImplication
 where
     T: std::ops::Not<Output = T>,
 {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
-        use Evaluation::{Partial, Terminal};
-        match values {
-            [Partial(_), Partial(_)] => None,
-            [Partial(antecedent), Terminal(consequent)] => {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+        match (x.into_terminal(), y.into_terminal()) {
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Err(antecedent), Ok(consequent)) => {
                 if consequent {
-                    Some(Evaluation::tautology())
+                    Ok(E::tautology())
                 } else {
-                    Some(Partial(!antecedent))
+                    Ok(E::partial(!antecedent))
                 }
             }
-            [Terminal(antecedent), Partial(consequent)] => {
+            (Ok(antecedent), Err(consequent)) => {
                 if antecedent {
-                    Some(Partial(consequent))
+                    Ok(E::partial(consequent))
                 } else {
-                    Some(Evaluation::tautology())
+                    Ok(E::tautology())
                 }
             }
-            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

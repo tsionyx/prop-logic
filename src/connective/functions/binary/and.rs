@@ -5,7 +5,7 @@
 use crate::formula::{And, Formula};
 
 use super::super::{
-    super::{Evaluation, FormulaComposer, Reducible},
+    super::{Evaluable, FormulaComposer, Reducible},
     BoolFn, Connective, FunctionNotation,
 };
 
@@ -21,20 +21,19 @@ impl BoolFn<2> for Conjunction {
     }
 }
 
-impl<T> Reducible<2, T> for Conjunction {
-    fn try_reduce(&self, values: [Evaluation<T>; 2]) -> Option<Evaluation<T>> {
-        use Evaluation::{Partial, Terminal};
-        match values {
-            [Partial(_), Partial(_)] => None,
+impl<E: Evaluable<T>, T> Reducible<2, E, T> for Conjunction {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+        match (x.into_terminal(), y.into_terminal()) {
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
             // **conjunction** is _commutative_
-            [Partial(x), Terminal(val)] | [Terminal(val), Partial(x)] => {
+            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
                 if val {
-                    Some(Partial(x))
+                    Ok(E::partial(x))
                 } else {
-                    Some(Evaluation::contradiction())
+                    Ok(E::contradiction())
                 }
             }
-            [Terminal(val1), Terminal(val2)] => Some(Terminal(self.eval([val1, val2]))),
+            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
         }
     }
 }

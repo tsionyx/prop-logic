@@ -45,25 +45,22 @@ pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
     &functions::Truth,
 ]);
 
-type NProj0 = functions::ProjectAndUnary<0, functions::Negation>;
-type NProj1 = functions::ProjectAndUnary<1, functions::Negation>;
-
 #[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of unary functions.
 pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage::new([
     &functions::Falsity as &'static dyn StoredBoolFn<2>, // 0 0 0 0
     &functions::Conjunction,                             // 0 0 0 1
     &functions::MaterialNonImplication,                  // 0 0 1 0
-    &functions::Projection::<0>,                         // 0 0 1 1
+    &functions::First {},                                // 0 0 1 1
     &functions::ConverseNonImplication,                  // 0 1 0 0
-    &functions::Projection::<1>,                         // 0 1 0 1
+    &functions::Last {},                                 // 0 1 0 1
     &functions::ExclusiveDisjunction,                    // 0 1 1 0
     &functions::Disjunction,                             // 0 1 1 1
     &functions::NonDisjunction,                          // 1 0 0 0
     &functions::LogicalBiconditional,                    // 1 0 0 1
-    &NProj1::new(),                                      // 1 0 1 0
+    &functions::NotSecond::new(),                        // 1 0 1 0
     &functions::ConverseImplication,                     // 1 0 1 1
-    &NProj0::new(),                                      // 1 1 0 0
+    &functions::NotFirst::new(),                         // 1 1 0 0
     &functions::MaterialImplication,                     // 1 1 0 1
     &functions::NonConjunction,                          // 1 1 1 0
     &functions::Truth,                                   // 1 1 1 1
