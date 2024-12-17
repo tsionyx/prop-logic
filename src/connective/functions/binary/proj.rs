@@ -17,6 +17,21 @@ use super::super::{
 /// <https://en.wikipedia.org/wiki/Ordered_pair#Generalities>
 pub struct Projection<const I: usize>;
 
+/// The projection function returning always its first argument
+/// and ignoring the others.
+///
+/// The function is associative and can be used not only as the binary
+/// but as the function with any `ARITY >= 2` when applied sequentially.
+pub type First = Projection<0>;
+
+/// The projection function returning always its last argument
+/// and ignoring the others.
+///
+/// The function is associative and can be used not only as the binary
+/// but as the function with any `ARITY >= 2`  when applied sequentially
+/// (therefore its name is the `Last`, not the `Second`).
+pub type Last = Projection<1>;
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// [`Projection`]-like operator that feed
 /// the projection result further into some unary function.
@@ -27,6 +42,20 @@ pub struct Projection<const I: usize>;
 /// is to act like __Fpq__ and __Gpq__ functions in terms of
 /// [prefix logical notation](https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique).
 pub struct ProjectAndUnary<const I: usize, UnaryOp: BoolFn<1> = Negation>(PhantomData<UnaryOp>);
+
+/// The projection function returning always the [`Negation`]
+/// of its _first_ argument and ignoring the others.
+pub type NotFirst = ProjectAndUnary<0, Negation>;
+
+/// The projection function returning always the [`Negation`]
+/// of its _second_ argument and ignoring the others.
+///
+/// The function is **not** associative and, when applied sequentially,
+/// can produce the negation of the specified argument
+/// using the proper order of operations
+/// (therefore its name is the `NotSecond`, not the `NotLast`,
+/// as could be mistakenly deduced from its binary negation [`Last`]).
+pub type NotSecond = ProjectAndUnary<1, Negation>;
 
 impl<const I: usize, UnaryOp: BoolFn<1>> ProjectAndUnary<I, UnaryOp> {
     /// Create an instance of the [`ProjectAndUnary`].
@@ -46,7 +75,7 @@ where
     Projection<I>: TruthFn<2>,
 {
     fn eval(&self, values: [bool; 2]) -> bool {
-        let project_result = Projection::<I>::init().eval(values);
+        let project_result = Projection::<I> {}.eval(values);
         UnaryOp::init().eval([project_result])
     }
 }
@@ -58,7 +87,7 @@ where
     Projection<I>: TruthFn<2> + Reducible<2, E>,
 {
     fn try_reduce(&self, values: [E; 2]) -> Result<E, [E; 2]> {
-        let expr = Projection::<I>::init().try_reduce(values.clone())?;
+        let expr = Projection::<I> {}.try_reduce(values.clone())?;
         UnaryOp::init().try_reduce([expr]).map_err(|_| values)
     }
 }
@@ -70,48 +99,48 @@ where
     T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
 {
     fn compose(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
-        let expr = Projection::<I>::init().compose(expressions);
+        let expr = Projection::<I> {}.compose(expressions);
         UnaryOp::init().compose([expr])
     }
 }
 
-impl BoolFn<2> for Projection<0> {
+impl BoolFn<2> for First {
     fn eval(&self, [val0, _]: [bool; 2]) -> bool {
         val0
     }
 }
 
-impl BoolFn<2> for Projection<1> {
-    fn eval(&self, [_, val1]: [bool; 2]) -> bool {
-        val1
-    }
-}
-
-impl<E: Evaluable> Reducible<2, E> for Projection<0> {
+impl<E: Evaluable> Reducible<2, E> for First {
     fn try_reduce(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
         Ok(val0)
     }
 }
 
-impl<T> FormulaComposer<2, T> for Projection<0> {
+impl<T> FormulaComposer<2, T> for First {
     fn compose(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
         expr0
     }
 }
 
-impl<E: Evaluable> Reducible<2, E> for Projection<1> {
+impl BoolFn<2> for Last {
+    fn eval(&self, [_, val1]: [bool; 2]) -> bool {
+        val1
+    }
+}
+
+impl<E: Evaluable> Reducible<2, E> for Last {
     fn try_reduce(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
         Ok(val1)
     }
 }
 
-impl<T> FormulaComposer<2, T> for Projection<1> {
+impl<T> FormulaComposer<2, T> for Last {
     fn compose(&self, [_, expr1]: [Formula<T>; 2]) -> Formula<T> {
         expr1
     }
 }
 
-impl Connective<2> for Projection<0> {
+impl Connective<2> for First {
     fn notation(&self) -> FunctionNotation {
         FunctionNotation::symbolic_str("π1")
     }
@@ -125,7 +154,7 @@ impl Connective<2> for Projection<0> {
     }
 }
 
-impl Connective<2> for Projection<1> {
+impl Connective<2> for Last {
     fn notation(&self) -> FunctionNotation {
         FunctionNotation::symbolic_str("π2")
     }
@@ -139,13 +168,13 @@ impl Connective<2> for Projection<1> {
     }
 }
 
-impl Connective<2> for ProjectAndUnary<0, Negation> {
+impl Connective<2> for NotFirst {
     fn notation(&self) -> FunctionNotation {
         FunctionNotation::Polish('F')
     }
 }
 
-impl Connective<2> for ProjectAndUnary<1, Negation> {
+impl Connective<2> for NotSecond {
     fn notation(&self) -> FunctionNotation {
         FunctionNotation::Polish('G')
     }
@@ -157,13 +186,13 @@ mod tests {
 
     #[test]
     fn projection_eval() {
-        let x = Projection::<0>::init().bool_evaluator();
+        let x = First {}.bool_evaluator();
         assert!(!x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
         assert!(x([true, true]));
 
-        let x = Projection::<1>::init().bool_evaluator();
+        let x = Last {}.bool_evaluator();
         assert!(!x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
@@ -172,13 +201,13 @@ mod tests {
 
     #[test]
     fn projection_neg_eval() {
-        let x = ProjectAndUnary::<0, Negation>::init().bool_evaluator();
+        let x = NotFirst::new().bool_evaluator();
         assert!(x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
         assert!(!x([true, true]));
 
-        let x = ProjectAndUnary::<1, Negation>::init().bool_evaluator();
+        let x = NotSecond::new().bool_evaluator();
         assert!(x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
