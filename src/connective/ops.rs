@@ -113,18 +113,18 @@ impl Not for Truth {
 impl_negate![2:
     Conjunction =! NonConjunction,
     MaterialNonImplication =! MaterialImplication,
-    Projection::<0> =! ProjectAndUnary::<0, Negation>,
+    First =! NotFirst,
     ConverseNonImplication =! ConverseImplication,
-    Projection::<1> =! ProjectAndUnary::<1, Negation>,
+    Last =! NotSecond,
     ExclusiveDisjunction =! LogicalBiconditional,
     Disjunction =! NonDisjunction,
 ];
 impl_std_not![2:
     Conjunction, NonConjunction,
     MaterialNonImplication, MaterialImplication,
-    Projection::<0>, ProjectAndUnary::<0, Negation>,
+    First, NotFirst,
     ConverseNonImplication, ConverseImplication,
-    Projection::<1>, ProjectAndUnary::<1, Negation>,
+    Last, NotSecond,
     ExclusiveDisjunction, LogicalBiconditional,
     Disjunction, NonDisjunction,
 ];
@@ -141,9 +141,9 @@ impl_converse![
 ];
 impl_converse![
     MaterialNonImplication = !ConverseNonImplication,
-    Projection::<0> = !Projection::<1>,
+    First = !Last,
     MaterialImplication = !ConverseImplication,
-    ProjectAndUnary::<0, Negation> = !ProjectAndUnary::<1, Negation>,
+    NotFirst = !NotSecond,
 ];
 
 /// Allow to check the
@@ -285,14 +285,14 @@ mod tests {
         assert_neg::<2, MaterialNonImplication>();
         assert_std_not::<2, _, _>(MaterialNonImplication);
 
-        assert_neg::<2, Projection<0>>();
-        assert_std_not::<2, _, _>(Projection::<0>);
+        assert_neg::<2, First>();
+        assert_std_not::<2, _, _>(First {});
 
         assert_neg::<2, ConverseNonImplication>();
         assert_std_not::<2, _, _>(ConverseNonImplication);
 
-        assert_neg::<2, Projection<1>>();
-        assert_std_not::<2, _, _>(Projection::<1>);
+        assert_neg::<2, Last>();
+        assert_std_not::<2, _, _>(Last {});
 
         assert_neg::<2, ExclusiveDisjunction>();
         assert_std_not::<2, _, _>(ExclusiveDisjunction);
@@ -306,14 +306,14 @@ mod tests {
         assert_neg::<2, LogicalBiconditional>();
         assert_std_not::<2, _, _>(LogicalBiconditional);
 
-        assert_neg::<2, ProjectAndUnary<1, Negation>>();
-        assert_std_not::<2, _, _>(ProjectAndUnary::<1, Negation>::new());
+        assert_neg::<2, NotSecond>();
+        assert_std_not::<2, _, _>(NotSecond::new());
 
         assert_neg::<2, ConverseImplication>();
         assert_std_not::<2, _, _>(ConverseImplication);
 
-        assert_neg::<2, ProjectAndUnary<0, Negation>>();
-        assert_std_not::<2, _, _>(ProjectAndUnary::<0, Negation>::new());
+        assert_neg::<2, NotFirst>();
+        assert_std_not::<2, _, _>(NotFirst::new());
 
         assert_neg::<2, MaterialImplication>();
         assert_std_not::<2, _, _>(MaterialImplication);
@@ -330,16 +330,16 @@ mod tests {
         assert_conversion::<Falsity>();
         assert_conversion::<Conjunction>();
         assert_conversion::<MaterialNonImplication>();
-        assert_conversion::<Projection<0>>();
+        assert_conversion::<First>();
         assert_conversion::<ConverseNonImplication>();
-        assert_conversion::<Projection<1>>();
+        assert_conversion::<Last>();
         assert_conversion::<ExclusiveDisjunction>();
         assert_conversion::<Disjunction>();
         assert_conversion::<NonDisjunction>();
         assert_conversion::<LogicalBiconditional>();
-        assert_conversion::<ProjectAndUnary<1, Negation>>();
+        assert_conversion::<NotSecond>();
         assert_conversion::<ConverseImplication>();
-        assert_conversion::<ProjectAndUnary<0, Negation>>();
+        assert_conversion::<NotFirst>();
         assert_conversion::<MaterialImplication>();
         assert_conversion::<NonConjunction>();
         assert_conversion::<Truth>();
@@ -357,16 +357,16 @@ mod tests {
         assert_commutativity::<Falsity>(true);
         assert_commutativity::<Conjunction>(true);
         assert_commutativity::<MaterialNonImplication>(false);
-        assert_commutativity::<Projection<0>>(false);
+        assert_commutativity::<First>(false);
         assert_commutativity::<ConverseNonImplication>(false);
-        assert_commutativity::<Projection<1>>(false);
+        assert_commutativity::<Last>(false);
         assert_commutativity::<ExclusiveDisjunction>(true);
         assert_commutativity::<Disjunction>(true);
         assert_commutativity::<NonDisjunction>(true);
         assert_commutativity::<LogicalBiconditional>(true);
-        assert_commutativity::<ProjectAndUnary<1, Negation>>(false);
+        assert_commutativity::<NotSecond>(false);
         assert_commutativity::<ConverseImplication>(false);
-        assert_commutativity::<ProjectAndUnary<0, Negation>>(false);
+        assert_commutativity::<NotFirst>(false);
         assert_commutativity::<MaterialImplication>(false);
         assert_commutativity::<NonConjunction>(true);
         assert_commutativity::<Truth>(true);
@@ -384,9 +384,9 @@ mod tests {
         assert_associativity::<Falsity>(true);
         assert_associativity::<Conjunction>(true);
         assert_associativity::<MaterialNonImplication>(false);
-        assert_associativity::<Projection<0>>(true); // always first
+        assert_associativity::<First>(true); // always first
         assert_associativity::<ConverseNonImplication>(false);
-        assert_associativity::<Projection<1>>(true); // always last
+        assert_associativity::<Last>(true); // always last
         assert_associativity::<ExclusiveDisjunction>(true);
         assert_associativity::<Disjunction>(true);
         assert_associativity::<NonDisjunction>(false);
@@ -394,12 +394,12 @@ mod tests {
 
         // left is Neg(LAST): F(F(a, b), c) = F(-b, c) = -c
         // right is Id(LAST): F(a, F(b, c)) = F(a, -c) = --c = c
-        assert_associativity::<ProjectAndUnary<1, Negation>>(false);
+        assert_associativity::<NotSecond>(false);
         assert_associativity::<ConverseImplication>(false);
 
         // left is Id(FIRST): F(F(a, b), c) = F(-a, c) = a
         // right is Neg(FIRST): F(a, F(b, c)) = F(a, -b) = -a
-        assert_associativity::<ProjectAndUnary<0, Negation>>(false);
+        assert_associativity::<NotFirst>(false);
         assert_associativity::<MaterialImplication>(false);
         assert_associativity::<NonConjunction>(false);
         assert_associativity::<Truth>(true);

@@ -387,16 +387,16 @@ mod tests {
         assert_prop!(Falsity, 2: is_constant);
         assert_prop!(Conjunction: ! is_constant);
         assert_prop!(MaterialNonImplication: ! is_constant);
-        assert_prop!(Projection<0>: ! is_constant);
+        assert_prop!(First: ! is_constant);
         assert_prop!(ConverseNonImplication: ! is_constant);
-        assert_prop!(Projection<1>: ! is_constant);
+        assert_prop!(Last: ! is_constant);
         assert_prop!(ExclusiveDisjunction: ! is_constant);
         assert_prop!(Disjunction: ! is_constant);
         assert_prop!(NonDisjunction: ! is_constant);
         assert_prop!(LogicalBiconditional: ! is_constant);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_constant);
+        assert_prop!(NotSecond: ! is_constant);
         assert_prop!(ConverseImplication: ! is_constant);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_constant);
+        assert_prop!(NotFirst: ! is_constant);
         assert_prop!(MaterialImplication: ! is_constant);
         assert_prop!(NonConjunction: ! is_constant);
         assert_prop!(Truth, 2: is_constant);
@@ -421,16 +421,16 @@ mod tests {
         assert_prop!(Falsity, 2: is_falsity_preserving);
         assert_prop!(Conjunction: is_falsity_preserving);
         assert_prop!(MaterialNonImplication: is_falsity_preserving);
-        assert_prop!(Projection<0>: is_falsity_preserving);
+        assert_prop!(First: is_falsity_preserving);
         assert_prop!(ConverseNonImplication: is_falsity_preserving);
-        assert_prop!(Projection<1>: is_falsity_preserving);
+        assert_prop!(Last: is_falsity_preserving);
         assert_prop!(ExclusiveDisjunction: is_falsity_preserving);
         assert_prop!(Disjunction: is_falsity_preserving);
         assert_prop!(NonDisjunction: ! is_falsity_preserving);
         assert_prop!(LogicalBiconditional: ! is_falsity_preserving);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_falsity_preserving);
+        assert_prop!(NotSecond: ! is_falsity_preserving);
         assert_prop!(ConverseImplication: ! is_falsity_preserving);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_falsity_preserving);
+        assert_prop!(NotFirst: ! is_falsity_preserving);
         assert_prop!(MaterialImplication: ! is_falsity_preserving);
         assert_prop!(NonConjunction: ! is_falsity_preserving);
         assert_prop!(Truth, 2: ! is_falsity_preserving);
@@ -455,16 +455,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_truth_preserving);
         assert_prop!(Conjunction: is_truth_preserving);
         assert_prop!(MaterialNonImplication: ! is_truth_preserving);
-        assert_prop!(Projection<0>: is_truth_preserving);
+        assert_prop!(First: is_truth_preserving);
         assert_prop!(ConverseNonImplication: ! is_truth_preserving);
-        assert_prop!(Projection<1>: is_truth_preserving);
+        assert_prop!(Last: is_truth_preserving);
         assert_prop!(ExclusiveDisjunction: ! is_truth_preserving);
         assert_prop!(Disjunction: is_truth_preserving);
         assert_prop!(NonDisjunction: ! is_truth_preserving);
         assert_prop!(LogicalBiconditional: is_truth_preserving);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_truth_preserving);
+        assert_prop!(NotSecond: ! is_truth_preserving);
         assert_prop!(ConverseImplication: is_truth_preserving);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_truth_preserving);
+        assert_prop!(NotFirst: ! is_truth_preserving);
         assert_prop!(MaterialImplication: is_truth_preserving);
         assert_prop!(NonConjunction: ! is_truth_preserving);
         assert_prop!(Truth, 2: is_truth_preserving);
@@ -489,16 +489,16 @@ mod tests {
         assert_prop!(Falsity, 2: is_monotonic);
         assert_prop!(Conjunction: is_monotonic);
         assert_prop!(MaterialNonImplication: ! is_monotonic);
-        assert_prop!(Projection<0>: is_monotonic);
+        assert_prop!(First: is_monotonic);
         assert_prop!(ConverseNonImplication: ! is_monotonic);
-        assert_prop!(Projection<1>: is_monotonic);
+        assert_prop!(Last: is_monotonic);
         assert_prop!(ExclusiveDisjunction: ! is_monotonic);
         assert_prop!(Disjunction: is_monotonic);
         assert_prop!(NonDisjunction: ! is_monotonic);
         assert_prop!(LogicalBiconditional: ! is_monotonic);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_monotonic);
+        assert_prop!(NotSecond: ! is_monotonic);
         assert_prop!(ConverseImplication: ! is_monotonic);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_monotonic);
+        assert_prop!(NotFirst: ! is_monotonic);
         assert_prop!(MaterialImplication: ! is_monotonic);
         assert_prop!(NonConjunction: ! is_monotonic);
         assert_prop!(Truth, 2: is_monotonic);
@@ -523,16 +523,16 @@ mod tests {
         assert_prop!(Falsity, 2: is_affine);
         assert_prop!(Conjunction: ! is_affine);
         assert_prop!(MaterialNonImplication: ! is_affine);
-        assert_prop!(Projection<0>: is_affine);
+        assert_prop!(First: is_affine);
         assert_prop!(ConverseNonImplication: ! is_affine);
-        assert_prop!(Projection<1>: is_affine);
+        assert_prop!(Last: is_affine);
         assert_prop!(ExclusiveDisjunction: is_affine);
         assert_prop!(Disjunction: ! is_affine);
         assert_prop!(NonDisjunction: ! is_affine);
         assert_prop!(LogicalBiconditional: is_affine);
-        assert_prop!(ProjectAndUnary<1, Negation>: is_affine);
+        assert_prop!(NotSecond: is_affine);
         assert_prop!(ConverseImplication: ! is_affine);
-        assert_prop!(ProjectAndUnary<0, Negation>: is_affine);
+        assert_prop!(NotFirst: is_affine);
         assert_prop!(MaterialImplication: ! is_affine);
         assert_prop!(NonConjunction: ! is_affine);
         assert_prop!(Truth, 2: is_affine);
@@ -557,16 +557,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_parity);
         assert_prop!(Conjunction: ! is_parity);
         assert_prop!(MaterialNonImplication: ! is_parity);
-        assert_prop!(Projection<0>: ! is_parity);
+        assert_prop!(First: ! is_parity);
         assert_prop!(ConverseNonImplication: ! is_parity);
-        assert_prop!(Projection<1>: ! is_parity);
+        assert_prop!(Last: ! is_parity);
         assert_prop!(ExclusiveDisjunction: is_parity);
         assert_prop!(Disjunction: ! is_parity);
         assert_prop!(NonDisjunction: ! is_parity);
         assert_prop!(LogicalBiconditional: ! is_parity);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_parity);
+        assert_prop!(NotSecond: ! is_parity);
         assert_prop!(ConverseImplication: ! is_parity);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_parity);
+        assert_prop!(NotFirst: ! is_parity);
         assert_prop!(MaterialImplication: ! is_parity);
         assert_prop!(NonConjunction: ! is_parity);
         assert_prop!(Truth, 2: ! is_parity);
@@ -591,16 +591,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_balanced);
         assert_prop!(Conjunction: ! is_balanced);
         assert_prop!(MaterialNonImplication: ! is_balanced);
-        assert_prop!(Projection<0>: is_balanced);
+        assert_prop!(First: is_balanced);
         assert_prop!(ConverseNonImplication: ! is_balanced);
-        assert_prop!(Projection<1>: is_balanced);
+        assert_prop!(Last: is_balanced);
         assert_prop!(ExclusiveDisjunction: is_balanced);
         assert_prop!(Disjunction: ! is_balanced);
         assert_prop!(NonDisjunction: ! is_balanced);
         assert_prop!(LogicalBiconditional: is_balanced);
-        assert_prop!(ProjectAndUnary<1, Negation>: is_balanced);
+        assert_prop!(NotSecond: is_balanced);
         assert_prop!(ConverseImplication: ! is_balanced);
-        assert_prop!(ProjectAndUnary<0, Negation>: is_balanced);
+        assert_prop!(NotFirst: is_balanced);
         assert_prop!(MaterialImplication: ! is_balanced);
         assert_prop!(NonConjunction: ! is_balanced);
         assert_prop!(Truth, 2: ! is_balanced);
@@ -625,16 +625,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_evasive);
         assert_prop!(Conjunction: is_evasive);
         assert_prop!(MaterialNonImplication: is_evasive);
-        assert_prop!(Projection<0>: ! is_evasive);
+        assert_prop!(First: ! is_evasive);
         assert_prop!(ConverseNonImplication: is_evasive);
-        assert_prop!(Projection<1>: ! is_evasive);
+        assert_prop!(Last: ! is_evasive);
         assert_prop!(ExclusiveDisjunction: is_evasive);
         assert_prop!(Disjunction: is_evasive);
         assert_prop!(NonDisjunction: is_evasive);
         assert_prop!(LogicalBiconditional: is_evasive);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_evasive);
+        assert_prop!(NotSecond: ! is_evasive);
         assert_prop!(ConverseImplication: is_evasive);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_evasive);
+        assert_prop!(NotFirst: ! is_evasive);
         assert_prop!(MaterialImplication: is_evasive);
         assert_prop!(NonConjunction: is_evasive);
         assert_prop!(Truth, 2: ! is_evasive);
@@ -659,16 +659,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_fully_evasive);
         assert_prop!(Conjunction: ! is_fully_evasive);
         assert_prop!(MaterialNonImplication: ! is_fully_evasive);
-        assert_prop!(Projection<0>: ! is_fully_evasive);
+        assert_prop!(First: ! is_fully_evasive);
         assert_prop!(ConverseNonImplication: ! is_fully_evasive);
-        assert_prop!(Projection<1>: ! is_fully_evasive);
+        assert_prop!(Last: ! is_fully_evasive);
         assert_prop!(ExclusiveDisjunction: is_fully_evasive);
         assert_prop!(Disjunction: ! is_fully_evasive);
         assert_prop!(NonDisjunction: ! is_fully_evasive);
         assert_prop!(LogicalBiconditional: is_fully_evasive);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_fully_evasive);
+        assert_prop!(NotSecond: ! is_fully_evasive);
         assert_prop!(ConverseImplication: ! is_fully_evasive);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_fully_evasive);
+        assert_prop!(NotFirst: ! is_fully_evasive);
         assert_prop!(MaterialImplication: ! is_fully_evasive);
         assert_prop!(NonConjunction: ! is_fully_evasive);
         assert_prop!(Truth, 2: ! is_fully_evasive);
@@ -693,16 +693,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_self_dual);
         assert_prop!(Conjunction: ! is_self_dual);
         assert_prop!(MaterialNonImplication: ! is_self_dual);
-        assert_prop!(Projection<0>: is_self_dual);
+        assert_prop!(First: is_self_dual);
         assert_prop!(ConverseNonImplication: ! is_self_dual);
-        assert_prop!(Projection<1>: is_self_dual);
+        assert_prop!(Last: is_self_dual);
         assert_prop!(ExclusiveDisjunction: ! is_self_dual);
         assert_prop!(Disjunction: ! is_self_dual);
         assert_prop!(NonDisjunction: ! is_self_dual);
         assert_prop!(LogicalBiconditional: ! is_self_dual);
-        assert_prop!(ProjectAndUnary<1, Negation>: is_self_dual);
+        assert_prop!(NotSecond: is_self_dual);
         assert_prop!(ConverseImplication: ! is_self_dual);
-        assert_prop!(ProjectAndUnary<0, Negation>: is_self_dual);
+        assert_prop!(NotFirst: is_self_dual);
         assert_prop!(MaterialImplication: ! is_self_dual);
         assert_prop!(NonConjunction: ! is_self_dual);
         assert_prop!(Truth, 2: ! is_self_dual);
@@ -727,16 +727,16 @@ mod tests {
         assert_prop!(Falsity, 2: ! is_sheffer);
         assert_prop!(Conjunction: ! is_sheffer);
         assert_prop!(MaterialNonImplication: ! is_sheffer);
-        assert_prop!(Projection<0>: ! is_sheffer);
+        assert_prop!(First: ! is_sheffer);
         assert_prop!(ConverseNonImplication: ! is_sheffer);
-        assert_prop!(Projection<1>: ! is_sheffer);
+        assert_prop!(Last: ! is_sheffer);
         assert_prop!(ExclusiveDisjunction: ! is_sheffer);
         assert_prop!(Disjunction: ! is_sheffer);
         assert_prop!(NonDisjunction: is_sheffer);
         assert_prop!(LogicalBiconditional: ! is_sheffer);
-        assert_prop!(ProjectAndUnary<1, Negation>: ! is_sheffer);
+        assert_prop!(NotSecond: ! is_sheffer);
         assert_prop!(ConverseImplication: ! is_sheffer);
-        assert_prop!(ProjectAndUnary<0, Negation>: ! is_sheffer);
+        assert_prop!(NotFirst: ! is_sheffer);
         assert_prop!(MaterialImplication: ! is_sheffer);
         assert_prop!(NonConjunction: is_sheffer);
         assert_prop!(Truth, 2: ! is_sheffer);
@@ -773,17 +773,17 @@ mod tests_completeness {
     }
 
     type F = &'static dyn BoolFnExt<2>;
-    const NP0: ProjectAndUnary<0, Negation> = ProjectAndUnary::<0, Negation>::new();
-    const NP1: ProjectAndUnary<1, Negation> = ProjectAndUnary::<1, Negation>::new();
+    const NF: NotFirst = NotFirst::new();
+    const NS: NotSecond = NotSecond::new();
     const PAIR_BASIS: [[F; 2]; 24] = [
-        [&Disjunction, &NP0],
-        [&Disjunction, &NP1],
-        [&Conjunction, &NP0],
-        [&Conjunction, &NP1],
-        [&MaterialImplication, &NP0],
-        [&MaterialImplication, &NP1],
-        [&ConverseImplication, &NP0],
-        [&ConverseImplication, &NP1],
+        [&Disjunction, &NF],
+        [&Disjunction, &NS],
+        [&Conjunction, &NF],
+        [&Conjunction, &NS],
+        [&MaterialImplication, &NF],
+        [&MaterialImplication, &NS],
+        [&ConverseImplication, &NF],
+        [&ConverseImplication, &NS],
         [&MaterialImplication, &Falsity],
         [&ConverseImplication, &Falsity],
         [&MaterialImplication, &ExclusiveDisjunction],
@@ -792,10 +792,10 @@ mod tests_completeness {
         [&MaterialImplication, &ConverseNonImplication],
         [&ConverseImplication, &MaterialNonImplication],
         [&ConverseImplication, &ConverseNonImplication],
-        [&MaterialNonImplication, &NP0],
-        [&MaterialNonImplication, &NP1],
-        [&ConverseNonImplication, &NP0],
-        [&ConverseNonImplication, &NP1],
+        [&MaterialNonImplication, &NF],
+        [&MaterialNonImplication, &NS],
+        [&ConverseNonImplication, &NF],
+        [&ConverseNonImplication, &NS],
         [&MaterialNonImplication, &Truth],
         [&ConverseNonImplication, &Truth],
         [&MaterialNonImplication, &LogicalBiconditional],
