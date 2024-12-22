@@ -4,19 +4,19 @@
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
 mod atom;
-mod connective;
 mod eval;
-#[allow(clippy::module_inception)]
-mod formula;
+mod general;
 mod lit;
 mod ops;
 mod var;
 
 pub use self::{
     atom::{Assignment, Atom},
-    connective::{AnyConnective, DynConnective},
     eval::Valuation,
-    formula::Formula,
+    general::{
+        connective::{AnyConnective, DynConnective},
+        formula::Formula,
+    },
     lit::{Lit, Literal},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},

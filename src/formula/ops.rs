@@ -1,177 +1,70 @@
-use std::ops;
-
-use crate::connective::{functions, Reducible as _};
-
-use super::formula::Formula;
-
-impl<T> ops::Not for Formula<T> {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        Not::not(self)
-    }
-}
-
-impl<RHS, T> ops::BitAnd<RHS> for Formula<T>
-where
-    RHS: Into<Self>,
-{
-    type Output = Self;
-
-    fn bitand(self, e: RHS) -> Self::Output {
-        self.and(e.into())
-    }
-}
-
-impl<RHS, T> ops::BitOr<RHS> for Formula<T>
-where
-    RHS: Into<Self>,
-{
-    type Output = Self;
-
-    fn bitor(self, e: RHS) -> Self::Output {
-        self.or(e.into())
-    }
-}
-
-impl<RHS, T> ops::BitXor<RHS> for Formula<T>
-where
-    RHS: Into<Self>,
-{
-    type Output = Self;
-
-    fn bitxor(self, e: RHS) -> Self::Output {
-        self.xor(e.into())
-    }
-}
+use crate::connective::Evaluable;
 
 /// The logical negation operator.
-pub trait Not<T> {
-    /// Performs the logical negation.
-    fn not(self) -> Formula<T>;
+pub trait Not<Target> {
+    /// Reverse the evaluation.
+    ///
+    /// This should be a
+    ///
+    /// `impl<T: Not<Output = T>, E: Evaluable<T>> Not for E { ... }`
+    ///
+    /// but the latter cannot be defined because of the 'orphan' rule.
+    fn not(self) -> Target;
 }
 
-impl<T, F> Not<T> for F
+impl<T, E> Not<E> for T
 where
-    F: Into<Formula<T>>,
+    T: Into<E>,
+    E: Evaluable,
+    E::Partial: std::ops::Not<Output = E::Partial>,
 {
-    fn not(self) -> Formula<T> {
-        let f = self.into();
+    fn not(self) -> E {
+        let e = self.into();
+        match e.into_terminal() {
+            Ok(x) => E::terminal(!x),
 
-        // break the recursion while using it in the:
-        // - `impl Reducible for connective::*`;
-        // - `Evaluable::not`.
-        //
-        // Do not use the `functions::Negation.try_reduce([f])`
-        // since it recursively calls the same function again.
-        match f {
-            Formula::TruthValue(value) => Formula::TruthValue(!value),
-            f => Formula::Not(Box::new(f)),
+            // Be aware the recursion can arise
+            // when `impl Evaluable<T> for T`
+            // if the `impl std::ops::Not for T` defined itself
+            // in terms of `Evaluable<T>`.
+            //
+            // This way you should break the recursion manually:
+            // - either with the manual implementation of this method (`Not::not`)
+            //   (**CANNOT BE USED** without _specialization_ feature because of this _impl_ itself);
+            // - or (better) by providing the `impl std::ops::Not for T` using
+            //   the `T`'s internal structure details rather than relying
+            //   on this `Not::not` implementation.
+            Err(partial) => E::partial(!partial),
         }
     }
 }
 
 /// The logical conjunction operator.
-pub trait And<T, RHS> {
+pub trait And<RHS: Into<Target>, Target> {
     /// Performs the logical conjunction.
-    fn and(self, rhs: RHS) -> Formula<T>;
-}
-
-impl<T, LHS, RHS> And<T, RHS> for LHS
-where
-    RHS: Into<Formula<T>>,
-    LHS: Into<Formula<T>>,
-{
-    fn and(self, e: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = e.into();
-
-        functions::Conjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::And(Box::new(f1), Box::new(f2)))
-    }
+    fn and(self, rhs: RHS) -> Target;
 }
 
 /// The logical disjunction operator.
-pub trait Or<T, RHS> {
+pub trait Or<RHS: Into<Target>, Target> {
     /// Performs the logical disjunction.
-    fn or(self, rhs: RHS) -> Formula<T>;
-}
-
-impl<T, LHS, RHS> Or<T, RHS> for LHS
-where
-    RHS: Into<Formula<T>>,
-    LHS: Into<Formula<T>>,
-{
-    fn or(self, e: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = e.into();
-
-        functions::Disjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Or(Box::new(f1), Box::new(f2)))
-    }
+    fn or(self, rhs: RHS) -> Target;
 }
 
 /// The logical exclusive disjunction (XOR) operator.
-pub trait Xor<T, RHS> {
+pub trait Xor<RHS: Into<Target>, Target> {
     /// Performs the logical exclusive disjunction (XOR).
-    fn xor(self, rhs: RHS) -> Formula<T>;
-}
-
-impl<T, LHS, RHS> Xor<T, RHS> for LHS
-where
-    RHS: Into<Formula<T>>,
-    LHS: Into<Formula<T>>,
-{
-    fn xor(self, e: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = e.into();
-
-        functions::ExclusiveDisjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Xor(Box::new(f1), Box::new(f2)))
-    }
+    fn xor(self, rhs: RHS) -> Target;
 }
 
 /// The logical implication operator.
-pub trait Implies<T, RHS> {
+pub trait Implies<RHS: Into<Target>, Target> {
     /// Performs the logical implication.
-    fn implies(self, rhs: RHS) -> Formula<T>;
-}
-
-impl<T, LHS, RHS> Implies<T, RHS> for LHS
-where
-    RHS: Into<Formula<T>>,
-    LHS: Into<Formula<T>>,
-{
-    fn implies(self, e: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = e.into();
-
-        functions::MaterialImplication
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Implies(Box::new(f1), Box::new(f2)))
-    }
+    fn implies(self, rhs: RHS) -> Target;
 }
 
 /// The logical equivalence operator.
-pub trait Equivalent<T, RHS> {
+pub trait Equivalent<RHS: Into<Target>, Target> {
     /// Performs the logical equivalence.
-    fn equivalent(self, rhs: RHS) -> Formula<T>;
-}
-
-impl<T, LHS, RHS> Equivalent<T, RHS> for LHS
-where
-    RHS: Into<Formula<T>>,
-    LHS: Into<Formula<T>>,
-{
-    fn equivalent(self, e: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = e.into();
-
-        functions::LogicalBiconditional
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Equivalent(Box::new(f1), Box::new(f2)))
-    }
+    fn equivalent(self, rhs: RHS) -> Target;
 }

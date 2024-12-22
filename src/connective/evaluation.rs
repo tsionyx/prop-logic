@@ -1,5 +1,3 @@
-use std::ops::Not;
-
 /// Represent the intermediate result of boolean operations.
 pub trait Evaluable {
     /// The 'partial' evaluation contains
@@ -51,35 +49,6 @@ pub trait Evaluable {
         match self.into_terminal() {
             Ok(t) => Err(t),
             Err(p) => Ok(p),
-        }
-    }
-
-    /// Reverse the evaluation.
-    ///
-    /// This should be a
-    ///
-    /// `impl<T: Not<Output = T>, E: Evaluable<T>> Not for E { ... }`
-    ///
-    /// but the latter cannot be defined because of the 'orphan' rule.
-    fn not(self) -> Self
-    where
-        Self: Sized,
-        Self::Partial: Not<Output = Self::Partial>,
-    {
-        match self.into_terminal() {
-            Ok(x) => Self::terminal(!x),
-
-            // Be aware the recursion can arise
-            // when `impl Evaluable<T> for T`
-            // if the `impl Not for T` defined itself
-            // in terms of `Evaluable<T>`.
-            //
-            // This way you should break the recursion manually:
-            // - either with the manual implementation of this method (`Evaluable::not`);
-            // - or (better) by providing the `impl Not for T` using
-            //   the `T`'s internal structure details rather than relying
-            //   on this `Evaluable::not` implementation.
-            Err(partial) => Self::partial(!partial),
         }
     }
 }

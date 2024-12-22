@@ -9,7 +9,10 @@ use crate::connective::{
     functions, Associativity as _, Connective, FormulaComposer, Prioritized, Priority,
 };
 
-pub use super::{atom::Atom, connective::AnyConnective, ops::*};
+pub use super::{
+    super::{atom::Atom, ops::*},
+    connective::AnyConnective,
+};
 
 #[derive(Debug, Clone)]
 #[derive_where(PartialEq; T: PartialEq + 'static)]
@@ -181,7 +184,7 @@ mod tests {
     use std::ops::Not;
 
     use super::{
-        super::{atom::Atom, var::Variable},
+        super::super::{atom::Atom, var::Variable},
         *,
     };
 
