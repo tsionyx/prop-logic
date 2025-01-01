@@ -54,6 +54,14 @@ impl Evaluable for Assignment<bool> {
         Self::Value(value)
     }
 
+    fn is_tautology(&self) -> bool {
+        matches!(self, Self::Value(x) if *x)
+    }
+
+    fn is_contradiction(&self) -> bool {
+        matches!(self, Self::Value(x) if !*x)
+    }
+
     fn partial(_empty: ()) -> Self {
         Self::Unknown
     }
@@ -68,6 +76,14 @@ impl Evaluable for bool {
 
     fn terminal(value: bool) -> Self {
         value
+    }
+
+    fn is_tautology(&self) -> bool {
+        *self
+    }
+
+    fn is_contradiction(&self) -> bool {
+        !*self
     }
 
     fn partial(_: Void) -> Self {

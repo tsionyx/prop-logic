@@ -11,6 +11,14 @@ impl<T> Evaluable for Formula<T> {
         Self::TruthValue(value)
     }
 
+    fn is_tautology(&self) -> bool {
+        matches!(self, Self::TruthValue(x) if *x)
+    }
+
+    fn is_contradiction(&self) -> bool {
+        matches!(self, Self::TruthValue(x) if !*x)
+    }
+
     fn partial(val: Self) -> Self {
         val
     }

@@ -8,10 +8,6 @@ pub trait Evaluable {
     /// Create a 'terminal' bool result of evaluation.
     fn terminal(value: bool) -> Self;
 
-    /// Create a 'partial' evaluation which contains
-    /// some term that is going to be evaluated but not ready yet.
-    fn partial(val: Self::Partial) -> Self;
-
     /// Terminal result equivalent to [`Truth`][super::Truth].
     fn tautology() -> Self
     where
@@ -19,6 +15,9 @@ pub trait Evaluable {
     {
         Self::terminal(true)
     }
+
+    /// Is the `Evaluation` terminal equivalent to [`Truth`][super::Truth].
+    fn is_tautology(&self) -> bool;
 
     /// Terminal result equivalent to [`Falsity`][super::Falsity].
     fn contradiction() -> Self
@@ -28,6 +27,9 @@ pub trait Evaluable {
         Self::terminal(false)
     }
 
+    /// Is the `Evaluation` terminal equivalent to [`Falsity`][super::Falsity].
+    fn is_contradiction(&self) -> bool;
+
     /// Convert the [`Evaluable`] into bool result
     /// or return the partial term `Err(T)` instead.
     ///
@@ -35,6 +37,16 @@ pub trait Evaluable {
     ///
     /// If the [`Evaluable`] is not terminal, return `Err(T)`.
     fn into_terminal(self) -> Result<bool, Self::Partial>;
+
+    /// Create a 'partial' evaluation which contains
+    /// some term that is going to be evaluated but not ready yet.
+    fn partial(val: Self::Partial) -> Self;
+
+    /// Is the `Evaluation` partial
+    /// (not reduced to either [`Truth`][super::Truth] nor [`Falsity`][super::Falsity]).
+    fn is_partial(&self) -> bool {
+        !(self.is_tautology() || self.is_contradiction())
+    }
 
     /// Convert the [`Evaluable`] into partial term
     /// or return the terminal `Err(bool)` instead.
