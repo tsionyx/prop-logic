@@ -3,12 +3,9 @@
 //! conditional sentences in natural language.
 //!
 //! <https://en.wikipedia.org/wiki/Material_conditional>
-use crate::formula::{Formula, Implies};
+use std::ops::{BitOr, Not};
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Material implication is an operation on two logical values,
@@ -16,26 +13,13 @@ use super::super::{
 /// unless its first argument is `true` and its second argument is `false`.
 pub struct MaterialImplication;
 
-impl BoolFn<2> for MaterialImplication {
-    fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
-        !antecedent || consequent
-    }
-}
-
-impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for MaterialImplication
+impl<E> TruthFn<2, E> for MaterialImplication
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-            (Err(antecedent), Ok(consequent)) => {
-                if consequent {
-                    Ok(E::tautology())
-                } else {
-                    Ok(E::partial(!antecedent))
-                }
-            }
+            (Ok(antecedent), Ok(consequent)) => Ok(E::terminal(!antecedent || consequent)),
             (Ok(antecedent), Err(consequent)) => {
                 if antecedent {
                     Ok(E::partial(consequent))
@@ -43,14 +27,20 @@ where
                     Ok(E::tautology())
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(antecedent), Ok(consequent)) => {
+                if consequent {
+                    Ok(E::tautology())
+                } else {
+                    Ok(!E::partial(antecedent))
+                }
+            }
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for MaterialImplication {
-    fn compose(&self, [antecedent, consequent]: [Formula<T>; 2]) -> Formula<T> {
-        antecedent.implies(consequent)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms)
+            .unwrap_or_else(|[antecedent, consequent]| !antecedent | consequent)
     }
 }
 

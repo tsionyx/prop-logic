@@ -1,10 +1,7 @@
 //! Generic ternary function as the composition of two binary functions.
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
-use super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Formula, TruthFn,
-};
+use super::super::{Evaluable, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Wrapper for a ternary boolean function which applies
@@ -21,57 +18,30 @@ impl<const LEFT: bool, Op1, Op2> Ternary<LEFT, Op1, Op2> {
     }
 }
 
-impl<const LEFT: bool, Op1, Op2> BoolFn<3> for Ternary<LEFT, Op1, Op2>
-where
-    Op1: BoolFn<2>,
-    Op2: BoolFn<2>,
-{
-    fn eval(&self, [x, y, z]: [bool; 3]) -> bool {
-        if LEFT {
-            let intermediate = self.op1.eval([x, y]);
-            self.op2.eval([intermediate, z])
-        } else {
-            let intermediate = self.op2.eval([y, z]);
-            self.op1.eval([x, intermediate])
-        }
-    }
-}
-
-impl<const LEFT: bool, E, Op1, Op2> Reducible<3, E> for Ternary<LEFT, Op1, Op2>
+impl<const LEFT: bool, E, Op1, Op2> TruthFn<3, E> for Ternary<LEFT, Op1, Op2>
 where
     E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
-    Op1: TruthFn<2> + Reducible<2, E>,
-    Op2: TruthFn<2> + Reducible<2, E>,
+    Op1: TruthFn<2, E>,
+    Op2: TruthFn<2, E>,
 {
-    fn try_reduce(&self, values: [E; 3]) -> Result<E, [E; 3]> {
+    fn fold(&self, values: [E; 3]) -> Result<E, [E; 3]> {
         let [x, y, z] = values.clone();
 
         // TODO: consider for example the case of (expr1 || expr2 || false)
         let optional = || {
             if LEFT {
-                let intermediate = self.op1.try_reduce([x, y]).ok()?;
-                self.op2.try_reduce([intermediate, z]).ok()
+                let intermediate = self.op1.fold([x, y]).ok()?;
+                self.op2.fold([intermediate, z]).ok()
             } else {
-                let intermediate = self.op2.try_reduce([y, z]).ok()?;
-                self.op1.try_reduce([x, intermediate]).ok()
+                let intermediate = self.op2.fold([y, z]).ok()?;
+                self.op1.fold([x, intermediate]).ok()
             }
         };
 
         optional().ok_or(values)
     }
-}
 
-impl<const LEFT: bool, Op1, Op2, T> FormulaComposer<3, T> for Ternary<LEFT, Op1, Op2>
-where
-    Op1: TruthFn<2> + FormulaComposer<2, T>,
-    Op2: TruthFn<2> + FormulaComposer<2, T>,
-    T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
-{
-    fn compose(&self, [x, y, z]: [Formula<T>; 3]) -> Formula<T>
-    where
-        Op1: Sized,
-        Op2: Sized,
-    {
+    fn compose(&self, [x, y, z]: [E; 3]) -> E {
         if LEFT {
             let intermediate = self.op1.compose([x, y]);
             self.op2.compose([intermediate, z])
@@ -84,13 +54,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::connective::Conjunction;
-
-    use super::*;
+    use super::{
+        super::super::{Conjunction, InitFn as _, TruthFnConnector as _},
+        *,
+    };
 
     #[test]
     fn ternary_conjunction() {
-        let x = Ternary::<true, Conjunction>::init().bool_evaluator();
+        let x = Ternary::<true, Conjunction>::init().connector();
         assert!(!x([false, false, false]));
         assert!(!x([false, false, true]));
         assert!(!x([false, true, false]));

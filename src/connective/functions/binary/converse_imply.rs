@@ -4,12 +4,9 @@
 //! _antecedent_ and _consequent_.
 //!
 //! <https://en.wikipedia.org/wiki/Converse_implication>
-use crate::formula::{Formula, Implies};
+use std::ops::{BitOr, Not};
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse implication is an operation on two logical values,
@@ -17,19 +14,20 @@ use super::super::{
 /// unless its first argument is `false` and its second argument is `true`.
 pub struct ConverseImplication;
 
-impl BoolFn<2> for ConverseImplication {
-    fn eval(&self, [consequent, antecedent]: [bool; 2]) -> bool {
-        consequent || !antecedent
-    }
-}
-
-impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for ConverseImplication
+impl<E> TruthFn<2, E> for ConverseImplication
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(consequent), Ok(antecedent)) => Ok(E::terminal(!antecedent || consequent)),
+            (Ok(consequent), Err(antecedent)) => {
+                if consequent {
+                    Ok(E::tautology())
+                } else {
+                    Ok(!E::partial(antecedent))
+                }
+            }
             (Err(consequent), Ok(antecedent)) => {
                 if antecedent {
                     Ok(E::partial(consequent))
@@ -37,21 +35,13 @@ where
                     Ok(E::tautology())
                 }
             }
-            (Ok(consequent), Err(antecedent)) => {
-                if consequent {
-                    Ok(E::tautology())
-                } else {
-                    Ok(E::partial(!antecedent))
-                }
-            }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for ConverseImplication {
-    fn compose(&self, [consequent, antecedent]: [Formula<T>; 2]) -> Formula<T> {
-        antecedent.implies(consequent)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms)
+            .unwrap_or_else(|[consequent, antecedent]| !antecedent | consequent)
     }
 }
 

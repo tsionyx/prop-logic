@@ -2,12 +2,9 @@
 //! is `true` if and only if all of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
-use crate::formula::{And, Formula};
+use std::ops::BitAnd;
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical conjunction is an operation on two logical values,
@@ -15,32 +12,27 @@ use super::super::{
 /// if and only if both of its operands are `true`.
 pub struct Conjunction;
 
-impl BoolFn<2> for Conjunction {
-    fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
-        conjunct1 && conjunct2
-    }
-}
-
-impl<E: Evaluable> Reducible<2, E> for Conjunction {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+impl<E> TruthFn<2, E> for Conjunction
+where
+    E: Evaluable + BitAnd<Output = E>,
+{
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(conjunct1 && conjunct2)),
             // **conjunction** is _commutative_
-            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
+            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
                     Ok(E::partial(x))
                 } else {
                     Ok(E::contradiction())
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for Conjunction {
-    fn compose(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        conjunct1.and(conjunct2)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms).unwrap_or_else(|[x, y]| x & y)
     }
 }
 

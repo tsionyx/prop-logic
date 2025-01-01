@@ -3,9 +3,11 @@ use std::fmt::Debug;
 use derive_where::derive_where;
 
 use crate::{
-    connective::{Connective, FormulaComposer, Prioritized},
+    connective::{Connective, Prioritized, TruthFn},
     utils::{upcast::Upcast as _, Zst},
 };
+
+use super::formula::Formula;
 
 use self::usable::UsableConnective;
 
@@ -13,7 +15,7 @@ use self::usable::UsableConnective;
 #[derive_where(Clone; OPERAND: Clone)]
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
 #[derive_where(Eq; OPERAND: Eq, Atom: 'static)]
-/// [`Connective`] + [`FormulaComposer`] of ARITY from {0, 1, 2} along with their operands.
+/// [`Connective`] + [`TruthFn`] of ARITY from {0, 1, 2} along with their operands.
 pub enum AnyConnective<OPERAND, Atom> {
     /// Nullary [`Connective`].
     Nullary(DynConnective<0, OPERAND, Atom>),
@@ -28,7 +30,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     pub fn new_0<C>(connective: C) -> Self
     where
         C: Connective<0>
-            + FormulaComposer<0, Atom>
+            + TruthFn<0, Formula<Atom>>
             + Prioritized
             + Debug
             + Clone
@@ -42,7 +44,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     pub fn new_1<C>(connective: C, operand: OPERAND) -> Self
     where
         C: Connective<1>
-            + FormulaComposer<1, Atom>
+            + TruthFn<1, Formula<Atom>>
             + Prioritized
             + Debug
             + Clone
@@ -56,7 +58,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     pub fn new_2<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
     where
         C: Connective<2>
-            + FormulaComposer<2, Atom>
+            + TruthFn<2, Formula<Atom>>
             + Prioritized
             + Debug
             + Clone
@@ -93,7 +95,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
 // requires `Atom: 'static` because of the `UsableConnective`: `DynCompare`: `AsDynCompare`: `Any`: `'static`
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
 #[derive_where(Eq; OPERAND: Eq, Atom: 'static)]
-/// Wrapper for dynamic [`Connective`] and [`FormulaComposer`] with operands attached.
+/// Wrapper for dynamic [`Connective`] and [`TruthFn`] with operands attached.
 pub struct DynConnective<const ARITY: usize, OPERAND, Atom> {
     pub(super) connective: Box<dyn UsableConnective<ARITY, Atom>>,
     pub(super) operands: [OPERAND; ARITY],
@@ -104,7 +106,7 @@ impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
     pub fn new<C>(connective: C, operands: [OPERAND; ARITY]) -> Self
     where
         C: Connective<ARITY>
-            + FormulaComposer<ARITY, Atom>
+            + TruthFn<ARITY, Formula<Atom>>
             + Prioritized
             + Debug
             + Clone
@@ -161,16 +163,16 @@ mod usable {
 
     use crate::utils::dyn_eq::DynCompare;
 
-    use super::{Connective, FormulaComposer, Prioritized};
+    use super::{Connective, Formula, Prioritized, TruthFn};
 
     /// [`Connective`]'s marker subtrait to be used in [`DynConnective`][super::DynConnective].
     pub(in super::super) trait UsableConnective<const N: usize, Atom>:
-        Connective<N> + FormulaComposer<N, Atom> + Prioritized + Debug + DynClone + DynCompare
+        Connective<N> + TruthFn<N, Formula<Atom>> + Prioritized + Debug + DynClone + DynCompare
     {
     }
 
     impl<const N: usize, Atom, T> UsableConnective<N, Atom> for T where
-        T: Connective<N> + FormulaComposer<N, Atom> + Prioritized + Debug + DynClone + DynCompare
+        T: Connective<N> + TruthFn<N, Formula<Atom>> + Prioritized + Debug + DynClone + DynCompare
     {
     }
 

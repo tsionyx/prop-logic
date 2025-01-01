@@ -197,11 +197,11 @@ where
     }
 
     fn is_falsity_preserving(&self) -> bool {
-        !self.eval([false; ARITY])
+        !self.compose([false; ARITY])
     }
 
     fn is_truth_preserving(&self) -> bool {
-        self.eval([true; ARITY])
+        self.compose([true; ARITY])
     }
 
     fn is_monotonic(&self) -> bool {
@@ -344,7 +344,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        super::{functions::*, TruthFn},
+        super::{functions::*, InitFn},
         *,
     };
 
@@ -353,18 +353,14 @@ mod tests {
             assert!(<$F>::init().$prop())
         };
         ($F:ty, $arity:literal: $prop:ident) => {
-            assert!(<$F as BoolFnExt<$arity>>::$prop(
-                &<$F as TruthFn<$arity>>::init()
-            ))
+            assert!(<$F as BoolFnExt<$arity>>::$prop(&<$F as InitFn>::init()))
         };
 
         ($F:ty: ! $prop:ident) => {
             assert!(!<$F>::init().$prop())
         };
         ($F:ty, $arity:literal: ! $prop:ident) => {
-            assert!(!<$F as BoolFnExt<$arity>>::$prop(&<$F as TruthFn<
-                $arity,
-            >>::init()))
+            assert!(!<$F as BoolFnExt<$arity>>::$prop(&<$F as InitFn>::init()))
         };
     }
 

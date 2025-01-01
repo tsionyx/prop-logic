@@ -2,12 +2,9 @@
 //! is `true` when either or both of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use crate::formula::{Formula, Or};
+use std::ops::BitOr;
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical disjunction is an operation on two logical values,
@@ -15,32 +12,27 @@ use super::super::{
 /// unless both of its arguments are `false`.
 pub struct Disjunction;
 
-impl BoolFn<2> for Disjunction {
-    fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
-        disjunct1 || disjunct2
-    }
-}
-
-impl<E: Evaluable> Reducible<2, E> for Disjunction {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+impl<E> TruthFn<2, E> for Disjunction
+where
+    E: Evaluable + BitOr<Output = E>,
+{
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1 || disjunct2)),
             // **disjunction** is _commutative_
-            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
+            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
                     Ok(E::tautology())
                 } else {
                     Ok(E::partial(x))
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for Disjunction {
-    fn compose(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        disjunct1.or(disjunct2)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms).unwrap_or_else(|[x, y]| x | y)
     }
 }
 

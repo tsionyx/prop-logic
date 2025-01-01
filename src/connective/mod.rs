@@ -13,8 +13,6 @@ mod storage;
 mod traits;
 mod truth_table;
 
-use crate::formula::Formula;
-
 pub use self::{
     evaluation::Evaluable,
     functions::*,
@@ -23,7 +21,7 @@ pub use self::{
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{BoolFn, Connective, FormulaComposer, Reducible, TruthFn},
+    traits::{BoolFn, Connective, InitFn, TruthFn, TruthFnConnector},
     truth_table::TruthTable,
 };
 
@@ -58,14 +56,18 @@ const _ASSERT_ZST: () = {
 mod tests {
     use itertools::Itertools as _;
 
-    use crate::{arity::two_powers, formula::Valuation, utils::dependent_array::CheckedArray};
+    use crate::{
+        arity::two_powers,
+        formula::{Formula, Valuation},
+        utils::dependent_array::CheckedArray,
+    };
 
     use super::*;
 
     #[allow(clippy::needless_pass_by_value)]
     fn apply_and_compose_is_equivalent<const ARITY: usize, F>(f: F)
     where
-        F: TruthFn<ARITY> + FormulaComposer<ARITY, ()>,
+        F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
         let truth_table = f.get_truth_table().into_iter();

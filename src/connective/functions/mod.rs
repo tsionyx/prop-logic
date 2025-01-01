@@ -5,8 +5,6 @@ pub mod neg;
 pub mod ternary;
 pub mod truth;
 
-use super::{BoolFn, Connective, Formula, FunctionNotation, TruthFn};
-
 pub use self::{
     binary::{
         and::Conjunction,

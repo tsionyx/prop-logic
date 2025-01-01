@@ -6,12 +6,9 @@
 //! since it says in effect that at least one of its operands is `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
-use crate::formula::{And, Formula};
+use std::ops::{BitOr, Not};
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Non-conjunction is an operation on two logical values,
@@ -19,35 +16,27 @@ use super::super::{
 /// if and only if at least one of the operands is `false`.
 pub struct NonConjunction;
 
-impl BoolFn<2> for NonConjunction {
-    fn eval(&self, [conjunct1, conjunct2]: [bool; 2]) -> bool {
-        !conjunct1 || !conjunct2
-    }
-}
-
-impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for NonConjunction
+impl<E> TruthFn<2, E> for NonConjunction
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(!conjunct1 || !conjunct2)),
             // **Sheffer stroke** is _commutative_
-            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
+            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
-                    Ok(E::partial(!x))
+                    Ok(!E::partial(x))
                 } else {
                     Ok(E::tautology())
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for NonConjunction {
-    fn compose(&self, [conjunct1, conjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        !(conjunct1.and(conjunct2))
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms).unwrap_or_else(|[x, y]| !x | !y)
     }
 }
 

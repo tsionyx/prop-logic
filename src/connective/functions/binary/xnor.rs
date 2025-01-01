@@ -5,12 +5,9 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_biconditional>
 //! <https://en.wikipedia.org/wiki/Logical_equality>
-use crate::formula::{Equivalent, Formula};
+use std::ops::{BitXor, Not};
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Logical biconditional is an operation on two logical values,
@@ -18,35 +15,27 @@ use super::super::{
 /// if and only if both operands are `false` or both operands are `true`.
 pub struct LogicalBiconditional;
 
-impl BoolFn<2> for LogicalBiconditional {
-    fn eval(&self, [antecedent, consequent]: [bool; 2]) -> bool {
-        antecedent == consequent
-    }
-}
-
-impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for LogicalBiconditional
+impl<E> TruthFn<2, E> for LogicalBiconditional
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(x), Ok(y)) => Ok(E::terminal(x == y)),
             // **equivalence** is _commutative_
-            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
+            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
                     Ok(E::partial(x))
                 } else {
-                    Ok(E::partial(!x))
+                    Ok(!E::partial(x))
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for LogicalBiconditional {
-    fn compose(&self, [antecedent, consequent]: [Formula<T>; 2]) -> Formula<T> {
-        antecedent.equivalent(consequent)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms).unwrap_or_else(|[x, y]| !(x ^ y))
     }
 }
 

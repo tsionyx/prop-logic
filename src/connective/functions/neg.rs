@@ -2,10 +2,9 @@
 //! is an unary operation that reverse its only argument.
 //!
 //! <https://en.wikipedia.org/wiki/Negation>
-use super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation,
-};
+use std::ops::Not;
+
+use super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Unary operation that takes a proposition P
@@ -14,24 +13,18 @@ use super::{
 /// switched.
 pub struct Negation;
 
-impl BoolFn<1> for Negation {
-    fn eval(&self, [value]: [bool; 1]) -> bool {
-        !value
-    }
-}
-
-impl<E, T> Reducible<1, E> for Negation
+impl<E> TruthFn<1, E> for Negation
 where
-    E: Evaluable<Partial = T> + std::ops::Not<Output = E>,
+    E: Evaluable + Not<Output = E>,
 {
-    fn try_reduce(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
-        Ok(!value)
+    fn fold(&self, [e]: [E; 1]) -> Result<E, [E; 1]> {
+        e.into_terminal()
+            .map(|value| E::terminal(!value))
+            .map_err(|partial| [E::partial(partial)])
     }
-}
 
-impl<T> FormulaComposer<1, T> for Negation {
-    fn compose(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {
-        !expr
+    fn compose(&self, formula: [E; 1]) -> E {
+        self.fold(formula).unwrap_or_else(|[x]| !x)
     }
 }
 

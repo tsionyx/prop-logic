@@ -1,9 +1,5 @@
 //! Degenerate unary [`TruthFn`] that simply return its sole argument.
-
-use super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation,
-};
+use super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// The unary
@@ -11,23 +7,15 @@ use super::{
 /// for a proposition.
 pub struct LogicalIdentity;
 
-impl BoolFn<1> for LogicalIdentity {
-    fn eval(&self, [value]: [bool; 1]) -> bool {
+impl<E: Evaluable> TruthFn<1, E> for LogicalIdentity {
+    fn fold(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
+        Ok(value)
+    }
+
+    fn compose(&self, [value]: [E; 1]) -> E {
         // the truth value of the single given proposition
         // <https://en.wikipedia.org/wiki/Truth_value>
         value
-    }
-}
-
-impl<E: Evaluable> Reducible<1, E> for LogicalIdentity {
-    fn try_reduce(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
-        Ok(value)
-    }
-}
-
-impl<T> FormulaComposer<1, T> for LogicalIdentity {
-    fn compose(&self, [expr]: [Formula<T>; 1]) -> Formula<T> {
-        expr
     }
 }
 

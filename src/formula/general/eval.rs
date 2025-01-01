@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, hash::Hash};
 
-use crate::connective::{Evaluable, Reducible as _};
+use crate::connective::{Evaluable, TruthFn as _};
 
 use super::{super::eval::Valuation, connective::AnyConnective, formula::Formula};
 
@@ -54,48 +54,18 @@ where
 
         let conn = self.get_connective();
         match &conn {
-            AnyConnective::Nullary(operator) => operator
-                .connective
-                .try_reduce([])
-                .ok()
-                .expect("The nullary operator always reducible"),
+            AnyConnective::Nullary(operator) => operator.connective.compose([]),
             AnyConnective::Unary(conn) => {
                 let operator = &conn.connective;
                 let [operand] = &conn.operands;
-
                 let reduced = operand.try_reduce(i12n);
-                operator.try_reduce([reduced]).unwrap_or_else(|[f]| {
-                    match f.into_partial() {
-                        Ok(f) => operator.compose([f]),
-                        Err(val) => {
-                            // should be unreachable
-                            Self::terminal(operator.as_ref().eval([val]))
-                        }
-                    }
-                })
+                operator.compose([reduced])
             }
             AnyConnective::Binary(conn) => {
                 let operator = &conn.connective;
                 let [op1, op2] = &conn.operands;
-
                 let reduced = [op1.try_reduce(i12n), op2.try_reduce(i12n)];
-                operator.try_reduce(reduced).unwrap_or_else(|[f1, f2]| {
-                    match (f1.into_partial(), f2.into_partial()) {
-                        (Ok(f1), Ok(f2)) => operator.compose([f1, f2]),
-                        (Ok(f), Err(val)) => {
-                            // unreachable!("This branch should be catched by `operator.try_reduce`")
-                            operator.compose([f, Self::TruthValue(val)])
-                        }
-                        (Err(val), Ok(f)) => {
-                            // unreachable!("This branch should be catched by `operator.try_reduce`")
-                            operator.compose([Self::TruthValue(val), f])
-                        }
-                        (Err(val1), Err(val2)) => {
-                            // should be unreachable
-                            Self::terminal(operator.as_ref().eval([val1, val2]))
-                        }
-                    }
-                })
+                operator.compose(reduced)
             }
         }
     }
@@ -190,7 +160,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('c'));
-        let f: Formula<_> = var1.and(var2).and(var3);
+        let f = Formula::from(var1).and(var2).and(var3);
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
@@ -202,7 +172,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.and(var2).and(var3);
+        let f = Formula::from(var1).and(var2).and(var3);
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
@@ -215,19 +185,23 @@ mod tests {
         let var2 = Arc::new(get_var('d'));
         let var3 = Arc::new(get_var('p'));
 
-        let f: Formula<_> = var1.clone().and(var2.clone()).and(var3.clone());
+        let f = Formula::from(var1.clone())
+            .and(var2.clone())
+            .and(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2.clone().and(var3.clone()).and(var1.clone());
+        let f = Formula::from(var2.clone())
+            .and(var3.clone())
+            .and(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2.and(var3.clone().and(var1));
+        let f = Formula::from(var2).and(Formula::from(var3.clone()).and(var1));
         assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
     }
 
@@ -237,25 +211,23 @@ mod tests {
         let var2 = Arc::new(get_var('d'));
         let var3 = Arc::new(get_var('p'));
 
-        let f: Formula<_> = var1
-            .clone()
+        let f = Formula::from(var1.clone())
             .and(var2.clone())
-            .and(Not::<Formula<_>>::not(var3.clone()));
+            .and(Formula::from(var3.clone()).not());
         assert_eq!(
             f.interpret(&partial_valuation()),
             !Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2
-            .clone()
-            .and(Not::<Formula<_>>::not(var3.clone()))
+        let f = Formula::from(var2.clone())
+            .and(Formula::from(var3.clone()).not())
             .and(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             !Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2.and(Not::<Formula<_>>::not(var3.clone()).and(var1));
+        let f = Formula::from(var2).and(Formula::from(var3.clone()).not().and(var1));
         assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3));
     }
 
@@ -264,7 +236,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('c'));
-        let f: Formula<_> = var1.or(var2).or(var3);
+        let f = Formula::from(var1).or(var2).or(var3);
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
     }
 
@@ -273,7 +245,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.or(var2).or(var3);
+        let f = Formula::from(var1).or(var2).or(var3);
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
     }
 
@@ -283,19 +255,23 @@ mod tests {
         let var2 = Arc::new(get_var('c'));
         let var3 = Arc::new(get_var('p'));
 
-        let f: Formula<_> = var1.clone().or(var2.clone()).or(var3.clone());
+        let f = Formula::from(var1.clone())
+            .or(var2.clone())
+            .or(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2.clone().or(var3.clone()).or(var1.clone());
+        let f = Formula::from(var2.clone())
+            .or(var3.clone())
+            .or(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var3.clone())
         );
 
-        let f: Formula<_> = var2.or(var3.clone().or(var1));
+        let f = Formula::from(var2).or(Formula::from(var3.clone()).or(var1));
         assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
     }
 
@@ -303,7 +279,7 @@ mod tests {
     fn xor_known() {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
-        let f: Formula<_> = var1.xor(var2);
+        let f = Formula::from(var1).xor(var2);
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
     }
 
@@ -312,7 +288,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.xor(var2).xor(var3.clone());
+        let f = Formula::from(var1).xor(var2).xor(var3.clone());
         assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3),);
     }
 
@@ -321,7 +297,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('d'));
         let var3 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.xor(var2).xor(var3.clone());
+        let f = Formula::from(var1).xor(var2).xor(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var3.clone())
@@ -329,7 +305,7 @@ mod tests {
 
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('c'));
-        let f: Formula<_> = var1.xor(var2).xor(var3.clone());
+        let f = Formula::from(var1).xor(var2).xor(var3.clone());
         assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
     }
 
@@ -337,13 +313,13 @@ mod tests {
     fn imply_known() {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
-        let f: Formula<_> = var1.clone().implies(var2.clone());
+        let f = Formula::from(var1.clone()).implies(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
         );
 
-        let f: Formula<_> = var2.implies(var1);
+        let f = Formula::from(var2).implies(var1);
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
     }
 
@@ -351,7 +327,7 @@ mod tests {
     fn imply_unknown_from_false_vacuous() {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.implies(var2);
+        let f = Formula::from(var1).implies(var2);
         assert_eq!(f.interpret(&partial_valuation()), true.into());
     }
 
@@ -359,7 +335,7 @@ mod tests {
     fn imply_unknown_to_false_is_negation() {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
-        let f: Formula<_> = var2.clone().implies(var1);
+        let f = Formula::from(var2.clone()).implies(var1);
         assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2));
     }
 
@@ -367,7 +343,7 @@ mod tests {
     fn imply_unknown_from_true_is_identity() {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
-        let f: Formula<_> = var1.implies(var2.clone());
+        let f = Formula::from(var1).implies(var2.clone());
         assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var2));
     }
 
@@ -375,7 +351,7 @@ mod tests {
     fn imply_unknown_to_true_is_true() {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
-        let f: Formula<_> = var2.implies(var1);
+        let f = Formula::from(var2).implies(var1);
         assert_eq!(f.interpret(&partial_valuation()), true.into());
     }
 
@@ -383,10 +359,10 @@ mod tests {
     fn eq_known_same() {
         let var1 = Arc::new(get_var('c'));
         let var2 = Arc::new(get_var('b'));
-        let f: Formula<_> = var1.clone().equivalent(var2.clone());
+        let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
 
-        let f: Formula<_> = var2.equivalent(var1);
+        let f = Formula::from(var2).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), true.into());
     }
 
@@ -394,13 +370,13 @@ mod tests {
     fn eq_known_different() {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
-        let f: Formula<_> = var1.clone().equivalent(var2.clone());
+        let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::TruthValue(false)
         );
 
-        let f: Formula<_> = var2.equivalent(var1);
+        let f = Formula::from(var2).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), false.into());
     }
 
@@ -409,13 +385,13 @@ mod tests {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
 
-        let f: Formula<_> = var1.clone().equivalent(var2.clone());
+        let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             !Formula::Atomic(var2.clone()),
         );
 
-        let f: Formula<_> = var2.clone().equivalent(var1);
+        let f = Formula::from(var2.clone()).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2),);
     }
 
@@ -424,13 +400,13 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
 
-        let f: Formula<_> = var1.clone().equivalent(var2.clone());
+        let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
             Formula::Atomic(var2.clone())
         );
 
-        let f: Formula<_> = var2.clone().equivalent(var1);
+        let f = Formula::from(var2.clone()).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var2));
     }
 }

@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, truth_table, TruthFn};
+use super::{functions::*, truth_table, BoolFn, InitFn as _};
 
 use crate::{
     arity::two_powers::D,
@@ -15,8 +15,8 @@ use crate::{
 /// [Haase diagram](https://en.wikipedia.org/wiki/Logical_connective#Table_and_Hasse_diagram).
 fn partial_ordering<Op1, Op2, const ARITY: usize>() -> Option<Ordering>
 where
-    Op1: TruthFn<ARITY>,
-    Op2: TruthFn<ARITY>,
+    Op1: BoolFn<ARITY> + Default,
+    Op2: BoolFn<ARITY> + Default,
     D: CheckedArray<ARITY>,
     <D as CheckedArray<ARITY>>::Array<truth_table::Row<ARITY>>: Clone,
 {

@@ -1,32 +1,24 @@
 //! Nullary logical function (constant) equals to `false`.
 //!
 //! <https://en.wikipedia.org/wiki/False_(logic)>
-use super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, Formula, FunctionNotation,
-};
+use super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// A statement which is always false,
 /// aka [contradiction](https://en.wikipedia.org/wiki/Contradiction).
 pub struct Falsity;
 
-// allow to use the `False` constant in unary or binary on N-ary context
-impl<const ARITY: usize> BoolFn<ARITY> for Falsity {
-    fn eval(&self, _values: [bool; ARITY]) -> bool {
-        false
-    }
-}
-
-impl<const ARITY: usize, E: Evaluable> Reducible<ARITY, E> for Falsity {
-    fn try_reduce(&self, _values: [E; ARITY]) -> Result<E, [E; ARITY]> {
+// allow to use the `Falsity` constant in unary or binary on N-ary context
+impl<const ARITY: usize, E> TruthFn<ARITY, E> for Falsity
+where
+    E: Evaluable,
+{
+    fn fold(&self, _: [E; ARITY]) -> Result<E, [E; ARITY]> {
         Ok(E::contradiction())
     }
-}
 
-impl<const ARITY: usize, T> FormulaComposer<ARITY, T> for Falsity {
-    fn compose(&self, _expr: [Formula<T>; ARITY]) -> Formula<T> {
-        Formula::contradiction()
+    fn compose(&self, _: [E; ARITY]) -> E {
+        E::contradiction()
     }
 }
 

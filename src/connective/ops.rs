@@ -2,7 +2,7 @@
 use std::{collections::HashMap as Map, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, ternary::Ternary, BoolFn, TruthFn};
+use super::{functions::*, ternary::Ternary, BoolFn, InitFn as _};
 
 /// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -197,12 +197,12 @@ mod tests {
 
     use crate::{arity::two_powers, utils::dependent_array::CheckedArray};
 
-    use super::*;
+    use super::{super::InitFn, *};
 
     fn assert_neg<const ARITY: usize, N>()
     where
-        N: Negate<ARITY> + TruthFn<ARITY>,
-        N::Not: TruthFn<ARITY>,
+        N: Negate<ARITY> + BoolFn<ARITY> + InitFn,
+        N::Not: BoolFn<ARITY> + InitFn,
         two_powers::D: CheckedArray<ARITY>,
     {
         let table = N::init().get_truth_table().into_values();
@@ -232,8 +232,8 @@ mod tests {
 
     fn assert_conversion<C>()
     where
-        C: Converse + TruthFn<2>,
-        C::Conversion: TruthFn<2>,
+        C: Converse + BoolFn<2> + InitFn,
+        C::Conversion: BoolFn<2> + InitFn,
     {
         let table = C::init().get_truth_table().into_iter();
         let table_conversed: HashMap<_, _> = C::Conversion::init()
@@ -347,7 +347,7 @@ mod tests {
 
     fn assert_commutativity<F>(holds: bool)
     where
-        F: TruthFn<2>,
+        F: BoolFn<2> + InitFn,
     {
         assert_eq!(F::init().is_commutative(), holds);
     }
@@ -374,7 +374,7 @@ mod tests {
 
     fn assert_associativity<F>(holds: bool)
     where
-        F: TruthFn<2>,
+        F: BoolFn<2> + InitFn,
     {
         assert_eq!(F::init().is_associative(), holds);
     }

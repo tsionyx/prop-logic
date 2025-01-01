@@ -4,9 +4,8 @@
 use std::marker::PhantomData;
 
 use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
+    super::{Connective, Evaluable, FunctionNotation, InitFn, TruthFn},
     neg::Negation,
-    BoolFn, Connective, Formula, FunctionNotation, TruthFn,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
@@ -32,6 +31,26 @@ pub type First = Projection<0>;
 /// (therefore its name is the `Last`, not the `Second`).
 pub type Last = Projection<1>;
 
+impl<E: Evaluable> TruthFn<2, E> for First {
+    fn fold(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
+        Ok(val0)
+    }
+
+    fn compose(&self, [val0, _]: [E; 2]) -> E {
+        val0
+    }
+}
+
+impl<E: Evaluable> TruthFn<2, E> for Last {
+    fn fold(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
+        Ok(val1)
+    }
+
+    fn compose(&self, [_, val1]: [E; 2]) -> E {
+        val1
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 /// [`Projection`]-like operator that feed
 /// the projection result further into some unary function.
@@ -41,7 +60,7 @@ pub type Last = Projection<1>;
 /// With this default setting, the operator's main purpose
 /// is to act like __Fpq__ and __Gpq__ functions in terms of
 /// [prefix logical notation](https://en.wikipedia.org/wiki/J%C3%B3zef_Maria_Boche%C5%84ski#Pr%C3%A9cis_de_logique_math%C3%A9matique).
-pub struct ProjectAndUnary<const I: usize, UnaryOp: BoolFn<1> = Negation>(PhantomData<UnaryOp>);
+pub struct ProjectAndUnary<const I: usize, UnaryOp = Negation>(PhantomData<UnaryOp>);
 
 /// The projection function returning always the [`Negation`]
 /// of its _first_ argument and ignoring the others.
@@ -57,86 +76,33 @@ pub type NotFirst = ProjectAndUnary<0, Negation>;
 /// as could be mistakenly deduced from its binary negation [`Last`]).
 pub type NotSecond = ProjectAndUnary<1, Negation>;
 
-impl<const I: usize, UnaryOp: BoolFn<1>> ProjectAndUnary<I, UnaryOp> {
+impl<const I: usize, UnaryOp> ProjectAndUnary<I, UnaryOp> {
     /// Create an instance of the [`ProjectAndUnary`].
     pub const fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-impl<const I: usize, UnaryOp: BoolFn<1>> Default for ProjectAndUnary<I, UnaryOp> {
+impl<const I: usize, UnaryOp> Default for ProjectAndUnary<I, UnaryOp> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const I: usize, UnaryOp: TruthFn<1>> BoolFn<2> for ProjectAndUnary<I, UnaryOp>
-where
-    Projection<I>: TruthFn<2>,
-{
-    fn eval(&self, values: [bool; 2]) -> bool {
-        let project_result = Projection::<I> {}.eval(values);
-        UnaryOp::init().eval([project_result])
-    }
-}
-
-impl<const I: usize, E, UnaryOp> Reducible<2, E> for ProjectAndUnary<I, UnaryOp>
+impl<const I: usize, E, UnaryOp> TruthFn<2, E> for ProjectAndUnary<I, UnaryOp>
 where
     E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
-    UnaryOp: TruthFn<1> + Reducible<1, E>,
-    Projection<I>: TruthFn<2> + Reducible<2, E>,
+    UnaryOp: TruthFn<1, E> + InitFn,
+    Projection<I>: TruthFn<2, E>,
 {
-    fn try_reduce(&self, values: [E; 2]) -> Result<E, [E; 2]> {
-        let expr = Projection::<I> {}.try_reduce(values.clone())?;
-        UnaryOp::init().try_reduce([expr]).map_err(|_| values)
+    fn fold(&self, values: [E; 2]) -> Result<E, [E; 2]> {
+        let expr = Projection::<I> {}.fold(values.clone())?;
+        UnaryOp::init().fold([expr]).map_err(|_| values)
     }
-}
 
-impl<const I: usize, UnaryOp, T> FormulaComposer<2, T> for ProjectAndUnary<I, UnaryOp>
-where
-    UnaryOp: TruthFn<1> + FormulaComposer<1, T>,
-    Projection<I>: TruthFn<2> + FormulaComposer<2, T>,
-    T: Clone, // TODO: get rid of the `E: Clone` in the `impl Reducible ..` above
-{
-    fn compose(&self, expressions: [Formula<T>; 2]) -> Formula<T> {
-        let expr = Projection::<I> {}.compose(expressions);
+    fn compose(&self, terms: [E; 2]) -> E {
+        let expr = Projection::<I> {}.compose(terms);
         UnaryOp::init().compose([expr])
-    }
-}
-
-impl BoolFn<2> for First {
-    fn eval(&self, [val0, _]: [bool; 2]) -> bool {
-        val0
-    }
-}
-
-impl<E: Evaluable> Reducible<2, E> for First {
-    fn try_reduce(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
-        Ok(val0)
-    }
-}
-
-impl<T> FormulaComposer<2, T> for First {
-    fn compose(&self, [expr0, _]: [Formula<T>; 2]) -> Formula<T> {
-        expr0
-    }
-}
-
-impl BoolFn<2> for Last {
-    fn eval(&self, [_, val1]: [bool; 2]) -> bool {
-        val1
-    }
-}
-
-impl<E: Evaluable> Reducible<2, E> for Last {
-    fn try_reduce(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
-        Ok(val1)
-    }
-}
-
-impl<T> FormulaComposer<2, T> for Last {
-    fn compose(&self, [_, expr1]: [Formula<T>; 2]) -> Formula<T> {
-        expr1
     }
 }
 
@@ -182,17 +148,17 @@ impl Connective<2> for NotSecond {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{super::super::super::TruthFnConnector as _, *};
 
     #[test]
     fn projection_eval() {
-        let x = First {}.bool_evaluator();
+        let x = First {}.connector();
         assert!(!x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));
         assert!(x([true, true]));
 
-        let x = Last {}.bool_evaluator();
+        let x = Last {}.connector();
         assert!(!x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
@@ -201,13 +167,13 @@ mod tests {
 
     #[test]
     fn projection_neg_eval() {
-        let x = NotFirst::new().bool_evaluator();
+        let x = NotFirst::new().connector();
         assert!(x([false, false]));
         assert!(x([false, true]));
         assert!(!x([true, false]));
         assert!(!x([true, true]));
 
-        let x = NotSecond::new().bool_evaluator();
+        let x = NotSecond::new().connector();
         assert!(x([false, false]));
         assert!(!x([false, true]));
         assert!(x([true, false]));

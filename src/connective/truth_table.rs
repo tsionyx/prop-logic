@@ -140,7 +140,7 @@ mod tests {
 
     fn get<Op, const ARITY: usize>() -> Vec<bool>
     where
-        Op: TruthFn<ARITY>,
+        Op: BoolFn<ARITY> + InitFn,
         D: CheckedArray<ARITY>,
     {
         get_mapping::<Op, ARITY>()
@@ -151,7 +151,7 @@ mod tests {
 
     fn get_mapping<Op, const ARITY: usize>() -> Vec<Row<ARITY>>
     where
-        Op: TruthFn<ARITY>,
+        Op: BoolFn<ARITY> + InitFn,
         D: CheckedArray<ARITY>,
     {
         let table = Op::init().get_truth_table();

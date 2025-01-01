@@ -2,12 +2,9 @@
 //! is `true` if and only if its arguments differ.
 //!
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
-use crate::formula::{Formula, Xor};
+use std::ops::{BitXor, Not};
 
-use super::super::{
-    super::{Evaluable, FormulaComposer, Reducible},
-    BoolFn, Connective, FunctionNotation,
-};
+use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Exclusive disjunction is an operation on two logical values,
@@ -15,35 +12,27 @@ use super::super::{
 /// if and only if one is `true` and the other is `false`.
 pub struct ExclusiveDisjunction;
 
-impl BoolFn<2> for ExclusiveDisjunction {
-    fn eval(&self, [disjunct1, disjunct2]: [bool; 2]) -> bool {
-        disjunct1 ^ disjunct2
-    }
-}
-
-impl<E: Evaluable<Partial = T>, T> Reducible<2, E> for ExclusiveDisjunction
+impl<E> TruthFn<2, E> for ExclusiveDisjunction
 where
-    T: std::ops::Not<Output = T>,
+    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
 {
-    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
+            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1 ^ disjunct2)),
             // **exclusive disjunction** is _commutative_
-            (Err(x), Ok(val)) | (Ok(val), Err(x)) => {
+            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
-                    Ok(E::partial(!x))
+                    Ok(!E::partial(x))
                 } else {
                     Ok(E::partial(x))
                 }
             }
-            (Ok(val1), Ok(val2)) => Ok(E::terminal(self.eval([val1, val2]))),
+            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
-}
 
-impl<T> FormulaComposer<2, T> for ExclusiveDisjunction {
-    fn compose(&self, [disjunct1, disjunct2]: [Formula<T>; 2]) -> Formula<T> {
-        disjunct1.xor(disjunct2)
+    fn compose(&self, terms: [E; 2]) -> E {
+        self.fold(terms).unwrap_or_else(|[x, y]| x ^ y)
     }
 }
 

@@ -1,23 +1,16 @@
-use std::ops;
-
-use crate::connective::{functions, Reducible as _};
+use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 use super::{
-    super::ops::{And, Equivalent, Implies, Or, Xor},
+    super::{Equivalent, Implies},
     formula::Formula,
 };
 
-impl<T> ops::Not for Formula<T> {
+impl<T> Not for Formula<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        // break the recursion while using it in the:
-        // - `impl Reducible for connective::*`;
-        // - `crate::formula::ops::Not::not`.
-        //
         // Do not use the `functions::Negation.try_reduce([f])`
         // since it recursively calls the same function again.
-
         if let Self::TruthValue(value) = &self {
             Self::TruthValue(!*value)
         } else {
@@ -26,110 +19,70 @@ impl<T> ops::Not for Formula<T> {
     }
 }
 
-impl<RHS, T> ops::BitAnd<RHS> for Formula<T>
+impl<Rhs, T> BitAnd<Rhs> for Formula<T>
 where
-    RHS: Into<Self>,
+    Rhs: Into<Self>,
 {
     type Output = Self;
 
-    fn bitand(self, e: RHS) -> Self::Output {
-        self.and(e.into())
+    fn bitand(self, e: Rhs) -> Self::Output {
+        Self::And(Box::new(self), Box::new(e.into()))
     }
 }
 
-impl<RHS, T> ops::BitOr<RHS> for Formula<T>
+impl<Rhs, T> BitOr<Rhs> for Formula<T>
 where
-    RHS: Into<Self>,
+    Rhs: Into<Self>,
 {
     type Output = Self;
 
-    fn bitor(self, e: RHS) -> Self::Output {
-        self.or(e.into())
+    fn bitor(self, e: Rhs) -> Self::Output {
+        Self::Or(Box::new(self), Box::new(e.into()))
     }
 }
 
-impl<RHS, T> ops::BitXor<RHS> for Formula<T>
+impl<Rhs, T> BitXor<Rhs> for Formula<T>
 where
-    RHS: Into<Self>,
+    Rhs: Into<Self>,
 {
     type Output = Self;
 
-    fn bitxor(self, e: RHS) -> Self::Output {
-        self.xor(e.into())
+    fn bitxor(self, e: Rhs) -> Self::Output {
+        Self::Xor(Box::new(self), Box::new(e.into()))
     }
 }
 
-impl<T, LHS, RHS> And<RHS, Formula<T>> for LHS
+// special implementations instead of the blanket ones,
+// since there is no special operators like `->` and `<->`
+
+impl<T, Rhs> Implies<Rhs> for Formula<T>
 where
-    LHS: Into<Formula<T>>,
-    RHS: Into<Formula<T>>,
+    Rhs: Into<Self>,
 {
-    fn and(self, rhs: RHS) -> Formula<T> {
-        let f1 = self.into();
+    fn implies(self, rhs: Rhs) -> Self {
+        use crate::connective::TruthFn as _;
+
+        let f1 = self;
         let f2 = rhs.into();
 
-        functions::Conjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::And(Box::new(f1), Box::new(f2)))
+        crate::connective::MaterialImplication
+            .fold([f1, f2])
+            .unwrap_or_else(|[f1, f2]| Self::Implies(Box::new(f1), Box::new(f2)))
     }
 }
 
-impl<T, LHS, RHS> Or<RHS, Formula<T>> for LHS
+impl<T, Rhs> Equivalent<Rhs> for Formula<T>
 where
-    LHS: Into<Formula<T>>,
-    RHS: Into<Formula<T>>,
+    Rhs: Into<Self>,
 {
-    fn or(self, rhs: RHS) -> Formula<T> {
-        let f1 = self.into();
+    fn equivalent(self, rhs: Rhs) -> Self {
+        use crate::connective::TruthFn as _;
+
+        let f1 = self;
         let f2 = rhs.into();
 
-        functions::Disjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Or(Box::new(f1), Box::new(f2)))
-    }
-}
-
-impl<T, LHS, RHS> Xor<RHS, Formula<T>> for LHS
-where
-    LHS: Into<Formula<T>>,
-    RHS: Into<Formula<T>>,
-{
-    fn xor(self, rhs: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = rhs.into();
-
-        functions::ExclusiveDisjunction
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Xor(Box::new(f1), Box::new(f2)))
-    }
-}
-
-impl<T, LHS, RHS> Implies<RHS, Formula<T>> for LHS
-where
-    LHS: Into<Formula<T>>,
-    RHS: Into<Formula<T>>,
-{
-    fn implies(self, rhs: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = rhs.into();
-
-        functions::MaterialImplication
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Implies(Box::new(f1), Box::new(f2)))
-    }
-}
-
-impl<T, LHS, RHS> Equivalent<RHS, Formula<T>> for LHS
-where
-    LHS: Into<Formula<T>>,
-    RHS: Into<Formula<T>>,
-{
-    fn equivalent(self, rhs: RHS) -> Formula<T> {
-        let f1 = self.into();
-        let f2 = rhs.into();
-
-        functions::LogicalBiconditional
-            .try_reduce([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Formula::Equivalent(Box::new(f1), Box::new(f2)))
+        crate::connective::LogicalBiconditional
+            .fold([f1, f2])
+            .unwrap_or_else(|[f1, f2]| Self::Equivalent(Box::new(f1), Box::new(f2)))
     }
 }

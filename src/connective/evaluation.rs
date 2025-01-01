@@ -2,7 +2,7 @@
 pub trait Evaluable {
     /// The 'partial' evaluation contains
     /// some term that is going to be evaluated but
-    /// has no determinedd bool value yet.
+    /// has no determined bool value yet.
     type Partial;
 
     /// Create a 'terminal' bool result of evaluation.

@@ -6,7 +6,7 @@ use std::fmt;
 use derive_where::derive_where;
 
 use crate::connective::{
-    functions, Associativity as _, Connective, FormulaComposer, Prioritized, Priority,
+    functions, Associativity as _, Connective, Prioritized, Priority, TruthFn,
 };
 
 pub use super::{
@@ -117,7 +117,7 @@ impl<T> Formula<T> {
     pub fn with_connective<C>(connective: C, op1: Self, op2: Self) -> Self
     where
         C: Connective<2>
-            + FormulaComposer<2, T>
+            + TruthFn<2, Self>
             + Prioritized
             + fmt::Debug
             + Clone

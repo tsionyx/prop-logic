@@ -4,7 +4,6 @@ use itertools::Itertools as _;
 
 use crate::{
     arity::two_powers,
-    formula::Formula,
     utils::{dependent_array::CheckedArray, operation::Operation, upcast::UpcastFrom},
 };
 
@@ -15,36 +14,53 @@ use super::{
 };
 
 #[auto_impl::auto_impl(&, Box)]
-/// A function that accepts `ARITY` [`bool`] values as input
-/// and produces a `bool` value as an output.
+/// Enables the ability to combine propositional [`Evaluable`] into a single one.
+///
+/// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
+/// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
 ///
 /// The [`ARITY`](https://en.wikipedia.org/wiki/Arity) is the number of arguments which this function accepts.
 ///
-/// Every [`BoolFn`] is essentially a bunch of _static_ functions
-/// without the need to create an _instance_. So, as a rule of thumb,
-/// any instantiated type should have exactly one value (unit type, isomorphic to `()`).
-///
-/// But, in order to use the [`BoolFn`] in a dynamic context
-/// we have to create some 'dummy' instance.
-/// Usually, the [`Default`] trait can be used in such a case,
-/// but using [`Default`] as a supertrait here disables the use of `Box<dyn BoolFn>`
-/// because of the `Default: Sized` requirement.
-///
-/// Unfortunately it is not possible now in stable rust
-/// to ensure the generic type is ZST, so whenever you use
-/// the [`BoolFn`] and want to ensure it has zero size,
-/// you have to:
-/// 1. Require that the generic [`BoolFn`] is [`ZST`][crate::utils::Zst].
-///    This is not used as a supertrait here deliberately to allow to use `dyn BoolFn`,
-///    (as the `Zst` trait contains an associated constant preventing the dynamic object to create).
-/// 2. Use the [`Zst::ASSERT_ZST`][crate::utils::Zst::ASSERT_ZST] in your function accepting
-///    generic `BoolFn` to force the compiler to do `size_of` check.
-pub trait BoolFn<const ARITY: usize> {
-    /// The way to express the [`BoolFn`] as a boolean function of its arguments.
+/// <https://en.wikipedia.org/wiki/Truth_function>
+pub trait TruthFn<const ARITY: usize, E: Evaluable> {
+    /// Try to reduce the propistional [`Evaluable`]-s
+    /// into a single one by taking
+    /// into account the partial knowledge of them.
     ///
-    /// It gets used later to generate the [`truth_table`].
-    fn eval(&self, values: [bool; ARITY]) -> bool;
+    /// This is can also be viewed as
+    /// [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation).
+    ///
+    /// # Errors
+    ///
+    /// If the set of [`Evaluable`]-s is not reducible,
+    /// produce the inputs wrapped in an `Err` as a last resort.
+    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]>;
 
+    /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective.
+    fn compose(&self, terms: [E; ARITY]) -> E;
+}
+
+/// Extension of the [`TruthFn`] to create a [callable object][Operation]
+/// to use with [`Evaluable`]-s.
+///
+/// Separated from the parent trait to allow for it to be used with `auto_impl`.
+pub trait TruthFnConnector<const ARITY: usize, E: Evaluable>: TruthFn<ARITY, E> {
+    /// Returns a [callable object][Operation] which can
+    /// be used to [compose][TruthFn::compose] a number of [`Evaluable`]-s.
+    fn connector(self) -> Operation<ARITY, E>;
+}
+
+impl<const ARITY: usize, E: Evaluable, T> TruthFnConnector<ARITY, E> for T
+where
+    T: TruthFn<ARITY, E> + 'static,
+{
+    fn connector(self) -> Operation<ARITY, E> {
+        Operation::new(Box::new(move |args| self.compose(args)))
+    }
+}
+
+/// Special case of [`TruthFn`] dealing with plain `bool` values.
+pub trait BoolFn<const ARITY: usize>: TruthFn<ARITY, bool> {
     /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
     /// for a [`BoolFn`] as the **key** (boolean arguments)-**value** (function result)
     /// ordered map.
@@ -57,6 +73,15 @@ pub trait BoolFn<const ARITY: usize> {
     /// [itertools library][itertools::Itertools::multi_cartesian_product].
     fn get_truth_table(&self) -> TruthTable<ARITY>
     where
+        two_powers::D: CheckedArray<ARITY>;
+}
+
+impl<const ARITY: usize, T> BoolFn<ARITY> for T
+where
+    T: TruthFn<ARITY, bool>,
+{
+    fn get_truth_table(&self) -> TruthTable<ARITY>
+    where
         two_powers::D: CheckedArray<ARITY>,
     {
         let table: Map<_, _> = iter::repeat([false, true])
@@ -66,14 +91,14 @@ pub trait BoolFn<const ARITY: usize> {
                 let assignment = assignment
                     .try_into()
                     .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
-                (assignment, self.eval(assignment))
+                (assignment, self.compose(assignment))
             })
             .collect();
 
         let table = if ARITY == 0 {
             assert!(table.is_empty());
             let dummy_empty_array = [false; ARITY];
-            let row: Row<ARITY> = (dummy_empty_array, self.eval(dummy_empty_array));
+            let row: Row<ARITY> = (dummy_empty_array, self.compose(dummy_empty_array));
             vec![row]
         } else {
             table.into_iter().collect()
@@ -93,42 +118,6 @@ impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn
 
     fn up_from_mut(value: &mut T) -> &mut Self {
         value
-    }
-}
-
-#[auto_impl::auto_impl(&, Box)]
-/// Enables the ability for the boolean connective
-/// to simplify a set of propositional [`Evaluable`]-s by taking
-/// into account the partial knowledge of them.
-///
-/// This is can also be viewed as
-/// [short-circuit evaluation](https://en.wikipedia.org/wiki/Short-circuit_evaluation).
-pub trait Reducible<const ARITY: usize, E: Evaluable>: BoolFn<ARITY> {
-    /// Try to reduce the propistional structure.
-    ///
-    /// It is a more general version of [`BoolFn::eval`]
-    /// which can reduce a set of propositional [`Evaluable`]-s
-    /// to a single one, if possible.
-    ///
-    /// # Errors
-    ///
-    /// If the set of [`Evaluable`]-s is not reducible,
-    /// produce the original ones as a last resort.
-    fn try_reduce(&self, values: [E; ARITY]) -> Result<E, [E; ARITY]>;
-}
-
-/// Enables the ability for to combine boolean formulas into a single formula.
-pub trait FormulaComposer<const ARITY: usize, T>: Reducible<ARITY, Formula<T>> {
-    /// Compose a [`Formula`] from other [`Formula`]-s using self as a connective.
-    fn compose(&self, formulas: [Formula<T>; ARITY]) -> Formula<T>;
-
-    /// Returns a [callable object][Operation] which can
-    /// be used to [compose][Self::compose] a number of [`Formula`]-s.
-    fn formula_connector(self) -> Operation<ARITY, Formula<T>>
-    where
-        Self: Sized + 'static,
-    {
-        Operation::new(Box::new(move |args| self.compose(args)))
     }
 }
 
@@ -164,31 +153,33 @@ impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Conn
     }
 }
 
-/// A function that accepts `ARITY` [truth values](https://en.wikipedia.org/wiki/Truth_value) as input
-/// and produces a unique [truth value](https://en.wikipedia.org/wiki/Truth_value) as output.
+/// Helper trait to ease the instantiation of the `TruthFn`.
 ///
-/// The [`ARITY`](https://en.wikipedia.org/wiki/Arity) is the number of arguments which this function accepts.
+/// Every [`TruthFn`] is essentially a bunch of _static_ functions
+/// without the need to create an _instance_. So, as a rule of thumb,
+/// any instantiated type should have exactly one value (unit type, isomorphic to `()`).
 ///
-/// <https://en.wikipedia.org/wiki/Truth_function>
-pub trait TruthFn<const ARITY: usize>: BoolFn<ARITY> {
+/// But, in order to use the [`TruthFn`] in a dynamic context
+/// we have to create some 'dummy' instance.
+/// Usually, the [`Default`] trait can be used in such a case,
+/// but using [`Default`] as a supertrait here disables the use of `Box<dyn TruthFn>`
+/// because of the `Default: Sized` requirement.
+///
+/// Unfortunately it is not possible now in stable rust
+/// to ensure the generic type is ZST, so whenever you use
+/// the [`TruthFn`] and want to ensure it has zero size,
+/// you have to:
+/// 1. Require that the generic [`TruthFn`] is [`ZST`][crate::utils::Zst].
+///    This is not used as a supertrait here deliberately to allow to use `dyn TruthFn`,
+///    (as the `Zst` trait contains an associated constant preventing the dynamic object to create).
+/// 2. Use the [`Zst::ASSERT_ZST`][crate::utils::Zst::ASSERT_ZST] in your function accepting
+///    generic `TruthFn` to force the compiler to do `size_of` check.
+pub trait InitFn {
     /// It is usually implemented as a shorthand for [`Default::default`].
     fn init() -> Self;
-
-    /// Returns a [callable object][Operation] which can
-    /// represent the [`BoolFn`] as a logical operation
-    /// on simple boolean values.
-    fn bool_evaluator(self) -> Operation<ARITY, bool>
-    where
-        Self: Sized + 'static,
-    {
-        Operation::new(Box::new(move |args| self.eval(args)))
-    }
 }
 
-impl<const ARITY: usize, T> TruthFn<ARITY> for T
-where
-    T: BoolFn<ARITY> + Default,
-{
+impl<T: Default> InitFn for T {
     fn init() -> Self {
         Self::default()
     }
