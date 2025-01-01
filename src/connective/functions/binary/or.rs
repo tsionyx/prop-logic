@@ -55,3 +55,72 @@ impl Connective<2> for Disjunction {
         ])
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+/// Generalization of the [`Disjunction`] for any number of values.
+///
+/// It produces a value of `false` if and only if all of its operands are `false`.
+/// If at least one of its operands is `true`, then the result is `true`.
+///
+/// The two degenerative cases are:
+/// - nullary (ARITY=0):
+///   the connective is equivalent to [`Falsity`][super::super::Falsity];
+/// - unary (ARTIY=1):
+///   the connective is equivalent to [`LogicalIdentity`][super::super::LogicalIdentity];
+///
+/// ---
+/// The non-trivial boolean operation could be interpreted as the function of arbitrary arity
+/// only if it is both _commutative_ and _associative_.
+/// See also:
+/// - [`ConjunctionAny`][super::and::ConjunctionAny];
+/// - [`ExclusiveDisjunctionAny`][super::xor::ExclusiveDisjunctionAny];
+/// - [`LogicalBiconditionalAny`][super::xnor::LogicalBiconditionalAny];
+pub struct DisjunctionAny;
+
+impl<const ARITY: usize, E> TruthFn<ARITY, E> for DisjunctionAny
+where
+    E: Evaluable + BitOr<Output = E>,
+{
+    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+        if terms.iter().any(E::is_tautology) {
+            return Ok(E::tautology());
+        }
+
+        if terms.iter().all(E::is_contradiction) {
+            return Ok(E::contradiction());
+        }
+
+        let partials = terms.iter().filter(|e| e.is_partial()).count();
+        assert!(
+            partials > 0,
+            "No-partials case should be catched by the previous short-circuting routines"
+        );
+
+        if partials == 1 {
+            terms
+                .into_iter()
+                .find(E::is_partial)
+                .ok_or_else(|| panic!("Found on previous step"))
+        } else {
+            assert!(
+                partials >= 2,
+                "No-partials and single-partial cases should be catched by the previous short-circuting routines"
+            );
+            Err(terms)
+        }
+    }
+
+    fn compose(&self, terms: [E; ARITY]) -> E {
+        self.fold(terms).unwrap_or_else(|terms| {
+            terms.into_iter().rfold(E::contradiction(), |acc, t| {
+                if acc.is_contradiction() {
+                    t
+                } else if t.is_contradiction() {
+                    acc
+                } else {
+                    t | acc
+                }
+            })
+        })
+    }
+}

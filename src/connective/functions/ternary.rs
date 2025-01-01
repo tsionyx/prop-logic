@@ -54,8 +54,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::connective::{BoolFn, TruthTable};
+
     use super::{
-        super::super::{Conjunction, InitFn as _, TruthFnConnector as _},
+        super::super::{
+            functions::{Conjunction, ConjunctionAny, Disjunction, DisjunctionAny},
+            InitFn as _, TruthFnConnector as _,
+        },
         *,
     };
 
@@ -70,5 +75,25 @@ mod tests {
         assert!(!x([true, false, true]));
         assert!(!x([true, true, false]));
         assert!(x([true, true, true]));
+    }
+
+    #[test]
+    fn equivalent_to_3_conjunction() {
+        let x = Ternary::<true, Conjunction>::init().get_truth_table();
+        let y = Ternary::<false, Conjunction>::init().get_truth_table();
+        assert_eq!(x.values(), y.values());
+        let z: TruthTable<3> = ConjunctionAny::init().get_truth_table();
+        assert_eq!(x.values(), z.values());
+        assert_eq!(y.into_inner(), z.into_inner());
+    }
+
+    #[test]
+    fn equivalent_to_3_disjunction() {
+        let x = Ternary::<true, Disjunction>::init().get_truth_table();
+        let y = Ternary::<false, Disjunction>::init().get_truth_table();
+        assert_eq!(x.values(), y.values());
+        let z: TruthTable<3> = DisjunctionAny::init().get_truth_table();
+        assert_eq!(x.values(), z.values());
+        assert_eq!(y.into_inner(), z.into_inner());
     }
 }

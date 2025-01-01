@@ -7,14 +7,14 @@ pub mod truth;
 
 pub use self::{
     binary::{
-        and::Conjunction,
+        and::{Conjunction, ConjunctionAny},
         converse_imply::ConverseImplication,
         converse_nimply::ConverseNonImplication,
         imply::MaterialImplication,
         nand::NonConjunction,
         nimply::MaterialNonImplication,
         nor::NonDisjunction,
-        or::Disjunction,
+        or::{Disjunction, DisjunctionAny},
         proj::{First, Last, NotFirst, NotSecond, ProjectAndUnary, Projection},
         xnor::LogicalBiconditional,
         xor::ExclusiveDisjunction,

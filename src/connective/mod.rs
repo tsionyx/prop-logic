@@ -100,10 +100,14 @@ mod tests {
     fn eval_is_sync_with_apply() {
         // nullary
         apply_and_compose_is_equivalent::<0, _>(Falsity);
+        apply_and_compose_is_equivalent::<0, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<0, _>(Truth);
 
         // unary
         apply_and_compose_is_equivalent::<1, _>(Falsity);
+        apply_and_compose_is_equivalent::<1, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<1, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<1, _>(LogicalIdentity);
         apply_and_compose_is_equivalent::<1, _>(Negation);
         apply_and_compose_is_equivalent::<1, _>(Truth);

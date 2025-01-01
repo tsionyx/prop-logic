@@ -163,9 +163,11 @@ mod tests {
         type T = Truth;
         let table = get::<T, 0>();
         assert_eq!(table, [true]);
+        assert_eq!(table, get::<ConjunctionAny, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], true)]);
+        assert_eq!(table, get_mapping::<ConjunctionAny, 0>());
     }
 
     #[test]
@@ -173,9 +175,11 @@ mod tests {
         type T = Falsity;
         let table = get::<T, 0>();
         assert_eq!(table, [false]);
+        assert_eq!(table, get::<DisjunctionAny, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], false)]);
+        assert_eq!(table, get_mapping::<DisjunctionAny, 0>());
     }
 
     #[test]
@@ -239,9 +243,13 @@ mod tests {
         type T = LogicalIdentity;
         let table = get::<T, 1>();
         assert_eq!(table, [false, true]);
+        assert_eq!(table, get::<ConjunctionAny, 1>());
+        assert_eq!(table, get::<DisjunctionAny, 1>());
 
         let table = get_mapping::<T, 1>();
         assert_eq!(table, vec![([false], false), ([true], true)]);
+        assert_eq!(table, get_mapping::<ConjunctionAny, 1>());
+        assert_eq!(table, get_mapping::<DisjunctionAny, 1>());
     }
 
     #[test]
@@ -324,5 +332,45 @@ mod tests {
                 ([true, true], false),
             ]
         );
+    }
+
+    #[test]
+    fn binary_conjunction() {
+        type T = Conjunction;
+        let table = get::<T, 2>();
+        assert_eq!(table, [false, false, false, true]);
+        assert_eq!(table, get::<ConjunctionAny, 2>());
+
+        let table = get_mapping::<T, 2>();
+        assert_eq!(
+            table,
+            vec![
+                ([false, false], false),
+                ([false, true], false),
+                ([true, false], false),
+                ([true, true], true),
+            ]
+        );
+        assert_eq!(table, get_mapping::<ConjunctionAny, 2>());
+    }
+
+    #[test]
+    fn binary_disjunction() {
+        type T = Disjunction;
+        let table = get::<T, 2>();
+        assert_eq!(table, [false, true, true, true]);
+        assert_eq!(table, get::<DisjunctionAny, 2>());
+
+        let table = get_mapping::<T, 2>();
+        assert_eq!(
+            table,
+            vec![
+                ([false, false], false),
+                ([false, true], true),
+                ([true, false], true),
+                ([true, true], true),
+            ]
+        );
+        assert_eq!(table, get_mapping::<DisjunctionAny, 2>());
     }
 }
