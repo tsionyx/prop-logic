@@ -27,19 +27,19 @@ where
 
 fn main() {
     println!("=== NULLARY ===");
-    for f in NULLARY_FUNCTIONS.iter() {
+    for f in NULLARY_FUNCTIONS.as_ref() {
         print_stat(f);
         println!();
     }
 
     println!("=== UNARY ===");
-    for f in UNARY_FUNCTIONS.iter() {
+    for f in UNARY_FUNCTIONS.as_ref() {
         print_stat(f);
         println!();
     }
 
     println!("=== BINARY ===");
-    for f in BINARY_FUNCTIONS.iter() {
+    for f in BINARY_FUNCTIONS.as_ref() {
         print_stat(f);
         println!();
     }

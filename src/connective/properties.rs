@@ -757,7 +757,7 @@ mod tests_completeness {
         let truly_sheffer_ids = SHEFFER_FNS.map(|f| (*f).type_id());
 
         let mut found_sheffers = 0;
-        for &f in BINARY_FUNCTIONS.iter() {
+        for &f in BINARY_FUNCTIONS.as_ref() {
             let f: &dyn BoolFnExt<2> = f.up();
             if truly_sheffer_ids.contains(&(*f).type_id()) {
                 assert!(f.is_sheffer());
@@ -828,12 +828,17 @@ mod tests_completeness {
             })
             .collect();
 
-        let all_ids: Vec<_> = BINARY_FUNCTIONS.iter().map(|f| (**f).type_id()).collect();
+        let all_ids: Vec<_> = BINARY_FUNCTIONS
+            .as_ref()
+            .iter()
+            .map(|f| (**f).type_id())
+            .collect();
         dbg!(all_ids);
 
         let all_pairs: Vec<[&dyn BoolFnExt<2>; 2]> = BINARY_FUNCTIONS
+            .as_ref()
             .iter()
-            .cartesian_product(BINARY_FUNCTIONS.iter())
+            .cartesian_product(BINARY_FUNCTIONS.as_ref())
             .map(|(&f1, &f2)| [f1.up(), f2.up()])
             .collect();
         assert_eq!(all_pairs.len(), 256);
@@ -924,6 +929,7 @@ mod tests_completeness {
             .collect();
 
         let all_triples: Vec<_> = BINARY_FUNCTIONS
+            .as_ref()
             .iter()
             .combinations(3)
             .map(|x| {
@@ -1011,6 +1017,7 @@ mod tests_completeness {
             .collect();
 
         let all_quadruples: Vec<_> = BINARY_FUNCTIONS
+            .as_ref()
             .iter()
             .combinations(4)
             .map(|x| {

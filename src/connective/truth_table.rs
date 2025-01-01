@@ -44,7 +44,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TruthTable")
-            .field("table", &*self.table)
+            .field("table", self.table.as_ref())
             .finish()
     }
 }

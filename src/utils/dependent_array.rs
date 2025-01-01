@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ops::Deref};
+use std::marker::PhantomData;
 
 /// Defines the rule to map `IN` to the array size.
 pub trait Discriminant<const IN: usize> {
@@ -77,13 +77,11 @@ where
     }
 }
 
-impl<const IN: usize, ARR, T> Deref for CheckedStorage<IN, ARR, T>
+impl<const IN: usize, ARR, T> AsRef<ARR::Array<T>> for CheckedStorage<IN, ARR, T>
 where
     ARR: CheckedArray<IN>,
 {
-    type Target = ARR::Array<T>;
-
-    fn deref(&self) -> &Self::Target {
+    fn as_ref(&self) -> &ARR::Array<T> {
         &self.items
     }
 }

@@ -72,10 +72,10 @@ mod tests_ordering {
 
     #[test]
     fn nullary() {
-        for (i, f1) in NULLARY_FUNCTIONS.iter().enumerate() {
+        for (i, f1) in NULLARY_FUNCTIONS.as_ref().iter().enumerate() {
             let t1: Vec<_> = f1.get_truth_table().into_iter().map(|(_, k)| k).collect();
             dbg!(&t1);
-            for f2 in NULLARY_FUNCTIONS.iter().skip(i + 1) {
+            for f2 in NULLARY_FUNCTIONS.as_ref().iter().skip(i + 1) {
                 let t2: Vec<_> = f2.get_truth_table().into_iter().map(|(_, k)| k).collect();
                 assert!(t1 < t2, "{t1:?} >= {t2:?}");
             }
@@ -84,10 +84,10 @@ mod tests_ordering {
 
     #[test]
     fn unary() {
-        for (i, f1) in UNARY_FUNCTIONS.iter().enumerate() {
+        for (i, f1) in UNARY_FUNCTIONS.as_ref().iter().enumerate() {
             let t1: Vec<_> = f1.get_truth_table().into_iter().map(|(_, k)| k).collect();
             dbg!(&t1);
-            for f2 in UNARY_FUNCTIONS.iter().skip(i + 1) {
+            for f2 in UNARY_FUNCTIONS.as_ref().iter().skip(i + 1) {
                 let t2: Vec<_> = f2.get_truth_table().into_iter().map(|(_, k)| k).collect();
                 assert!(t1 < t2, "{t1:?} >= {t2:?}");
             }
@@ -96,15 +96,15 @@ mod tests_ordering {
 
     #[test]
     fn binary() {
-        for (i, f) in BINARY_FUNCTIONS.iter().enumerate() {
+        for (i, f) in BINARY_FUNCTIONS.as_ref().iter().enumerate() {
             let t: Vec<_> = f.get_truth_table().into_iter().map(|(_, k)| k).collect();
             dbg!(i, t);
         }
 
-        for (i, f1) in BINARY_FUNCTIONS.iter().enumerate() {
+        for (i, f1) in BINARY_FUNCTIONS.as_ref().iter().enumerate() {
             let t1: Vec<_> = f1.get_truth_table().into_iter().map(|(_, k)| k).collect();
             dbg!(i, &t1);
-            for f2 in BINARY_FUNCTIONS.iter().skip(i + 1) {
+            for f2 in BINARY_FUNCTIONS.as_ref().iter().skip(i + 1) {
                 let t2: Vec<_> = f2.get_truth_table().into_iter().map(|(_, k)| k).collect();
                 assert!(t1 < t2, "{i} {t1:?} >= {t2:?}");
             }
