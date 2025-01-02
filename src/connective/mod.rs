@@ -100,30 +100,42 @@ mod tests {
     fn eval_is_sync_with_apply() {
         // nullary
         apply_and_compose_is_equivalent::<0, _>(Falsity);
-        apply_and_compose_is_equivalent::<0, _>(ConjunctionAny);
+
         apply_and_compose_is_equivalent::<0, _>(DisjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(ExclusiveDisjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(AllEquivalent);
+
         apply_and_compose_is_equivalent::<0, _>(Truth);
 
         // unary
         apply_and_compose_is_equivalent::<1, _>(Falsity);
-        apply_and_compose_is_equivalent::<1, _>(ConjunctionAny);
-        apply_and_compose_is_equivalent::<1, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<1, _>(LogicalIdentity);
+
+        apply_and_compose_is_equivalent::<1, _>(DisjunctionAny);
+        apply_and_compose_is_equivalent::<1, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<1, _>(AllEquivalent);
+        apply_and_compose_is_equivalent::<1, _>(ExclusiveDisjunctionAny);
+
         apply_and_compose_is_equivalent::<1, _>(Negation);
         apply_and_compose_is_equivalent::<1, _>(Truth);
 
         // binary
         apply_and_compose_is_equivalent::<2, _>(Falsity);
         apply_and_compose_is_equivalent::<2, _>(Conjunction);
+        apply_and_compose_is_equivalent::<2, _>(ConjunctionAny);
         apply_and_compose_is_equivalent::<2, _>(MaterialNonImplication);
         apply_and_compose_is_equivalent::<2, _>(First {});
         apply_and_compose_is_equivalent::<2, _>(ConverseNonImplication);
         apply_and_compose_is_equivalent::<2, _>(Last {});
         apply_and_compose_is_equivalent::<2, _>(ExclusiveDisjunction);
+        apply_and_compose_is_equivalent::<2, _>(ExclusiveDisjunctionAny);
         apply_and_compose_is_equivalent::<2, _>(Disjunction);
+        apply_and_compose_is_equivalent::<2, _>(DisjunctionAny);
 
         apply_and_compose_is_equivalent::<2, _>(NonDisjunction);
         apply_and_compose_is_equivalent::<2, _>(LogicalBiconditional);
+        apply_and_compose_is_equivalent::<2, _>(AllEquivalent);
         apply_and_compose_is_equivalent::<2, _>(NotSecond::new());
         apply_and_compose_is_equivalent::<2, _>(ConverseImplication);
         apply_and_compose_is_equivalent::<2, _>(NotFirst::new());

@@ -75,7 +75,7 @@ impl Connective<2> for Conjunction {
 /// See also:
 /// - [`DisjunctionAny`][super::or::DisjunctionAny];
 /// - [`ExclusiveDisjunctionAny`][super::xor::ExclusiveDisjunctionAny];
-/// - [`LogicalBiconditionalAny`][super::xnor::LogicalBiconditionalAny];
+/// - [`AllEquivalent`][super::xnor::AllEquivalent];
 pub struct ConjunctionAny;
 
 impl<const ARITY: usize, E> TruthFn<ARITY, E> for ConjunctionAny

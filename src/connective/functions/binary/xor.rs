@@ -55,3 +55,84 @@ impl Connective<2> for ExclusiveDisjunction {
         ])
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+/// Generalization of the [`ExclusiveDisjunction`] for any number of values.
+///
+/// It produces a value of `true` if and only if there are _odd_ number of truthy operands,
+/// otherwise the result is `false`.
+///
+/// The two degenerative cases are:
+/// - nullary (ARITY=0):
+///   the connective is equivalent to [`Falsity`][super::super::Falsity];
+/// - unary (ARTIY=1):
+///   the connective is equivalent to [`LogicalIdentity`][super::super::LogicalIdentity];
+///
+/// ---
+/// The non-trivial boolean operation could be interpreted as the function of arbitrary arity
+/// only if it is both _commutative_ and _associative_.
+/// See also:
+/// - [`ConjunctionAny`][super::and::ConjunctionAny];
+/// - [`DisjunctionAny`][super::or::DisjunctionAny];
+/// - [`AllEquivalent`][super::xnor::AllEquivalent];
+pub struct ExclusiveDisjunctionAny;
+
+impl<const ARITY: usize, E> TruthFn<ARITY, E> for ExclusiveDisjunctionAny
+where
+    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
+{
+    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+        let tautologies = terms.iter().filter(|e| e.is_tautology()).count();
+        let _contradictions = terms.iter().filter(|e| e.is_contradiction()).count();
+        // odd number of tautologies equivalent to single Truth value
+        let is_truth_constant = tautologies % 2 == 1;
+
+        let partials = terms.iter().filter(|e| e.is_partial()).count();
+        if partials == 0 {
+            if is_truth_constant {
+                Ok(E::tautology())
+            } else {
+                Ok(E::contradiction())
+            }
+        } else if partials == 1 {
+            let Some(partial) = terms.into_iter().find(E::is_partial) else {
+                panic!("Found on previous step");
+            };
+
+            if is_truth_constant {
+                // single truth negate the result
+                Ok(!partial)
+            } else {
+                Ok(partial)
+            }
+        } else {
+            Err(terms)
+        }
+    }
+
+    fn compose(&self, terms: [E; ARITY]) -> E {
+        self.fold(terms).unwrap_or_else(|terms| {
+            terms
+                .into_iter()
+                .rfold(E::contradiction(), |acc, t| match acc.into_terminal() {
+                    Ok(truth_acc) => {
+                        if truth_acc {
+                            !t
+                        } else {
+                            t
+                        }
+                    }
+                    Err(partial_acc) => match t.into_terminal() {
+                        Ok(truth_term) => {
+                            if truth_term {
+                                !E::partial(partial_acc)
+                            } else {
+                                E::partial(partial_acc)
+                            }
+                        }
+                        Err(partial_term) => E::partial(partial_term) ^ E::partial(partial_acc),
+                    },
+                })
+        })
+    }
+}

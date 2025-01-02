@@ -164,10 +164,12 @@ mod tests {
         let table = get::<T, 0>();
         assert_eq!(table, [true]);
         assert_eq!(table, get::<ConjunctionAny, 0>());
+        assert_eq!(table, get::<AllEquivalent, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 0>());
+        assert_eq!(table, get_mapping::<AllEquivalent, 0>());
     }
 
     #[test]
@@ -176,10 +178,12 @@ mod tests {
         let table = get::<T, 0>();
         assert_eq!(table, [false]);
         assert_eq!(table, get::<DisjunctionAny, 0>());
+        assert_eq!(table, get::<ExclusiveDisjunctionAny, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], false)]);
         assert_eq!(table, get_mapping::<DisjunctionAny, 0>());
+        assert_eq!(table, get_mapping::<ExclusiveDisjunctionAny, 0>());
     }
 
     #[test]
@@ -187,9 +191,11 @@ mod tests {
         type T = Truth;
         let table = get::<T, 1>();
         assert_eq!(table, [true, true]);
+        assert_eq!(table, get::<AllEquivalent, 1>());
 
         let table = get_mapping::<T, 1>();
         assert_eq!(table, vec![([false], true), ([true], true)]);
+        assert_eq!(table, get_mapping::<AllEquivalent, 1>());
     }
 
     #[test]
@@ -245,11 +251,13 @@ mod tests {
         assert_eq!(table, [false, true]);
         assert_eq!(table, get::<ConjunctionAny, 1>());
         assert_eq!(table, get::<DisjunctionAny, 1>());
+        assert_eq!(table, get::<ExclusiveDisjunctionAny, 1>());
 
         let table = get_mapping::<T, 1>();
         assert_eq!(table, vec![([false], false), ([true], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 1>());
         assert_eq!(table, get_mapping::<DisjunctionAny, 1>());
+        assert_eq!(table, get_mapping::<ExclusiveDisjunctionAny, 1>());
     }
 
     #[test]
@@ -372,5 +380,45 @@ mod tests {
             ]
         );
         assert_eq!(table, get_mapping::<DisjunctionAny, 2>());
+    }
+
+    #[test]
+    fn binary_xor() {
+        type T = ExclusiveDisjunction;
+        let table = get::<T, 2>();
+        assert_eq!(table, [false, true, true, false]);
+        assert_eq!(table, get::<ExclusiveDisjunctionAny, 2>());
+
+        let table = get_mapping::<T, 2>();
+        assert_eq!(
+            table,
+            vec![
+                ([false, false], false),
+                ([false, true], true),
+                ([true, false], true),
+                ([true, true], false),
+            ]
+        );
+        assert_eq!(table, get_mapping::<ExclusiveDisjunctionAny, 2>());
+    }
+
+    #[test]
+    fn binary_eq() {
+        type T = LogicalBiconditional;
+        let table = get::<T, 2>();
+        assert_eq!(table, [true, false, false, true]);
+        assert_eq!(table, get::<AllEquivalent, 2>());
+
+        let table = get_mapping::<T, 2>();
+        assert_eq!(
+            table,
+            vec![
+                ([false, false], true),
+                ([false, true], false),
+                ([true, false], false),
+                ([true, true], true),
+            ]
+        );
+        assert_eq!(table, get_mapping::<AllEquivalent, 2>());
     }
 }

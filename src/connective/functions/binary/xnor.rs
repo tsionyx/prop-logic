@@ -65,3 +65,104 @@ impl Connective<2> for LogicalBiconditional {
         ])
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+/// Generalization of the [`LogicalBiconditional`] for any number of values.
+///
+/// It produces a value of `true` if and only if all the operands
+/// share the same value (either `true` or `false`), otherwise the result is `false`.
+///
+/// The two degenerative cases are:
+/// - nullary (ARITY=0) and unary (ARITY=1):
+///   the connective is equivalent to [`Truth`][super::super::Truth];
+///
+/// ---
+/// The non-trivial boolean operation could be interpreted as the function of arbitrary arity
+/// only if it is both _commutative_ and _associative_.
+/// See also:
+/// - [`ConjunctionAny`][super::and::ConjunctionAny];
+/// - [`DisjunctionAny`][super::or::DisjunctionAny];
+/// - [`ExclusiveDisjunctionAny`][super::xor::ExclusiveDisjunctionAny];
+///
+/// # Attention
+/// Be aware that this functions is **different** from the previous three examples
+/// in terms of being the **stronger** than the simple combination
+/// of multiple [binary equalities][super::xnor::AllEquivalent] because it represent
+/// the 'all equal' relationship rather than the 'pairwise equal',
+/// i.e.:
+///
+/// `(a == b) == c` is of course the same as
+/// `b == (c == a)`
+/// because of the commutativity and associativity of the binary equality.
+///
+/// But they are **not the same** as truly ternary `== (a, b, c)`
+/// which is the **all equal** relationship.
+pub struct AllEquivalent;
+
+impl<const ARITY: usize, E> TruthFn<ARITY, E> for AllEquivalent
+where
+    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
+{
+    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+        if terms.iter().all(E::is_tautology) {
+            return Ok(E::tautology());
+        }
+
+        if terms.iter().all(E::is_contradiction) {
+            return Ok(E::tautology());
+        }
+
+        let have_tautologies = terms.iter().any(E::is_tautology);
+        let have_contradictions = terms.iter().any(E::is_contradiction);
+        if have_tautologies && have_contradictions {
+            return Ok(E::contradiction());
+        }
+
+        let partials = terms.iter().filter(|e| e.is_partial()).count();
+        assert!(
+            partials > 0,
+            "No-partials case should be catched by the previous short-circuting routines"
+        );
+
+        if partials == 1 {
+            let Some(partial) = terms.into_iter().find(E::is_partial) else {
+                panic!("Found on previous step");
+            };
+
+            if have_contradictions {
+                Ok(!partial)
+            } else {
+                // does not matter whether we have tautologies or not
+                Ok(partial)
+            }
+        } else {
+            Err(terms)
+        }
+    }
+
+    fn compose(&self, terms: [E; ARITY]) -> E {
+        self.fold(terms).unwrap_or_else(|terms| {
+            terms
+                .into_iter()
+                .rfold(E::tautology(), |acc, t| match acc.into_terminal() {
+                    Ok(truth_acc) => {
+                        if truth_acc {
+                            t
+                        } else {
+                            !t
+                        }
+                    }
+                    Err(partial_acc) => match t.into_terminal() {
+                        Ok(truth_term) => {
+                            if truth_term {
+                                E::partial(partial_acc)
+                            } else {
+                                !E::partial(partial_acc)
+                            }
+                        }
+                        Err(partial_term) => !(E::partial(partial_term) ^ E::partial(partial_acc)),
+                    },
+                })
+        })
+    }
+}
