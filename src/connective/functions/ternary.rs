@@ -1,7 +1,7 @@
 //! Generic ternary function as the composition of two binary functions.
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
-use super::super::{Evaluable, TruthFn};
+use super::super::{ops::Associativity as _, EquivalentBoolFn, Evaluable, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Wrapper for a ternary boolean function which applies
@@ -21,15 +21,14 @@ impl<const LEFT: bool, Op1, Op2> Ternary<LEFT, Op1, Op2> {
 impl<const LEFT: bool, E, Op1, Op2> TruthFn<3, E> for Ternary<LEFT, Op1, Op2>
 where
     E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
-    Op1: TruthFn<2, E>,
-    Op2: TruthFn<2, E>,
+    Op1: TruthFn<2, E> + EquivalentBoolFn<2>,
+    Op2: TruthFn<2, E> + EquivalentBoolFn<2>,
 {
     fn fold(&self, values: [E; 3]) -> Result<E, [E; 3]> {
-        let [x, y, z] = values.clone();
+        let try_fold = |left| {
+            let [x, y, z] = values.clone();
 
-        // TODO: consider for example the case of (expr1 || expr2 || false)
-        let optional = || {
-            if LEFT {
+            if left {
                 let intermediate = self.op1.fold([x, y]).ok()?;
                 self.op2.fold([intermediate, z]).ok()
             } else {
@@ -38,7 +37,16 @@ where
             }
         };
 
-        optional().ok_or(values)
+        try_fold(LEFT)
+            .or_else(|| {
+                let can_switch = self.op1.is_equivalent(&self.op2) && self.op1.is_associative();
+                if can_switch {
+                    try_fold(!LEFT)
+                } else {
+                    None
+                }
+            })
+            .ok_or(values)
     }
 
     fn compose(&self, [x, y, z]: [E; 3]) -> E {
@@ -54,8 +62,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::{Formula, Var};
+
     use super::{
-        super::super::{functions::Conjunction, InitFn as _, TruthFnConnector as _},
+        super::super::{
+            functions::{Conjunction, Disjunction},
+            InitFn as _, TruthFnConnector as _,
+        },
         *,
     };
 
@@ -70,5 +83,37 @@ mod tests {
         assert!(!x([true, false, true]));
         assert!(!x([true, true, false]));
         assert!(x([true, true, true]));
+    }
+
+    #[test]
+    fn reduce_3_conjunction() {
+        let x = Var::new(1);
+        let y = Var::new(2);
+        let falsity = Formula::contradiction();
+
+        let left = Ternary::<true, Conjunction>::init();
+        let right = Ternary::<false, Conjunction>::init();
+
+        let res_left = left.fold([x.into(), y.into(), falsity.clone()]).unwrap();
+        assert!(res_left.is_contradiction());
+
+        let res_right = right.fold([x.into(), y.into(), falsity]).unwrap();
+        assert!(res_right.is_contradiction());
+    }
+
+    #[test]
+    fn reduce_3_disjunction() {
+        let x = Var::new(1);
+        let y = Var::new(2);
+        let truth = Formula::tautology();
+
+        let left = Ternary::<true, Disjunction>::init();
+        let right = Ternary::<false, Disjunction>::init();
+
+        let res_left = left.fold([x.into(), y.into(), truth.clone()]).unwrap();
+        assert!(res_left.is_tautology());
+
+        let res_right = right.fold([x.into(), y.into(), truth]).unwrap();
+        assert!(res_right.is_tautology());
     }
 }
