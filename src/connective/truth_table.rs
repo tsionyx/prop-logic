@@ -12,7 +12,7 @@ use std::fmt;
 use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, CheckedArray};
 
 /// A [truth table](https://en.wikipedia.org/wiki/Truth_table)
-/// for arbitrary [`TruthFn`][super::TruthFn]
+/// for arbitrary [`BoolFn`][super::BoolFn]
 ///
 /// with the values produced by applying
 /// the arguments in default order
@@ -62,17 +62,8 @@ where
         }
     }
 
-    /// Get the ordered sequence of bool results of a [`TruthFn`][super::TruthFn].
-    pub fn values(&self) -> Vec<bool>
-    where
-        <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
-    {
-        let v = self.table.clone().into_inner();
-        v.into_iter().map(|(_k, v)| v).collect()
-    }
-
     /// Convert the whole table into the ordered sequence
-    /// of bool results of a [`TruthFn`][super::TruthFn].
+    /// of bool results of a [`BoolFn`][super::BoolFn].
     pub fn into_values(self) -> Vec<bool> {
         self.table
             .into_inner()

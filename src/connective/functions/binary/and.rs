@@ -125,3 +125,27 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        super::super::{
+            super::{EquivalentBoolFn, InitFn as _},
+            ternary::Ternary,
+            LogicalIdentity, Truth,
+        },
+        *,
+    };
+
+    #[test]
+    fn any_equivalences() {
+        assert!(<Truth as EquivalentBoolFn<0>>::is_equivalent(
+            &Truth,
+            &ConjunctionAny::init()
+        ));
+        assert!(LogicalIdentity.is_equivalent(&ConjunctionAny::init()));
+        assert!(Conjunction.is_equivalent(&ConjunctionAny::init()));
+        assert!(Ternary::<true, Conjunction>::init().is_equivalent(&ConjunctionAny::init()));
+        assert!(Ternary::<false, Conjunction>::init().is_equivalent(&ConjunctionAny::init()));
+    }
+}

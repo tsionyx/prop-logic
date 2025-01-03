@@ -21,7 +21,7 @@ pub use self::{
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{BoolFn, Connective, InitFn, TruthFn, TruthFnConnector},
+    traits::{BoolFn, Connective, EquivalentBoolFn, InitFn, TruthFn, TruthFnConnector},
     truth_table::TruthTable,
 };
 

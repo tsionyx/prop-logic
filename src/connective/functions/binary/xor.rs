@@ -136,3 +136,29 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        super::super::{
+            super::{EquivalentBoolFn, InitFn as _},
+            ternary::Ternary,
+            Falsity, LogicalIdentity,
+        },
+        *,
+    };
+
+    #[test]
+    fn any_equivalences() {
+        assert!(<Falsity as EquivalentBoolFn<0>>::is_equivalent(
+            &Falsity,
+            &ExclusiveDisjunctionAny::init()
+        ));
+        assert!(LogicalIdentity.is_equivalent(&ExclusiveDisjunctionAny::init()));
+        assert!(ExclusiveDisjunction.is_equivalent(&ExclusiveDisjunctionAny::init()));
+        assert!(Ternary::<true, ExclusiveDisjunction>::init()
+            .is_equivalent(&ExclusiveDisjunctionAny::init()));
+        assert!(Ternary::<false, ExclusiveDisjunction>::init()
+            .is_equivalent(&ExclusiveDisjunctionAny::init()));
+    }
+}

@@ -2,7 +2,7 @@
 use std::{collections::HashMap as Map, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, ternary::Ternary, BoolFn, InitFn as _};
+use super::{functions::*, ternary::Ternary, BoolFn, EquivalentBoolFn as _, InitFn as _};
 
 /// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -187,7 +187,7 @@ where
         let t_right = Ternary::<false, _>::new(self, self);
         // println!("{}", t_left.get_truth_table());
         // println!("{}", t_right.get_truth_table());
-        t_left.get_truth_table().into_values() == t_right.get_truth_table().into_values()
+        t_left.is_equivalent(&t_right)
     }
 }
 

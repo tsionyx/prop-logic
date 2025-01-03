@@ -166,3 +166,39 @@ where
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        super::super::{
+            super::{EquivalentBoolFn, InitFn as _},
+            ternary::Ternary,
+            Truth,
+        },
+        *,
+    };
+
+    #[test]
+    fn any_equivalences() {
+        assert!(<Truth as EquivalentBoolFn<0>>::is_equivalent(
+            &Truth,
+            &AllEquivalent::init()
+        ));
+        assert!(<Truth as EquivalentBoolFn<1>>::is_equivalent(
+            &Truth,
+            &AllEquivalent::init()
+        ));
+        assert!(LogicalBiconditional.is_equivalent(&AllEquivalent::init()));
+    }
+
+    #[test]
+    fn all_equal_not_equivalent_to_pairwise_equal() {
+        // the 'all equal' is stronger than 'pairwise equal'
+        assert!(
+            !Ternary::<true, LogicalBiconditional>::init().is_equivalent(&AllEquivalent::init())
+        );
+        assert!(
+            !Ternary::<false, LogicalBiconditional>::init().is_equivalent(&AllEquivalent::init())
+        );
+    }
+}

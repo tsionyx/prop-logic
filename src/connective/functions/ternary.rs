@@ -55,13 +55,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        super::super::{
-            functions::{
-                AllEquivalent, Conjunction, ConjunctionAny, Disjunction, DisjunctionAny,
-                ExclusiveDisjunction, ExclusiveDisjunctionAny, LogicalBiconditional,
-            },
-            BoolFn, InitFn as _, TruthFnConnector as _, TruthTable,
-        },
+        super::super::{functions::Conjunction, InitFn as _, TruthFnConnector as _},
         *,
     };
 
@@ -76,46 +70,5 @@ mod tests {
         assert!(!x([true, false, true]));
         assert!(!x([true, true, false]));
         assert!(x([true, true, true]));
-    }
-
-    #[test]
-    fn equivalent_to_3_conjunction() {
-        let x = Ternary::<true, Conjunction>::init().get_truth_table();
-        let y = Ternary::<false, Conjunction>::init().get_truth_table();
-        assert_eq!(x.values(), y.values());
-        let z: TruthTable<3> = ConjunctionAny::init().get_truth_table();
-        assert_eq!(x.values(), z.values());
-        assert_eq!(y.into_inner(), z.into_inner());
-    }
-
-    #[test]
-    fn equivalent_to_3_disjunction() {
-        let x = Ternary::<true, Disjunction>::init().get_truth_table();
-        let y = Ternary::<false, Disjunction>::init().get_truth_table();
-        assert_eq!(x.values(), y.values());
-        let z: TruthTable<3> = DisjunctionAny::init().get_truth_table();
-        assert_eq!(x.values(), z.values());
-        assert_eq!(y.into_inner(), z.into_inner());
-    }
-
-    #[test]
-    fn equivalent_to_3_xor() {
-        let x = Ternary::<true, ExclusiveDisjunction>::init().get_truth_table();
-        let y = Ternary::<false, ExclusiveDisjunction>::init().get_truth_table();
-        assert_eq!(x.values(), y.values());
-        let z: TruthTable<3> = ExclusiveDisjunctionAny::init().get_truth_table();
-        assert_eq!(x.values(), z.values());
-        assert_eq!(y.into_inner(), z.into_inner());
-    }
-
-    #[test]
-    #[should_panic(expected = "left == right")] // the 'all equal' is stronger than 'pairwise equal'
-    fn equivalent_to_3_eq() {
-        let x = Ternary::<true, LogicalBiconditional>::init().get_truth_table();
-        let y = Ternary::<false, LogicalBiconditional>::init().get_truth_table();
-        assert_eq!(x.values(), y.values());
-        let z: TruthTable<3> = AllEquivalent::init().get_truth_table();
-        assert_eq!(x.values(), z.values());
-        assert_eq!(y.into_inner(), z.into_inner());
     }
 }

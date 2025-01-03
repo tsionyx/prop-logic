@@ -20,8 +20,8 @@ where
     D: CheckedArray<ARITY>,
     <D as CheckedArray<ARITY>>::Array<truth_table::Row<ARITY>>: Clone,
 {
-    let op1_truth_table = Op1::init().get_truth_table().values();
-    let op2_truth_table = Op2::init().get_truth_table().values();
+    let op1_truth_table = Op1::init().get_truth_table().into_values();
+    let op2_truth_table = Op2::init().get_truth_table().into_values();
 
     let mut set_ordering = Ordering::Equal;
     for (&val1, &val2) in op1_truth_table.iter().zip(&op2_truth_table) {

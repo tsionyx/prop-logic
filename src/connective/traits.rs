@@ -43,7 +43,8 @@ pub trait TruthFn<const ARITY: usize, E: Evaluable> {
 /// Extension of the [`TruthFn`] to create a [callable object][Operation]
 /// to use with [`Evaluable`]-s.
 ///
-/// Separated from the parent trait to allow for it to be used with `auto_impl`.
+/// Separated from the [parent trait][TruthFn] to allow for the latter
+/// to be used with `auto_impl`.
 pub trait TruthFnConnector<const ARITY: usize, E: Evaluable>: TruthFn<ARITY, E> {
     /// Returns a [callable object][Operation] which can
     /// be used to [compose][TruthFn::compose] a number of [`Evaluable`]-s.
@@ -74,6 +75,30 @@ pub trait BoolFn<const ARITY: usize>: TruthFn<ARITY, bool> {
     fn get_truth_table(&self) -> TruthTable<ARITY>
     where
         two_powers::D: CheckedArray<ARITY>;
+}
+
+/// Use [`TruthTable`] to determine if two functions are equivalent.
+///
+/// Separated from the [parent trait][BoolFn] to allow for the latter
+/// to be dyn-compatible.
+pub trait EquivalentBoolFn<const ARITY: usize>: BoolFn<ARITY> {
+    /// Checks whether the two functions are equivalent.
+    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
+    where
+        Rhs: BoolFn<ARITY>;
+}
+
+impl<const ARITY: usize, F> EquivalentBoolFn<ARITY> for F
+where
+    F: BoolFn<ARITY>,
+    two_powers::D: CheckedArray<ARITY>,
+{
+    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
+    where
+        Rhs: BoolFn<ARITY>,
+    {
+        self.get_truth_table().into_values() == other.get_truth_table().into_values()
+    }
 }
 
 impl<const ARITY: usize, T> BoolFn<ARITY> for T
