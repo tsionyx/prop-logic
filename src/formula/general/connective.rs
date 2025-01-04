@@ -88,6 +88,18 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
             Self::Binary(x) => AnyConnective::Binary(x.as_ref()),
         }
     }
+
+    /// Convert to another [`AnyConnective`] by converting its operands.
+    pub fn map<F, OperandTarget>(self, f: F) -> AnyConnective<OperandTarget, Atom>
+    where
+        F: FnMut(OPERAND) -> OperandTarget,
+    {
+        match self {
+            Self::Nullary(x) => AnyConnective::Nullary(x.map(f)),
+            Self::Unary(x) => AnyConnective::Unary(x.map(f)),
+            Self::Binary(x) => AnyConnective::Binary(x.map(f)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -144,6 +156,22 @@ impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
             operands: operands
                 .try_into()
                 .unwrap_or_else(|_| unreachable!("the size of ARITY is preserved")),
+        }
+    }
+
+    /// Convert to another [`DynConnective`] by converting its operands.
+    pub fn map<F, OperandTarget>(self, f: F) -> DynConnective<ARITY, OperandTarget, Atom>
+    where
+        F: FnMut(OPERAND) -> OperandTarget,
+    {
+        let Self {
+            connective,
+            operands,
+        } = self;
+
+        DynConnective {
+            connective,
+            operands: operands.map(f),
         }
     }
 }

@@ -73,7 +73,7 @@ impl<T: Atom> Formula<T> {
 }
 
 impl<T> Formula<T> {
-    /// Get a top-level connective for a given [`Formula`].
+    /// Get a top-level connective for a given [`Formula`] along with the operands.
     pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {
             Self::TruthValue(true) => AnyConnective::new_0(functions::Truth),
@@ -109,6 +109,23 @@ impl<T> Formula<T> {
 
     fn has_obvious_priority_over(&self, e: &Self) -> bool {
         self.priority() > e.priority()
+    }
+}
+
+impl<T> From<Formula<T>> for AnyConnective<Formula<T>, T> {
+    fn from(formula: Formula<T>) -> Self {
+        match formula {
+            Formula::TruthValue(true) => Self::new_0(functions::Truth),
+            Formula::TruthValue(false) => Self::new_0(functions::Falsity),
+            Formula::Atomic(_) => Self::new_1(functions::LogicalIdentity, formula),
+            Formula::Not(x) => Self::new_1(functions::Negation, *x),
+            Formula::And(x1, x2) => Self::new_2(functions::Conjunction, (*x1, *x2)),
+            Formula::Or(x1, x2) => Self::new_2(functions::Disjunction, (*x1, *x2)),
+            Formula::Xor(x1, x2) => Self::new_2(functions::ExclusiveDisjunction, (*x1, *x2)),
+            Formula::Implies(x1, x2) => Self::new_2(functions::MaterialImplication, (*x1, *x2)),
+            Formula::Equivalent(x1, x2) => Self::new_2(functions::LogicalBiconditional, (*x1, *x2)),
+            Formula::Other(inner) => inner.map(|f| *f),
+        }
     }
 }
 
