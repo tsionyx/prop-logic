@@ -26,8 +26,8 @@ jobs:
     steps:
       - run: echo "null"
 
-  fmt:
-    name: Verify formatting with `rustfmt` on rust '${{ matrix.rust }}'
+  static:
+    name: Static analysis with `rustfmt` and `clippy` on rust '${{ matrix.rust }}'
     runs-on: ubuntu-latest
     needs: [ get-env-vars ]
     strategy:
@@ -46,7 +46,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
-          components: rustfmt
+          components: rustfmt, clippy
           override: true
 
       - name: Run cargo fmt
@@ -55,31 +55,10 @@ jobs:
           command: fmt
           args: --all -- --check
 
-  clippy:
-    name: Static analysis with `clippy` on rust '${{ matrix.rust }}'
-    runs-on: ubuntu-latest
-    needs: [ get-env-vars ]
-    strategy:
-      matrix:
-        rust: ${{ fromJSON(needs.get-env-vars.outputs.RUST_VERSIONS) }}
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
       - name: Install deps
         # https://github.com/orgs/community/discussions/27125#discussioncomment-3254720
         if: ${{ fromJSON(needs.get-env-vars.outputs.APT_DEPENDENCIES)[0] != null }}
         run: sudo apt-get -y install ${{ join(fromJSON(needs.get-env-vars.outputs.APT_DEPENDENCIES), ' ') }}
-
-      - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          profile: minimal
-          components: clippy
-          override: true
 
       # Not using the fixed Cargo.lock results
       # in too frequent changes and low cache usage.
@@ -110,11 +89,28 @@ jobs:
           #token: ${{ secrets.GITHUB_TOKEN }}
           args: --workspace --all-targets --all-features -- -D warnings
 
+      - name: Check docs
+        env:
+          RUSTDOCFLAGS: '-D warnings'
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --workspace --lib --bins --examples
+
+      - name: Check docs with all features
+        env:
+          RUSTDOCFLAGS: '-D warnings'
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --workspace --lib --bins --examples --all-features --no-deps
+
+
   test:
     name: Test Suite on rust '${{ matrix.rust }}'
 
     runs-on: ubuntu-latest
-    needs: [ get-env-vars, fmt, clippy ]
+    needs: [ get-env-vars, static ]
 
     strategy:
       matrix:
