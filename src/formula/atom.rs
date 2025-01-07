@@ -2,9 +2,9 @@ use crate::{connective::Evaluable, utils::zst::Void};
 
 /// An atomic entity with no deeper propositional structure.
 ///
-/// For propositional logic, a [propositional variable][Variable]
+/// For propositional logic, a [propositional variable][super::super::Variable]
 /// is often more briefly referred to as an [atomic formula][Atom],
-/// but, more precisely, a [propositional variable][Variable]
+/// but, more precisely, a [propositional variable][super::super::Variable]
 /// is not an atomic formula but a formal expression that denotes an atomic formula.
 pub trait Atom {}
 

@@ -65,13 +65,6 @@ pub trait BoolFn<const ARITY: usize>: TruthFn<ARITY, bool> {
     /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
     /// for a [`BoolFn`] as the **key** (boolean arguments)-**value** (function result)
     /// ordered map.
-    ///
-    /// # Panics
-    ///
-    /// If a single point of cartesian product of `ARITY` bool values
-    /// does not contain exactly `ARITY` values.
-    /// This invariant should be guaranteed by the
-    /// [itertools library][itertools::Itertools::multi_cartesian_product].
     fn get_truth_table(&self) -> TruthTable<ARITY>
     where
         two_powers::D: CheckedArray<ARITY>;

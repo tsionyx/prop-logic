@@ -16,7 +16,7 @@ impl<const ARITY: usize, T> fmt::Debug for Operation<ARITY, T> {
 }
 
 impl<const ARITY: usize, T> Operation<ARITY, T> {
-    /// Create an [`Operator`] by wrapping the given function.
+    /// Create an [`Operation`] by wrapping the given function.
     pub const fn new(func: Box<dyn Fn([T; ARITY]) -> T>) -> Self {
         Self { func }
     }

@@ -12,7 +12,7 @@ pub struct Ternary<const LEFT: bool, Op1, Op2 = Op1> {
 }
 
 impl<const LEFT: bool, Op1, Op2> Ternary<LEFT, Op1, Op2> {
-    /// Create an instance of the [`ProjectAndUnary`].
+    /// Create an instance of the [`Ternary`] with given operators.
     pub const fn new(op1: Op1, op2: Op2) -> Self {
         Self { op1, op2 }
     }

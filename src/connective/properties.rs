@@ -138,11 +138,11 @@ impl<const ARITY: usize, T: BoolFnExt<ARITY>> UpcastFrom<T> for dyn BoolFnExt<AR
 /// without losing the completeness property.
 ///
 /// Defined using the Post's criterion about **not holding** the five properties:
-/// - [falsity preserving][Self::is_falsity_preserving];
-/// - [truth preserving][Self::is_truth_preserving];
-/// - [monotonness][Self::is_monotonic];
-/// - [affinness][Self::is_affine];
-/// - [self duality][Self::is_self_dual].
+/// - [falsity preserving][BoolFnExt::is_falsity_preserving];
+/// - [truth preserving][BoolFnExt::is_truth_preserving];
+/// - [monotonness][BoolFnExt::is_monotonic];
+/// - [affinness][BoolFnExt::is_affine];
+/// - [self duality][BoolFnExt::is_self_dual].
 ///
 /// More of it: <https://en.wikipedia.org/wiki/Functional_completeness#Characterization_of_functional_completeness>.
 pub fn is_complete<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool {
@@ -161,11 +161,11 @@ pub fn is_complete<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> b
 /// without losing the completeness property.
 ///
 /// Defined using the Post's criterion about **not holding** the five properties:
-/// - [falsity preserving][Self::is_falsity_preserving];
-/// - [truth preserving][Self::is_truth_preserving];
-/// - [monotonness][Self::is_monotonic];
-/// - [affinness][Self::is_affine];
-/// - [self duality][Self::is_self_dual].
+/// - [falsity preserving][BoolFnExt::is_falsity_preserving];
+/// - [truth preserving][BoolFnExt::is_truth_preserving];
+/// - [monotonness][BoolFnExt::is_monotonic];
+/// - [affinness][BoolFnExt::is_affine];
+/// - [self duality][BoolFnExt::is_self_dual].
 ///
 /// More of it: <https://en.wikipedia.org/wiki/Functional_completeness#Characterization_of_functional_completeness>.
 pub fn is_basis<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool {

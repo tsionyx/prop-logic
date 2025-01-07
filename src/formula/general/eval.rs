@@ -38,7 +38,7 @@ where
 {
     #[must_use]
     /// Trying to get the value of [`Formula`]
-    /// by reducing it using available [Atom]'s [`Valuation`].
+    /// by reducing it using available [`Atom`][super::super::Atom]'s [`Valuation`].
     ///
     /// If the [`Valuation`] is incomplete,
     /// the reduced [`Formula`] is going to be produced
