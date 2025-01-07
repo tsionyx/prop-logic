@@ -18,7 +18,7 @@ pub use super::{
 #[derive_where(PartialEq; T: PartialEq + 'static)]
 /// [`Formula`] is a well-formed expression constructed from
 /// propositions or [variables][Atom]
-/// and [logical operators][super::connective::Connective].
+/// and [logical operators][crate::connective::Connective].
 ///
 /// Based on <https://docs.rs/logic/>
 pub enum Formula<T> {

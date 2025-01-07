@@ -46,7 +46,8 @@ macro_rules! impl_std_not {
 /// Easily convert a binary `BoolFn` into its counterpart in terms
 /// of swapping its arguments.
 ///
-/// For the _commutative_ operation, the [`Conversion`] preserves the function.
+/// For the _commutative_ operation, the [`Converse::Conversion`]
+/// is equivalent to the function itself.
 #[auto_impl::auto_impl(&, Box)]
 pub trait Converse: BoolFn<2> {
     /// Another `BoolFn` which truth function is an conversion of the original one.
@@ -147,7 +148,7 @@ impl_converse![
 ];
 
 /// Allow to check the
-/// [Commutativity property](https://en.wikipedia.org/wiki/Commutative_property#Truth_functional_connectives)
+/// [commutativity property](https://en.wikipedia.org/wiki/Commutative_property#Truth_functional_connectives)
 /// of a binary [`BoolFn`].
 pub trait Commutativity {
     /// Whether the given [`BoolFn`] returns the same result

@@ -3,7 +3,7 @@ use crate::utils::dependent_array::{CheckedArray, CheckedStorage, Discriminant};
 /// Implement size checking for the arrays of size `2^ARITY`.
 ///
 /// Suitable to assert the number of combinations of inputs
-/// of a [`TruthFn`][crate::TruthFn]-s for a given `ARITY`.
+/// of a [`TruthFn`][crate::connective::TruthFn]-s for a given `ARITY`.
 pub mod two_powers {
     #[allow(clippy::wildcard_imports)]
     use super::*;
@@ -41,7 +41,7 @@ pub mod two_powers {
 /// Implement size checking for the arrays of size `2^(2^ARITY)`.
 ///
 /// Suitable to assert the number of possible
-/// [`TruthFn`][crate::TruthFn]-s for a given `ARITY`.
+/// [`TruthFn`][crate::connective::TruthFn]-s for a given `ARITY`.
 pub mod two_powers_of_two_powers {
     #[allow(clippy::wildcard_imports)]
     use super::*;
