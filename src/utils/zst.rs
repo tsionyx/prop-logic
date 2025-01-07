@@ -2,6 +2,8 @@
 
 use std::mem::size_of;
 
+pub use void::Void;
+
 /// Marker trait that will only be implemented for ZSTs
 pub trait Zst {
     /// Be aware that the associated constants
@@ -17,7 +19,3 @@ impl<T: Sized> Zst for T {
         assert!(size == 0, "Type must be zero-sized");
     };
 }
-
-#[derive(Debug, Copy, Clone)]
-/// Uninhabited type.
-pub enum Void {}
