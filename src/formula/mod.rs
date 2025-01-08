@@ -16,7 +16,7 @@ pub use self::{
     eval::Valuation,
     general::{
         connective::{AnyConnective, DynConnective},
-        formula::Formula,
+        formula::{Directed, Formula},
     },
     lit::{Lit, Literal},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
