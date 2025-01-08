@@ -68,6 +68,23 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
         Self::Binary(DynConnective::new(connective, operands.into()))
     }
 
+    /// Transform the connective by reversing order of operands
+    /// if it is a [binary][Self::Binary] function.
+    pub fn swap_operands(self) -> Self {
+        if let Self::Binary(DynConnective {
+            connective,
+            operands: [x1, x2],
+        }) = self
+        {
+            Self::Binary(DynConnective {
+                connective,
+                operands: [x2, x1],
+            })
+        } else {
+            self
+        }
+    }
+
     /// Forget the operands and return 'only-operator' version of [`AnyConnective`].
     pub fn clear_operands(&self) -> AnyConnective<(), Atom> {
         match self {
@@ -99,6 +116,98 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
             Self::Unary(x) => AnyConnective::Unary(x.map(f)),
             Self::Binary(x) => AnyConnective::Binary(x.map(f)),
         }
+    }
+}
+
+impl<Atom> AnyConnective<Box<Formula<Atom>>, Atom> {
+    /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
+    pub fn into_canonical(self) -> Formula<Atom> {
+        use crate::{
+            connective::{functions, Evaluable as _, TruthFn as _},
+            truth_table::TruthTabled as _,
+        };
+
+        match self {
+            Self::Nullary(DynConnective {
+                connective,
+                operands: [],
+            }) => {
+                if connective.is_equivalent(&functions::Falsity) {
+                    Formula::contradiction()
+                } else if connective.is_equivalent(&functions::Truth) {
+                    Formula::tautology()
+                } else {
+                    // should be unreachable because of exhaustive checks before
+                    connective.compose([])
+                }
+            }
+
+            Self::Unary(DynConnective {
+                connective,
+                operands: [f],
+            }) => {
+                if connective.is_equivalent(&functions::Falsity) {
+                    Formula::contradiction()
+                } else if connective.is_equivalent(&functions::LogicalIdentity) {
+                    *f
+                } else if connective.is_equivalent(&functions::Negation) {
+                    Formula::Not(f)
+                } else if connective.is_equivalent(&functions::Truth) {
+                    Formula::tautology()
+                } else {
+                    // should be unreachable because of exhaustive checks before
+                    connective.compose([*f])
+                }
+            }
+            Self::Binary(DynConnective {
+                connective,
+                operands: [f1, f2],
+            }) => {
+                if connective.is_equivalent(&functions::Falsity) {
+                    Formula::contradiction()
+                } else if connective.is_equivalent(&functions::Conjunction) {
+                    Formula::And(f1, f2)
+                } else if connective.is_equivalent(&functions::MaterialNonImplication) {
+                    Formula::not(Formula::Implies(f1, f2))
+                } else if connective.is_equivalent(&functions::First {}) {
+                    *f1
+                } else if connective.is_equivalent(&functions::ConverseNonImplication) {
+                    Formula::not(Formula::Implies(f2, f1))
+                } else if connective.is_equivalent(&functions::Last {}) {
+                    *f2
+                } else if connective.is_equivalent(&functions::ExclusiveDisjunction) {
+                    Formula::Xor(f1, f2)
+                } else if connective.is_equivalent(&functions::Disjunction) {
+                    Formula::Or(f1, f2)
+                } else if connective.is_equivalent(&functions::NonDisjunction) {
+                    Formula::not(Formula::Or(f1, f2))
+                } else if connective.is_equivalent(&functions::LogicalBiconditional) {
+                    Formula::Equivalent(f1, f2)
+                } else if connective.is_equivalent(&functions::NotSecond::new()) {
+                    Formula::Not(f2)
+                } else if connective.is_equivalent(&functions::ConverseImplication) {
+                    Formula::Implies(f2, f1)
+                } else if connective.is_equivalent(&functions::NotFirst::new()) {
+                    Formula::Not(f1)
+                } else if connective.is_equivalent(&functions::MaterialImplication) {
+                    Formula::Implies(f1, f2)
+                } else if connective.is_equivalent(&functions::NonConjunction) {
+                    Formula::not(Formula::And(f1, f2))
+                } else if connective.is_equivalent(&functions::Truth) {
+                    Formula::tautology()
+                } else {
+                    // should be unreachable because of exhaustive checks before
+                    connective.compose([*f1, *f2])
+                }
+            }
+        }
+    }
+}
+
+impl<Atom> AnyConnective<Formula<Atom>, Atom> {
+    /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
+    pub fn into_canonical(self) -> Formula<Atom> {
+        self.map(Box::new).into_canonical()
     }
 }
 

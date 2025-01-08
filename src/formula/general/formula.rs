@@ -65,6 +65,31 @@ impl<T: Atom> From<T> for Formula<T> {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+/// The wrapper around the atomic value of a [`Formula`]
+/// to represent the simplest structures:
+/// - an [atomic value][Formula::Atomic] ('p');
+/// - a [negated][Formula::Not] [atomic value][Formula::Atomic] ('¬p').
+///
+/// See the [`Formula::as_directed_atom`] for usage.
+///
+/// It is somewhat similar to the [`Literal`][super::super::Literal]
+/// but the wrapped value is not constrained to the [`Variable`][super::super::Variable].
+pub enum Directed<T> {
+    /// The atomic value itself.
+    Straight(T),
+    /// The negated atomic value.
+    Negated(T),
+}
+
+impl<T> AsRef<T> for Directed<T> {
+    fn as_ref(&self) -> &T {
+        match self {
+            Self::Straight(p) | Self::Negated(p) => p,
+        }
+    }
+}
+
 impl<T> Formula<T> {
     /// Create a constant _truth_ or _falsity_ formula.
     pub const fn truth(value: bool) -> Self {
@@ -113,6 +138,24 @@ impl<T> Formula<T> {
 }
 
 impl<T> Formula<T> {
+    /// Transform the inner parts of a [`Formula`]
+    /// preserving its structure.
+    pub fn map<F>(self, mut transform: F) -> Self
+    where
+        F: FnMut(Self) -> Self,
+    {
+        match self {
+            Self::TruthValue(_) | Self::Atomic(_) => self,
+            Self::Not(f) => Self::not(transform(*f)),
+            Self::And(f1, f2) => Self::and(transform(*f1), transform(*f2)),
+            Self::Or(f1, f2) => Self::or(transform(*f1), transform(*f2)),
+            Self::Xor(f1, f2) => Self::xor(transform(*f1), transform(*f2)),
+            Self::Implies(f1, f2) => Self::implies(transform(*f1), transform(*f2)),
+            Self::Equivalent(f1, f2) => Self::equivalent(transform(*f1), transform(*f2)),
+            Self::Other(conn) => Self::Other(conn.map(|f| Box::new(transform(*f)))),
+        }
+    }
+
     /// Get a top-level connective for a given [`Formula`] along with the operands.
     pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {
@@ -149,6 +192,21 @@ impl<T> Formula<T> {
 
     fn has_obvious_priority_over(&self, e: &Self) -> bool {
         self.priority() > e.priority()
+    }
+
+    /// Represent a [`Formula`] as a [`Directed`] atomic value if possible.
+    pub fn as_directed_atom(&self) -> Option<Directed<&T>> {
+        if let Self::Atomic(p) = self {
+            Some(Directed::Straight(p))
+        } else if let Self::Not(f) = self {
+            if let Self::Atomic(p) = f.as_ref() {
+                Some(Directed::Negated(p))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
 
