@@ -11,7 +11,7 @@ use crate::connective::{
 
 pub use super::{
     super::{atom::Atom, ops::*},
-    connective::AnyConnective,
+    connective::{AnyConnective, DynConnective},
 };
 
 #[derive(Debug, Clone)]
@@ -191,6 +191,36 @@ where
                 } else {
                     write!(f, "({op2})")
                 }
+            }
+        }
+    }
+}
+
+impl<T: PartialEq> Formula<T> {
+    /// Get all the atomic values of the [`Formula`].
+    pub fn atoms(&self) -> Vec<&T> {
+        match self {
+            Self::TruthValue(_) | Self::Other(AnyConnective::Nullary(_)) => vec![],
+            Self::Atomic(atom) => vec![atom],
+
+            Self::Not(f)
+            | Self::Other(AnyConnective::Unary(DynConnective { operands: [f], .. })) => f.atoms(),
+
+            Self::And(f1, f2)
+            | Self::Or(f1, f2)
+            | Self::Xor(f1, f2)
+            | Self::Implies(f1, f2)
+            | Self::Equivalent(f1, f2)
+            | Self::Other(AnyConnective::Binary(DynConnective {
+                operands: [f1, f2], ..
+            })) => {
+                let mut atoms = f1.atoms();
+                for atom in f2.atoms() {
+                    if !atoms.contains(&atom) {
+                        atoms.push(atom);
+                    }
+                }
+                atoms
             }
         }
     }
