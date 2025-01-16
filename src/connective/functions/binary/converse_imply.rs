@@ -6,7 +6,10 @@
 //! <https://en.wikipedia.org/wiki/Converse_implication>
 use std::ops::{BitOr, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::{
+    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    imply::MaterialImplication,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse implication is an operation on two logical values,
@@ -19,29 +22,11 @@ where
     E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
     fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        match (x.into_terminal(), y.into_terminal()) {
-            (Ok(consequent), Ok(antecedent)) => Ok(E::terminal(!antecedent || consequent)),
-            (Ok(consequent), Err(antecedent)) => {
-                if consequent {
-                    Ok(E::tautology())
-                } else {
-                    Ok(!E::partial(antecedent))
-                }
-            }
-            (Err(consequent), Ok(antecedent)) => {
-                if antecedent {
-                    Ok(E::partial(consequent))
-                } else {
-                    Ok(E::tautology())
-                }
-            }
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-        }
+        MaterialImplication.fold([y, x])
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms)
-            .unwrap_or_else(|[consequent, antecedent]| !antecedent | consequent)
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        MaterialImplication.compose([y, x])
     }
 }
 

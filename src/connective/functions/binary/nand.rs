@@ -6,9 +6,12 @@
 //! since it says in effect that at least one of its operands is `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
-use std::ops::{BitOr, Not};
+use std::ops::{BitAnd, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::{
+    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    and::Conjunction,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Non-conjunction is an operation on two logical values,
@@ -18,25 +21,14 @@ pub struct NonConjunction;
 
 impl<E> TruthFn<2, E> for NonConjunction
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Not<Output = E> + BitAnd<Output = E>,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        match (x.into_terminal(), y.into_terminal()) {
-            (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(!conjunct1 || !conjunct2)),
-            // **Sheffer stroke** is _commutative_
-            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
-                if val {
-                    Ok(!E::partial(x))
-                } else {
-                    Ok(E::tautology())
-                }
-            }
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-        }
+    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        Conjunction.fold(terms).map(E::not)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| !x | !y)
+        !Conjunction.compose(terms)
     }
 }
 

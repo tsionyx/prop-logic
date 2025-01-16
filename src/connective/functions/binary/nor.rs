@@ -7,9 +7,12 @@
 //! since it says in effect that both of its operands are `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_NOR>
-use std::ops::{BitAnd, Not};
+use std::ops::{BitOr, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::{
+    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    or::Disjunction,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Non-disjunction is an operation on two logical values,
@@ -19,25 +22,14 @@ pub struct NonDisjunction;
 
 impl<E> TruthFn<2, E> for NonDisjunction
 where
-    E: Evaluable + Not<Output = E> + BitAnd<Output = E>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        match (x.into_terminal(), y.into_terminal()) {
-            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(!disjunct1 && !disjunct2)),
-            // **Peirce arrow** is _commutative_
-            (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
-                if val {
-                    Ok(E::contradiction())
-                } else {
-                    Ok(!E::partial(x))
-                }
-            }
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-        }
+    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        Disjunction.fold(terms).map(E::not)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| !x & !y)
+        !Disjunction.compose(terms)
     }
 }
 

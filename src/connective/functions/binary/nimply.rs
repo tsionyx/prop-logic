@@ -3,9 +3,12 @@
 //! [negation][super::neg] of [implication][super::imply].
 //!
 //! <https://en.wikipedia.org/wiki/Material_nonimplication>
-use std::ops::{BitAnd, Not};
+use std::ops::{BitOr, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::{
+    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    imply::MaterialImplication,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Material nonimplication is an operation on two logical values,
@@ -15,32 +18,14 @@ pub struct MaterialNonImplication;
 
 impl<E> TruthFn<2, E> for MaterialNonImplication
 where
-    E: Evaluable + Not<Output = E> + BitAnd<Output = E>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        match (x.into_terminal(), y.into_terminal()) {
-            (Ok(antecedent), Ok(consequent)) => Ok(E::terminal(antecedent && !consequent)),
-            (Ok(antecedent), Err(consequent)) => {
-                if antecedent {
-                    Ok(!E::partial(consequent))
-                } else {
-                    Ok(E::contradiction())
-                }
-            }
-            (Err(antecedent), Ok(consequent)) => {
-                if consequent {
-                    Ok(E::contradiction())
-                } else {
-                    Ok(E::partial(antecedent))
-                }
-            }
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-        }
+    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialImplication.fold(terms).map(E::not)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms)
-            .unwrap_or_else(|[antecedent, consequent]| antecedent & !consequent)
+        !MaterialImplication.compose(terms)
     }
 }
 
