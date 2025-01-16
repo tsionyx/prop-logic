@@ -6,9 +6,12 @@
 //! of the converse of [implication][super::imply]).
 //!
 //! <https://en.wikipedia.org/wiki/Converse_nonimplication>
-use std::ops::{BitAnd, Not};
+use std::ops::{BitOr, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::{
+    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    nimply::MaterialNonImplication,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Converse nonimplication is an operation on two logical values,
@@ -18,32 +21,14 @@ pub struct ConverseNonImplication;
 
 impl<E> TruthFn<2, E> for ConverseNonImplication
 where
-    E: Evaluable + Not<Output = E> + BitAnd<Output = E>,
+    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
 {
     fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        match (x.into_terminal(), y.into_terminal()) {
-            (Ok(consequent), Ok(antecedent)) => Ok(E::terminal(antecedent && !consequent)),
-            (Ok(consequent), Err(antecedent)) => {
-                if consequent {
-                    Ok(E::contradiction())
-                } else {
-                    Ok(E::partial(antecedent))
-                }
-            }
-            (Err(consequent), Ok(antecedent)) => {
-                if antecedent {
-                    Ok(!E::partial(consequent))
-                } else {
-                    Ok(E::contradiction())
-                }
-            }
-            (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
-        }
+        MaterialNonImplication.fold([y, x])
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms)
-            .unwrap_or_else(|[consequent, antecedent]| antecedent & !consequent)
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        MaterialNonImplication.compose([y, x])
     }
 }
 
