@@ -7,6 +7,7 @@ mod atom;
 mod eval;
 mod general;
 mod lit;
+pub mod normal_forms;
 mod ops;
 mod var;
 
@@ -15,7 +16,8 @@ pub use self::{
     eval::Valuation,
     general::{
         connective::{AnyConnective, DynConnective},
-        formula::Formula,
+        equivalences,
+        formula::{Directed, Formula},
     },
     lit::{Lit, Literal},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
