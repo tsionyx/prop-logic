@@ -8,7 +8,7 @@ use crate::{
     arity::two_powers,
     utils::{
         dependent_array::{CheckedArray, Discriminant as _},
-        upcast::{Upcast, UpcastFrom},
+        upcast::UpcastFrom,
     },
 };
 
@@ -25,7 +25,7 @@ use crate::{
 /// See more at <https://en.wikipedia.org/wiki/Boolean_function#Properties>.
 ///
 /// Requires [`std::any::Any`] as a supertrait to enable `Any::type_id` in dyn context.
-pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Upcast<dyn BoolFn<ARITY>> + Any {
+pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Any {
     /// The constant connective is always *T* or always *F* regardless of its arguments.
     fn is_constant(&self) -> bool;
 
@@ -929,7 +929,7 @@ mod tests {
 #[cfg(test)]
 /// <https://en.wikipedia.org/wiki/Functional_completeness#Minimal_functionally_complete_operator_sets>
 mod tests_completeness {
-    use crate::connective::BINARY_FUNCTIONS;
+    use crate::{connective::BINARY_FUNCTIONS, utils::upcast::Upcast};
 
     use super::{super::functions::*, *};
 

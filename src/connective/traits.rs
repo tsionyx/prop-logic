@@ -129,16 +129,6 @@ where
     }
 }
 
-impl<'a, const ARITY: usize, T: BoolFn<ARITY> + 'a> UpcastFrom<T> for dyn BoolFn<ARITY> + 'a {
-    fn up_from(value: &T) -> &Self {
-        value
-    }
-
-    fn up_from_mut(value: &mut T) -> &mut Self {
-        value
-    }
-}
-
 #[auto_impl::auto_impl(&, Box)]
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
 /// that can be used to connect logical formulas.
