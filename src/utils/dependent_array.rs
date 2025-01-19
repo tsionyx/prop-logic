@@ -10,18 +10,18 @@ pub trait Discriminant<const IN: usize> {
 /// which is guaranteed to have the constant size.
 pub trait CheckedArray<const IN: usize>: Discriminant<IN> {
     /// The [`SizedArray`]
-    type Array<T>: SizedArray + TryFrom<Vec<T>> + Into<Vec<T>> + IntoIterator<Item = T>;
+    type Array<T>: SizedArray<T>;
 }
 
 /// Only implemented for arrays to allow to use their sizes
 /// as a constant at compile time.
-pub trait SizedArray {
+pub trait SizedArray<T>: TryFrom<Vec<T>> + Into<Vec<T>> + IntoIterator<Item = T> {
     /// The size of the array.
     const SIZE: usize;
 }
 
 // Implement for all fixed-size arrays
-impl<const N: usize, T> SizedArray for [T; N] {
+impl<const N: usize, T> SizedArray<T> for [T; N] {
     const SIZE: usize = N;
 }
 
@@ -40,7 +40,7 @@ impl<const IN: usize, ARR> VerifySize<IN, ARR> for ARR
 where
     ARR: CheckedArray<IN>,
 {
-    const ASSERT_SIZE: () = assert!(<ARR::Array<()> as SizedArray>::SIZE == ARR::ARR_SIZE);
+    const ASSERT_SIZE: () = assert!(<ARR::Array<()> as SizedArray<()>>::SIZE == ARR::ARR_SIZE);
 }
 
 #[derive(Debug, Copy, Clone)]
