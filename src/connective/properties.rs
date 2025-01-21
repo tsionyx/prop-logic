@@ -6,6 +6,7 @@ use super::BoolFn;
 
 use crate::{
     arity::two_powers,
+    truth_table::TruthTabled as _,
     utils::{
         dependent_array::{CheckedArray, Discriminant as _},
         upcast::UpcastFrom,
@@ -13,7 +14,7 @@ use crate::{
 };
 
 /// Defines the important properies of a [`BoolFn`]
-/// based on its [`TruthTable`][crate::connective::TruthTable].
+/// based on its [`TruthTable`][crate::truth_table::TruthTable].
 ///
 /// The most important of the properies are the includeness
 /// of a boolean function in some of the

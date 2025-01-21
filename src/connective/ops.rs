@@ -1,8 +1,10 @@
 //! Unary operations and properties of the [`BoolFn`]-s.
 use std::{collections::HashMap as Map, ops::Not};
 
+use crate::truth_table::TruthTabled as _;
+
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, ternary::Ternary, BoolFn, EquivalentBoolFn as _, InitFn as _};
+use super::{functions::*, ternary::Ternary, BoolFn, InitFn as _};
 
 /// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -161,6 +163,8 @@ where
     F: BoolFn<2>,
 {
     fn is_commutative(&self) -> bool {
+        use crate::truth_table::TruthTabled as _;
+
         let table: Map<_, _> = self.get_truth_table().into_iter().collect();
 
         table.iter().all(|(args, val)| {
@@ -196,7 +200,11 @@ where
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{arity::two_powers, utils::dependent_array::CheckedArray};
+    use crate::{
+        arity::two_powers,
+        truth_table::{TruthTable as _, TruthTabled as _},
+        utils::dependent_array::CheckedArray,
+    };
 
     use super::{super::InitFn, *};
 
@@ -206,8 +214,8 @@ mod tests {
         N::Not: BoolFn<ARITY> + InitFn,
         two_powers::D: CheckedArray<ARITY>,
     {
-        let table = N::init().get_truth_table().into_values();
-        let table_neg = N::Not::init().get_truth_table().into_values();
+        let table = N::init().get_truth_table().values();
+        let table_neg = N::Not::init().get_truth_table().values();
 
         dbg!(std::any::type_name::<N>());
         dbg!(std::any::type_name::<N::Not>());
@@ -222,8 +230,8 @@ mod tests {
         N2: BoolFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
-        let table = x.get_truth_table().into_values();
-        let table_neg = (!x).get_truth_table().into_values();
+        let table = x.get_truth_table().values();
+        let table_neg = (!x).get_truth_table().values();
 
         dbg!(std::any::type_name::<N>());
         for (x, y) in table.into_iter().zip(table_neg) {

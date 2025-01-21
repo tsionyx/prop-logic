@@ -1,15 +1,79 @@
-//! A [truth table](https://en.wikipedia.org/wiki/Truth_table)
-//! is a mathematical table which sets out the functional values
-//! of logical expressions on each combination of their functional arguments.
-//!
-//! A truth table has one column for each input variable (for example, A and B),
-//! and one final column showing all of the possible results of the logical operation
-//! that the table represents (for example, A XOR B).
-//! Each row of the truth table contains one possible configuration of the input variables
-//! (for instance, A=true, B=false), and the result of the operation for those values.
+//! Define [truth table](https://en.wikipedia.org/wiki/Truth_table)
+//! for [`BoolFn`]-s.
 use std::fmt;
 
-use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, CheckedArray};
+use crate::{
+    arity::two_powers::D,
+    connective::BoolFn,
+    truth_table::{TruthTable, TruthTabled},
+    utils::dependent_array::CheckedStorage,
+    CheckedArray,
+};
+
+impl<const ARITY: usize, F> TruthTabled<ARITY> for F
+where
+    F: BoolFn<ARITY>,
+    D: CheckedArray<ARITY>,
+{
+    type TT = FixedTruthTable<ARITY>;
+
+    fn get_truth_table(&self) -> Self::TT {
+        bool_truth_table(self)
+    }
+}
+
+fn bool_truth_table<const ARITY: usize, F>(f: &F) -> FixedTruthTable<ARITY>
+where
+    F: BoolFn<ARITY>,
+    D: CheckedArray<ARITY>,
+{
+    use itertools::Itertools as _;
+    use std::collections::BTreeMap as Map;
+
+    let table: Map<_, _> = std::iter::repeat([false, true])
+        .take(ARITY)
+        .multi_cartesian_product()
+        .map(|assignment| {
+            let assignment = assignment
+                .try_into()
+                .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
+            (assignment, f.compose(assignment))
+        })
+        .collect();
+
+    let table = if ARITY == 0 {
+        assert!(table.is_empty());
+        let dummy_empty_array = [false; ARITY];
+        let row: Row<ARITY> = (dummy_empty_array, f.compose(dummy_empty_array));
+        vec![row]
+    } else {
+        table.into_iter().collect()
+    };
+
+    assert_eq!(table.len(), 1 << ARITY);
+    table
+        .try_into()
+        .map_or_else(|_| panic!("Size checked before"), FixedTruthTable::new)
+}
+
+impl<const ARITY: usize> TruthTable<ARITY> for FixedTruthTable<ARITY>
+where
+    D: CheckedArray<ARITY>,
+{
+    type Input = [bool; ARITY];
+
+    type Repr = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
+
+    fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)> {
+        use crate::utils::dependent_array::SizedArray;
+
+        self.table.as_ref().iter()
+    }
+
+    fn into_inner(self) -> Self::Repr {
+        self.table.into_inner()
+    }
+}
 
 /// A [truth table](https://en.wikipedia.org/wiki/Truth_table)
 /// for arbitrary [`BoolFn`][super::BoolFn]
@@ -30,14 +94,14 @@ use crate::{arity::two_powers::D, utils::dependent_array::CheckedStorage, Checke
 /// |  2 |  (1, 0) |     1 |
 /// |  3 |  (1, 1) |     0 |
 /// ```
-pub struct TruthTable<const ARITY: usize>
+pub struct FixedTruthTable<const ARITY: usize>
 where
     D: CheckedArray<ARITY>,
 {
     table: CheckedStorage<ARITY, D, Row<ARITY>>,
 }
 
-impl<const ARITY: usize> fmt::Debug for TruthTable<ARITY>
+impl<const ARITY: usize> fmt::Debug for FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
     <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: fmt::Debug,
@@ -49,36 +113,26 @@ where
     }
 }
 
-pub(super) type Row<const ARITY: usize> = ([bool; ARITY], bool);
+type Row<const ARITY: usize> = ([bool; ARITY], bool);
 
-impl<const ARITY: usize> TruthTable<ARITY>
+impl<const ARITY: usize> FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
 {
-    /// Create new [`TruthTable`] from the individual rows.
-    pub const fn new(table: <D as CheckedArray<ARITY>>::Array<Row<ARITY>>) -> Self {
+    /// Create new [`FixedTruthTable`] from the individual rows.
+    const fn new(table: <D as CheckedArray<ARITY>>::Array<Row<ARITY>>) -> Self {
         Self {
             table: CheckedStorage::new(table),
         }
     }
 
-    /// Convert the whole table into the ordered sequence
-    /// of bool results of a [`BoolFn`][super::BoolFn].
-    pub fn into_values(self) -> Vec<bool> {
-        self.table
-            .into_inner()
-            .into_iter()
-            .map(|(_k, v)| v)
-            .collect()
-    }
-
     /// Return inner [array][CheckedArray::Array].
-    pub fn into_inner(self) -> <D as CheckedArray<ARITY>>::Array<Row<ARITY>> {
+    fn into_inner(self) -> <D as CheckedArray<ARITY>>::Array<Row<ARITY>> {
         self.table.into_inner()
     }
 }
 
-impl<const ARITY: usize> IntoIterator for TruthTable<ARITY>
+impl<const ARITY: usize> IntoIterator for FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
 {
@@ -91,7 +145,7 @@ where
     }
 }
 
-impl<const ARITY: usize> fmt::Display for TruthTable<ARITY>
+impl<const ARITY: usize> fmt::Display for FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
     <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,

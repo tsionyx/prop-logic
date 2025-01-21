@@ -68,6 +68,8 @@ pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage::new([
 
 #[cfg(test)]
 mod tests_ordering {
+    use crate::truth_table::TruthTabled as _;
+
     use super::*;
 
     #[test]

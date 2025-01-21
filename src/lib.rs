@@ -15,11 +15,13 @@
 mod arity;
 pub mod connective;
 pub mod formula;
+mod truth_table;
 mod utils;
 
 pub use self::{
     arity::{two_powers, two_powers_of_two_powers},
     formula::{Formula, Var, Variable},
+    truth_table::{TruthTable, TruthTabled},
     utils::{
         dependent_array::{CheckedArray, CheckedStorage, Discriminant, SizedArray, VerifySize},
         operation::Operation,

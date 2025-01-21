@@ -21,8 +21,8 @@ pub use self::{
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
-    traits::{BoolFn, Connective, EquivalentBoolFn, InitFn, TruthFn, TruthFnConnector},
-    truth_table::TruthTable,
+    traits::{BoolFn, Connective, InitFn, TruthFn, TruthFnConnector},
+    truth_table::FixedTruthTable,
 };
 
 #[allow(path_statements, clippy::no_effect)]
@@ -70,6 +70,8 @@ mod tests {
         F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY>,
         two_powers::D: CheckedArray<ARITY>,
     {
+        use crate::truth_table::TruthTabled as _;
+
         let truth_table = f.get_truth_table().into_iter();
         let eval_variants = truth_table.map(|(assignment, eval)| {
             let formulas = assignment

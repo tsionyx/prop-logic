@@ -169,22 +169,20 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::truth_table::TruthTabled;
+
     use super::{
-        super::super::{
-            super::{EquivalentBoolFn, InitFn as _},
-            ternary::Ternary,
-            Truth,
-        },
+        super::super::{super::InitFn as _, ternary::Ternary, Truth},
         *,
     };
 
     #[test]
     fn any_equivalences() {
-        assert!(<Truth as EquivalentBoolFn<0>>::is_equivalent(
+        assert!(<Truth as TruthTabled<0>>::is_equivalent(
             &Truth,
             &AllEquivalent::init()
         ));
-        assert!(<Truth as EquivalentBoolFn<1>>::is_equivalent(
+        assert!(<Truth as TruthTabled<1>>::is_equivalent(
             &Truth,
             &AllEquivalent::init()
         ));

@@ -18,11 +18,23 @@ pub trait CheckedArray<const IN: usize>: Discriminant<IN> {
 pub trait SizedArray<T>: TryFrom<Vec<T>> + Into<Vec<T>> + IntoIterator<Item = T> {
     /// The size of the array.
     const SIZE: usize;
+
+    /// Iterate over a [`SizedArray`].
+    fn iter<'s>(&'s self) -> impl Iterator<Item = &'s T>
+    where
+        T: 's;
 }
 
 // Implement for all fixed-size arrays
 impl<const N: usize, T> SizedArray<T> for [T; N] {
     const SIZE: usize = N;
+
+    fn iter<'s>(&'s self) -> impl Iterator<Item = &'s T>
+    where
+        T: 's,
+    {
+        <[T]>::iter(self)
+    }
 }
 
 /// Helper trait to define the rules to assert

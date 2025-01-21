@@ -1,10 +1,11 @@
 use std::cmp::Ordering;
 
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, truth_table, BoolFn, InitFn as _};
+use super::{functions::*, BoolFn, InitFn as _};
 
 use crate::{
     arity::two_powers::D,
+    truth_table::{TruthTable as _, TruthTabled as _},
     utils::{cartesian_diag, dependent_array::CheckedArray},
 };
 
@@ -18,10 +19,9 @@ where
     Op1: BoolFn<ARITY> + Default,
     Op2: BoolFn<ARITY> + Default,
     D: CheckedArray<ARITY>,
-    <D as CheckedArray<ARITY>>::Array<truth_table::Row<ARITY>>: Clone,
 {
-    let op1_truth_table = Op1::init().get_truth_table().into_values();
-    let op2_truth_table = Op2::init().get_truth_table().into_values();
+    let op1_truth_table = Op1::init().get_truth_table().values();
+    let op2_truth_table = Op2::init().get_truth_table().values();
 
     let mut set_ordering = Ordering::Equal;
     for (&val1, &val2) in op1_truth_table.iter().zip(&op2_truth_table) {

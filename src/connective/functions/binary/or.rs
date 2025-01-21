@@ -127,18 +127,16 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::truth_table::TruthTabled;
+
     use super::{
-        super::super::{
-            super::{EquivalentBoolFn, InitFn as _},
-            ternary::Ternary,
-            Falsity, LogicalIdentity,
-        },
+        super::super::{super::InitFn as _, ternary::Ternary, Falsity, LogicalIdentity},
         *,
     };
 
     #[test]
     fn any_equivalences() {
-        assert!(<Falsity as EquivalentBoolFn<0>>::is_equivalent(
+        assert!(<Falsity as TruthTabled<0>>::is_equivalent(
             &Falsity,
             &DisjunctionAny::init()
         ));

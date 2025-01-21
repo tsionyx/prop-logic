@@ -1,7 +1,9 @@
 //! Generic ternary function as the composition of two binary functions.
 //!
 //! <https://en.wikipedia.org/wiki/Ternary_operation>
-use super::super::{ops::Associativity as _, EquivalentBoolFn, Evaluable, TruthFn};
+use crate::truth_table::TruthTabled;
+
+use super::super::{ops::Associativity, Evaluable, TruthFn};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Wrapper for a ternary boolean function which applies
@@ -21,8 +23,8 @@ impl<const LEFT: bool, Op1, Op2> Ternary<LEFT, Op1, Op2> {
 impl<const LEFT: bool, E, Op1, Op2> TruthFn<3, E> for Ternary<LEFT, Op1, Op2>
 where
     E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
-    Op1: TruthFn<2, E> + EquivalentBoolFn<2>,
-    Op2: TruthFn<2, E> + EquivalentBoolFn<2>,
+    Op1: TruthFn<2, E> + TruthTabled<2> + Associativity,
+    Op2: TruthFn<2, E> + TruthTabled<2, TT = <Op1 as TruthTabled<2>>::TT> + Associativity,
 {
     fn fold(&self, values: [E; 3]) -> Result<E, [E; 3]> {
         let try_fold = |left| {

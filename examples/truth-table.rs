@@ -1,11 +1,11 @@
 //! Print truth tables for all the binary functions.
 #![allow(clippy::wildcard_imports)]
 
-use prop_logic::{connective::*, two_powers, CheckedArray};
+use prop_logic::{connective::*, two_powers, CheckedArray, TruthTabled as _};
 
 fn print_stat<const ARITY: usize>(f: &dyn StoredBoolFn<ARITY>)
 where
-    TruthTable<ARITY>: std::fmt::Display,
+    FixedTruthTable<ARITY>: std::fmt::Display,
     two_powers::D: CheckedArray<ARITY>,
 {
     print!("{}", f.notation());

@@ -1,17 +1,6 @@
-use std::{collections::BTreeMap as Map, iter};
+use crate::utils::{operation::Operation, upcast::UpcastFrom};
 
-use itertools::Itertools as _;
-
-use crate::{
-    arity::two_powers,
-    utils::{dependent_array::CheckedArray, operation::Operation, upcast::UpcastFrom},
-};
-
-use super::{
-    evaluation::Evaluable,
-    notation::FunctionNotation,
-    truth_table::{Row, TruthTable},
-};
+use super::{evaluation::Evaluable, notation::FunctionNotation};
 
 #[auto_impl::auto_impl(&, Box)]
 /// Enables the ability to combine propositional [`Evaluable`] into a single one.
@@ -61,73 +50,9 @@ where
 }
 
 /// Special case of [`TruthFn`] dealing with plain `bool` values.
-pub trait BoolFn<const ARITY: usize>: TruthFn<ARITY, bool> {
-    /// Generate a [truth table](https://en.wikipedia.org/wiki/Truth_table)
-    /// for a [`BoolFn`] as the **key** (boolean arguments)-**value** (function result)
-    /// ordered map.
-    fn get_truth_table(&self) -> TruthTable<ARITY>
-    where
-        two_powers::D: CheckedArray<ARITY>;
-}
+pub trait BoolFn<const ARITY: usize>: TruthFn<ARITY, bool> {}
 
-/// Use [`TruthTable`] to determine if two functions are equivalent.
-///
-/// Separated from the [parent trait][BoolFn] to allow for the latter
-/// to be dyn-compatible.
-pub trait EquivalentBoolFn<const ARITY: usize>: BoolFn<ARITY> {
-    /// Checks whether the two functions are equivalent.
-    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
-    where
-        Rhs: BoolFn<ARITY>;
-}
-
-impl<const ARITY: usize, F> EquivalentBoolFn<ARITY> for F
-where
-    F: BoolFn<ARITY>,
-    two_powers::D: CheckedArray<ARITY>,
-{
-    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
-    where
-        Rhs: BoolFn<ARITY>,
-    {
-        self.get_truth_table().into_values() == other.get_truth_table().into_values()
-    }
-}
-
-impl<const ARITY: usize, T> BoolFn<ARITY> for T
-where
-    T: TruthFn<ARITY, bool>,
-{
-    fn get_truth_table(&self) -> TruthTable<ARITY>
-    where
-        two_powers::D: CheckedArray<ARITY>,
-    {
-        let table: Map<_, _> = iter::repeat([false, true])
-            .take(ARITY)
-            .multi_cartesian_product()
-            .map(|assignment| {
-                let assignment = assignment
-                    .try_into()
-                    .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
-                (assignment, self.compose(assignment))
-            })
-            .collect();
-
-        let table = if ARITY == 0 {
-            assert!(table.is_empty());
-            let dummy_empty_array = [false; ARITY];
-            let row: Row<ARITY> = (dummy_empty_array, self.compose(dummy_empty_array));
-            vec![row]
-        } else {
-            table.into_iter().collect()
-        };
-
-        assert_eq!(table.len(), 1 << ARITY);
-        table
-            .try_into()
-            .map_or_else(|_| panic!("Size checked before"), TruthTable::new)
-    }
-}
+impl<const ARITY: usize, T> BoolFn<ARITY> for T where T: TruthFn<ARITY, bool> {}
 
 #[auto_impl::auto_impl(&, Box)]
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
