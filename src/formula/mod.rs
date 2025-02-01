@@ -16,6 +16,7 @@ pub use self::{
     general::{
         connective::{AnyConnective, DynConnective},
         formula::Formula,
+        truth_table::FormulaTruthTable,
     },
     lit::{Lit, Literal},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
