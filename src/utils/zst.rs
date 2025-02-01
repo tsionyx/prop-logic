@@ -1,8 +1,33 @@
 //! Helper to ensure the type is ZST in compile-time.
 
-use std::mem::size_of;
+use std::{fmt, hash, mem::size_of};
 
-pub use void::Void;
+/// The wrapper for uninhabited type.
+///
+/// This is a wrapper ensuring `Eq`, `Hash` and `Ord` implementations.
+#[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub struct Void(void::Void);
+
+impl Eq for Void {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl Ord for Void {
+    fn cmp(&self, _other: &Self) -> std::cmp::Ordering {
+        void::unreachable(self.0)
+    }
+}
+
+impl hash::Hash for Void {
+    fn hash<H: hash::Hasher>(&self, _state: &mut H) {
+        void::unreachable(self.0)
+    }
+}
+
+impl fmt::Display for Void {
+    fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+        void::unreachable(self.0)
+    }
+}
 
 /// Marker trait that will only be implemented for ZSTs
 pub trait Zst {
