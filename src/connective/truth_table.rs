@@ -30,6 +30,7 @@ where
     use itertools::Itertools as _;
     use std::collections::BTreeMap as Map;
 
+    #[allow(clippy::manual_repeat_n)]
     let table: Map<_, _> = std::iter::repeat([false, true])
         .take(ARITY)
         .multi_cartesian_product()

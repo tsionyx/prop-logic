@@ -42,3 +42,20 @@ where
         let _previous_value = self.values.insert(key, Assignment::Value(value));
     }
 }
+
+impl<T> FromIterator<(T, bool)> for Valuation<T>
+where
+    T: Eq + Hash,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (T, bool)>,
+    {
+        let values = iter
+            .into_iter()
+            .map(|(key, value)| (key, Assignment::Value(value)));
+        Self {
+            values: values.collect(),
+        }
+    }
+}
