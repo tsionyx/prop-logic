@@ -2,7 +2,7 @@ use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 use super::{
     super::{Equivalent, Implies},
-    formula::Formula,
+    formula::{Directed, Formula},
 };
 
 impl<T> Not for Formula<T> {
@@ -15,6 +15,17 @@ impl<T> Not for Formula<T> {
             Self::truth(!*value)
         } else {
             Self::not(self)
+        }
+    }
+}
+
+impl<T> Not for Directed<T> {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Self::Straight(x) => Self::Negated(x),
+            Self::Negated(x) => Self::Straight(x),
         }
     }
 }
