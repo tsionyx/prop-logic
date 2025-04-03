@@ -52,8 +52,8 @@ impl<T> Not for Variable<T> {
 impl<T> From<Literal<T>> for Formula<Variable<T>> {
     fn from(lit: Literal<T>) -> Self {
         match lit {
-            Literal::Var(var) => Self::atomic(var),
-            Literal::Neg(var) => !Self::atomic(var),
+            Literal::Var(var) => Self::atom(var),
+            Literal::Neg(var) => !Self::atom(var),
         }
     }
 }

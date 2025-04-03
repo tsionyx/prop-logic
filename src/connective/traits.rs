@@ -56,7 +56,7 @@ impl<const ARITY: usize, T> BoolFn<ARITY> for T where T: TruthFn<ARITY, bool> {}
 
 #[auto_impl::auto_impl(&, Box)]
 /// A [logical constant](https://en.wikipedia.org/wiki/Logical_constant)
-/// that can be used to connect logical formulas.
+/// that can be used to connect logical formulae.
 ///
 /// Its main usage is to convert to/from string representation of a formula.
 pub trait Connective<const ARITY: usize>: BoolFn<ARITY> {
