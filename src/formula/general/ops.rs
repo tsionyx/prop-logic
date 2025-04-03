@@ -12,9 +12,9 @@ impl<T> Not for Formula<T> {
         // Do not use the `functions::Negation.try_reduce([f])`
         // since it recursively calls the same function again.
         if let Self::TruthValue(value) = &self {
-            Self::TruthValue(!*value)
+            Self::truth(!*value)
         } else {
-            Self::Not(Box::new(self))
+            Self::not(self)
         }
     }
 }
@@ -26,7 +26,7 @@ where
     type Output = Self;
 
     fn bitand(self, e: Rhs) -> Self::Output {
-        Self::And(Box::new(self), Box::new(e.into()))
+        Self::and(self, e.into())
     }
 }
 
@@ -37,7 +37,7 @@ where
     type Output = Self;
 
     fn bitor(self, e: Rhs) -> Self::Output {
-        Self::Or(Box::new(self), Box::new(e.into()))
+        Self::or(self, e.into())
     }
 }
 
@@ -48,7 +48,7 @@ where
     type Output = Self;
 
     fn bitxor(self, e: Rhs) -> Self::Output {
-        Self::Xor(Box::new(self), Box::new(e.into()))
+        Self::xor(self, e.into())
     }
 }
 
@@ -67,7 +67,7 @@ where
 
         crate::connective::MaterialImplication
             .fold([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Self::Implies(Box::new(f1), Box::new(f2)))
+            .unwrap_or_else(|[f1, f2]| Self::implies(f1, f2))
     }
 }
 
@@ -83,6 +83,6 @@ where
 
         crate::connective::LogicalBiconditional
             .fold([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Self::Equivalent(Box::new(f1), Box::new(f2)))
+            .unwrap_or_else(|[f1, f2]| Self::equivalent(f1, f2))
     }
 }

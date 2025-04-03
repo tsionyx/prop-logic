@@ -8,7 +8,7 @@ impl<T> Evaluable for Formula<T> {
     type Partial = Self;
 
     fn terminal(value: bool) -> Self {
-        Self::TruthValue(value)
+        Self::truth(value)
     }
 
     fn is_tautology(&self) -> bool {
@@ -129,37 +129,31 @@ mod tests {
     #[test]
     fn tautology() {
         let f: Formula<Arc<Variable<char>>> = Formula::tautology();
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
     fn contradiction() {
         let f: Formula<Arc<Variable<char>>> = Formula::contradiction();
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
     fn known_atom() {
-        let f = Formula::atomic(Arc::new(get_var('a')));
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        let f = Formula::atom(Arc::new(get_var('a')));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
-        let f = Formula::atomic(Arc::new(get_var('b')));
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        let f = Formula::atom(Arc::new(get_var('b')));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
     fn unknown_atom() {
         let var = get_var('p');
-        let f = Formula::atomic(Arc::new(var));
+        let f = Formula::atom(Arc::new(var));
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(Arc::new(var))
+            Formula::atom(Arc::new(var))
         );
     }
 
@@ -169,10 +163,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('c'));
         let f = Formula::from(var1).and(var2).and(var3);
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
@@ -181,10 +172,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f = Formula::from(var1).and(var2).and(var3);
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
@@ -198,7 +186,7 @@ mod tests {
             .and(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone())
+            Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2.clone())
@@ -206,11 +194,11 @@ mod tests {
             .and(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone())
+            Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2).and(Formula::from(var3.clone()).and(var1));
-        assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::atom(var3));
     }
 
     #[test]
@@ -224,7 +212,7 @@ mod tests {
             .and(Formula::from(var3.clone()).not());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            !Formula::Atomic(var3.clone())
+            !Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2.clone())
@@ -232,11 +220,11 @@ mod tests {
             .and(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            !Formula::Atomic(var3.clone())
+            !Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2).and(Formula::from(var3.clone()).not().and(var1));
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3));
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3));
     }
 
     #[test]
@@ -245,7 +233,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('c'));
         let f = Formula::from(var1).or(var2).or(var3);
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -254,7 +242,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f = Formula::from(var1).or(var2).or(var3);
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -268,7 +256,7 @@ mod tests {
             .or(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone())
+            Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2.clone())
@@ -276,11 +264,11 @@ mod tests {
             .or(var1.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone())
+            Formula::atom(var3.clone())
         );
 
         let f = Formula::from(var2).or(Formula::from(var3.clone()).or(var1));
-        assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::atom(var3));
     }
 
     #[test]
@@ -288,7 +276,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let f = Formula::from(var1).xor(var2);
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -297,7 +285,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f = Formula::from(var1).xor(var2).xor(var3.clone());
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var3),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3),);
     }
 
     #[test]
@@ -308,13 +296,13 @@ mod tests {
         let f = Formula::from(var1).xor(var2).xor(var3.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var3.clone())
+            Formula::atom(var3.clone())
         );
 
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('c'));
         let f = Formula::from(var1).xor(var2).xor(var3.clone());
-        assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var3));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::atom(var3));
     }
 
     #[test]
@@ -322,13 +310,10 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let f = Formula::from(var1.clone()).implies(var2.clone());
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
 
         let f = Formula::from(var2).implies(var1);
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -344,7 +329,7 @@ mod tests {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var2.clone()).implies(var1);
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2));
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2));
     }
 
     #[test]
@@ -352,7 +337,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var1).implies(var2.clone());
-        assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var2));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::atom(var2));
     }
 
     #[test]
@@ -368,7 +353,7 @@ mod tests {
         let var1 = Arc::new(get_var('c'));
         let var2 = Arc::new(get_var('b'));
         let f = Formula::from(var1.clone()).equivalent(var2.clone());
-        assert_eq!(f.interpret(&partial_valuation()), Formula::TruthValue(true));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
         let f = Formula::from(var2).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), true.into());
@@ -379,10 +364,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('b'));
         let f = Formula::from(var1.clone()).equivalent(var2.clone());
-        assert_eq!(
-            f.interpret(&partial_valuation()),
-            Formula::TruthValue(false)
-        );
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
 
         let f = Formula::from(var2).equivalent(var1);
         assert_eq!(f.interpret(&partial_valuation()), false.into());
@@ -396,11 +378,11 @@ mod tests {
         let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            !Formula::Atomic(var2.clone()),
+            !Formula::atom(var2.clone()),
         );
 
         let f = Formula::from(var2.clone()).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::Atomic(var2),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2),);
     }
 
     #[test]
@@ -411,10 +393,10 @@ mod tests {
         let f = Formula::from(var1.clone()).equivalent(var2.clone());
         assert_eq!(
             f.interpret(&partial_valuation()),
-            Formula::Atomic(var2.clone())
+            Formula::atom(var2.clone())
         );
 
         let f = Formula::from(var2.clone()).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), Formula::Atomic(var2));
+        assert_eq!(f.interpret(&partial_valuation()), Formula::atom(var2));
     }
 }

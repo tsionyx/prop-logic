@@ -55,20 +55,60 @@ pub enum Formula<T> {
 
 impl<T> From<bool> for Formula<T> {
     fn from(value: bool) -> Self {
-        Self::TruthValue(value)
+        Self::truth(value)
     }
 }
 
 impl<T: Atom> From<T> for Formula<T> {
     fn from(value: T) -> Self {
-        Self::Atomic(value)
+        Self::atom(value)
     }
 }
 
-impl<T: Atom> Formula<T> {
+impl<T> Formula<T> {
+    /// Create a constant _truth_ or _falsity_ formula.
+    pub const fn truth(value: bool) -> Self {
+        Self::TruthValue(value)
+    }
+
     /// Create an [atomic][Atom] formula.
-    pub const fn atomic(atom: T) -> Self {
+    pub const fn atom(atom: T) -> Self {
         Self::Atomic(atom)
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    /// Create a [negated formula][Self::Not].
+    pub fn not(op: Self) -> Self {
+        Self::Not(Box::new(op))
+    }
+
+    /// Create a [conjunction][Self::And] of two formulae.
+    pub fn and(op1: Self, op2: Self) -> Self {
+        Self::And(Box::new(op1), Box::new(op2))
+    }
+
+    /// Create a [disjunction][Self::Or] of two formulae.
+    pub fn or(op1: Self, op2: Self) -> Self {
+        Self::Or(Box::new(op1), Box::new(op2))
+    }
+
+    /// Create an [exclusive disjunction][Self::Xor] of two formulae.
+    pub fn xor(op1: Self, op2: Self) -> Self {
+        Self::Xor(Box::new(op1), Box::new(op2))
+    }
+
+    /// Create a formula of [implication][Self::Implies]
+    /// from the first formula (antecedent) to the second one (consequent).
+    ///
+    /// Be aware that this operation is **not commutative**
+    /// (i.e. `a -> b != b -> a` in common case).
+    pub fn implies(op1: Self, op2: Self) -> Self {
+        Self::Implies(Box::new(op1), Box::new(op2))
+    }
+
+    /// Create a formula of [equivalence][Self::Equivalent] between the two formulae.
+    pub fn equivalent(op1: Self, op2: Self) -> Self {
+        Self::Equivalent(Box::new(op1), Box::new(op2))
     }
 }
 
@@ -239,7 +279,7 @@ mod tests {
     fn operation() {
         let p = Variable::with_data(1, 'p');
         let q = Variable::with_data(2, 'q');
-        let (p, q) = (Formula::atomic(p), Formula::atomic(q));
+        let (p, q) = (Formula::atom(p), Formula::atom(q));
         assert_eq!(p.clone().not(), !p.clone());
         assert_eq!(p.clone().and(q.clone()), p.clone() & q.clone());
         assert_eq!(p.clone().or(q.clone()), p.clone() | q.clone());
@@ -253,7 +293,7 @@ mod tests {
 
         impl Atom for A {}
 
-        let e1 = Formula::atomic(A(1));
+        let e1 = Formula::atom(A(1));
         let e2 = e1.clone();
         assert_eq!(e1, e2);
         drop(e2);
@@ -269,10 +309,10 @@ mod tests {
     fn formula_display() {
         let p = Variable::with_data(1, 'p');
         let q = Variable::with_data(2, 'q');
-        let (p, q) = (Formula::atomic(p), Formula::atomic(q));
+        let (p, q) = (Formula::atom(p), Formula::atom(q));
 
-        format_eq!(Formula::TruthValue::<i32>(true), "⊤");
-        format_eq!(Formula::TruthValue::<i32>(false), "⊥");
+        format_eq!(Formula::<i32>::truth(true), "⊤");
+        format_eq!(Formula::<i32>::truth(false), "⊥");
         format_eq!(p.clone().not(), "¬p");
         format_eq!(p.clone().and(q.clone()), "p∧q");
         format_eq!(p.clone().or(q.clone()), "p∨q");
@@ -286,7 +326,7 @@ mod tests {
         let p = Variable::with_data(1, 'p');
         let q = Variable::with_data(2, 'q');
         let r = Variable::with_data(3, 'r');
-        let (p, q, r) = (Formula::atomic(p), Formula::atomic(q), Formula::atomic(r));
+        let (p, q, r) = (Formula::atom(p), Formula::atom(q), Formula::atom(r));
 
         format_eq!(p.clone().not().not(), "¬¬p");
 

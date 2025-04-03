@@ -76,7 +76,7 @@ mod tests {
         let eval_variants = truth_table.map(|(assignment, eval)| {
             let formulas = assignment
                 .into_iter()
-                .map(Formula::<()>::TruthValue)
+                .map(Formula::<()>::truth)
                 .collect_vec();
             let formulas = formulas
                 .try_into()
