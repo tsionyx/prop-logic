@@ -24,6 +24,7 @@ pub use self::{
     truth_table::{TruthTable, TruthTabled},
     utils::{
         dependent_array::{CheckedArray, CheckedStorage, Discriminant, SizedArray, VerifySize},
+        dyn_eq::{AsDynCompare, DynCompare},
         operation::Operation,
         upcast::{Upcast, UpcastFrom},
         zst::{Void, Zst},
