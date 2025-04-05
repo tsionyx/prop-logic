@@ -22,3 +22,6 @@ pub use self::{
     ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},
 };
+
+#[cfg(feature = "arbitrary")]
+pub use self::general::arbitrary::Parameters as FormulaParameters;
