@@ -2,20 +2,30 @@ use super::{functions, BoolFnExt, Connective};
 
 use crate::{
     arity::two_powers_of_two_powers::D,
-    utils::{dependent_array::CheckedStorage, upcast::Upcast},
+    utils::{dependent_array::CheckedStorage, dyn_eq::DynCompare, upcast::Upcast},
 };
 
 /// Combination of [`BoolFnExt`] and [`Connective`] to allow to use in dyn context.
 ///
 /// Implemented automatically for all `F: BoolFnExt + Connective`.
 pub trait StoredBoolFn<const ARITY: usize>:
-    BoolFnExt<ARITY> + Connective<ARITY> + Upcast<dyn BoolFnExt<ARITY>>
+    std::fmt::Debug + DynCompare + BoolFnExt<ARITY> + Connective<ARITY> + Upcast<dyn BoolFnExt<ARITY>>
 {
 }
 
 impl<const ARITY: usize, F> StoredBoolFn<ARITY> for F where
-    F: BoolFnExt<ARITY> + Connective<ARITY> + Upcast<dyn BoolFnExt<ARITY>>
+    F: std::fmt::Debug
+        + DynCompare
+        + BoolFnExt<ARITY>
+        + Connective<ARITY>
+        + Upcast<dyn BoolFnExt<ARITY>>
 {
+}
+
+impl<const ARITY: usize> PartialEq for dyn StoredBoolFn<ARITY> {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_dyn_compare() == other.as_dyn_compare()
+    }
 }
 
 /// This type stores all [`StoredBoolFn`]-s for a given `ARITY`.

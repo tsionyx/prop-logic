@@ -1,9 +1,16 @@
 //! Compare `dyn Trait`
+//!
+//! <https://quinedot.github.io/rust-learning/dyn-trait-eq.html>
 use std::any::Any;
 
+/// A helper trait for coercing into `&Self` into `&dyn Any` and `&dyn DynCompare`.
 pub trait AsDynCompare: Any {
+    /// Helper to use [`dyn Any::downcast_ref`]
+    /// into [`DynCompare::dyn_eq`] method.
     fn as_any(&self) -> &dyn Any;
 
+    /// Helper to coerce `&Self` into [`dyn DynCompare`]
+    /// to use its `PartialEq` implementation later in client code.
     fn as_dyn_compare(&self) -> &dyn DynCompare;
 }
 
@@ -18,7 +25,14 @@ impl<T: Any + DynCompare> AsDynCompare for T {
     }
 }
 
+/// Supertrait for a trait wishing to implement `PartialEq` for `dyn Trait`.
+/// This is a workaround for the fact that `PartialEq` cannot be implemented
+/// for `dyn Trait` directly.
+///
+/// Based on the article [about dyn trait eq](https://quinedot.github.io/rust-learning/dyn-trait-eq.html).
 pub trait DynCompare: AsDynCompare {
+    /// Blanket method implementing comparison
+    /// using [`dyn Any::downcast_ref`].
     fn dyn_eq(&self, other: &dyn DynCompare) -> bool;
 }
 
