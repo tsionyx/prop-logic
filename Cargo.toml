@@ -15,7 +15,11 @@ dyn-clone = "1.0"
 auto_impl = "1.2"
 derive-where = "1.2"
 smol_str = "0.3"
+proptest = { version = "1.6", optional = true }
 
+
+[features]
+arbitrary = ["dep:proptest"]
 
 
 # https://doc.rust-lang.org/nightly/cargo/reference/manifest.html#the-lints-section
