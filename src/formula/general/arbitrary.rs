@@ -1,5 +1,7 @@
 use proptest::prelude::*;
 
+use crate::connective::NULLARY_FUNCTIONS;
+
 use super::formula::Formula;
 
 #[derive(Debug, Clone)]
@@ -32,7 +34,10 @@ where
         let Parameters { max_depth, atoms } = args;
 
         let leaf = prop_oneof![
+            // typed consts
             any::<bool>().prop_map(Self::truth),
+            // dyn consts
+            prop::sample::select(NULLARY_FUNCTIONS.as_ref()).prop_map(Self::nullary),
             prop::sample::select(atoms).prop_map(Self::atom),
         ];
 

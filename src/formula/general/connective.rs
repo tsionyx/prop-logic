@@ -254,6 +254,9 @@ mod impls {
             }
         }
     }
+
+    // TODO: impl for other connectives the same way (+think about generic `Atom`)
+    intertrait::castable_to!(Truth => super::UsableConnective<0, crate::Var>);
 }
 
 #[cfg(test)]

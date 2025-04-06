@@ -174,14 +174,15 @@ impl<T> Formula<T> {
     pub fn nullary<C>(connective: C) -> Self
     where
         C: Connective<0>
-            + TruthFn<0, Self>
-            + Prioritized
+            // + TruthFn<0, Self>
+            // + Prioritized
             + fmt::Debug
             + Clone
             + PartialEq
             + 'static,
     {
-        Self::Other(AnyConnective::new_0(connective))
+        todo!()
+        // Self::Other(AnyConnective::new_0(connective))
     }
 
     /// Create a new [`Formula`] using the _unary_ [`Connective`]

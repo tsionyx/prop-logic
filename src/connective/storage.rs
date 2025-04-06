@@ -1,3 +1,5 @@
+use intertrait::CastFrom;
+
 use super::{functions, BoolFnExt, Connective};
 
 use crate::{
@@ -9,7 +11,12 @@ use crate::{
 ///
 /// Implemented automatically for all `F: BoolFnExt + Connective`.
 pub trait StoredBoolFn<const ARITY: usize>:
-    std::fmt::Debug + DynCompare + BoolFnExt<ARITY> + Connective<ARITY> + Upcast<dyn BoolFnExt<ARITY>>
+    std::fmt::Debug
+    + DynCompare
+    + BoolFnExt<ARITY>
+    + Connective<ARITY>
+    + Upcast<dyn BoolFnExt<ARITY>>
+    + CastFrom
 {
 }
 
@@ -19,6 +26,7 @@ impl<const ARITY: usize, F> StoredBoolFn<ARITY> for F where
         + BoolFnExt<ARITY>
         + Connective<ARITY>
         + Upcast<dyn BoolFnExt<ARITY>>
+        + CastFrom
 {
 }
 
