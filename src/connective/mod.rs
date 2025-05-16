@@ -84,7 +84,7 @@ mod tests {
             (f.compose(formulas), eval)
         });
 
-        let empty_interpretation: Valuation<()> = Valuation::new();
+        let empty_interpretation: Valuation<()> = Valuation::empty();
         for (fully_interpreted_formula, expected_eval) in eval_variants {
             eprintln!("{fully_interpreted_formula:?} -> {expected_eval:?}");
             if let Formula::TruthValue(val) =

@@ -22,31 +22,42 @@ where
         let arity = atoms.len();
 
         #[expect(clippy::manual_repeat_n)]
-        let table: Vec<_> = std::iter::repeat([false, true])
-            .take(arity)
-            .multi_cartesian_product()
-            .filter_map(|assignment| {
-                assert_eq!(
-                    assignment.len(),
-                    arity,
-                    "The array size is guaranteed by Itertools::multi_cartesian_product"
-                );
-                let valuation: Valuation<_> = atoms
-                    .iter()
-                    .copied()
-                    .cloned()
-                    .zip(assignment.iter().copied())
-                    .collect();
-                if let Self::TruthValue(value) = self.interpret(&valuation) {
-                    Some((assignment, value))
-                } else {
-                    None
-                }
-            })
-            .collect();
+        let table: Vec<_> = if arity == 0 {
+            let dummy_assignment = vec![];
+            let valuation = Valuation::<T>::empty();
+            let row = if let Self::TruthValue(value) = self.interpret(&valuation) {
+                (dummy_assignment, value)
+            } else {
+                panic!("Cannot evaluate formala with no atoms")
+            };
+            vec![row]
+        } else {
+            std::iter::repeat([false, true])
+                .take(arity)
+                .multi_cartesian_product()
+                .filter_map(|assignment| {
+                    assert_eq!(
+                        assignment.len(),
+                        arity,
+                        "The array size is guaranteed by Itertools::multi_cartesian_product"
+                    );
+                    let valuation: Valuation<_> = atoms
+                        .iter()
+                        .copied()
+                        .cloned()
+                        .zip(assignment.iter().copied())
+                        .collect();
+                    if let Self::TruthValue(value) = self.interpret(&valuation) {
+                        Some((assignment, value))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
 
         assert_eq!(table.len(), 1 << arity, "The table is complete");
-        let atoms = atoms.iter().copied().cloned().collect();
+        let atoms = atoms.into_iter().cloned().collect();
         FormulaTruthTable { atoms, table }
     }
 }

@@ -13,13 +13,13 @@ pub struct Valuation<T> {
 
 impl<T> Default for Valuation<T> {
     fn default() -> Self {
-        Self::new()
+        Self::empty()
     }
 }
 
 impl<T> Valuation<T> {
-    /// Construct a new `Valuation`.
-    pub fn new() -> Self {
+    /// Construct an empty `Valuation`.
+    pub fn empty() -> Self {
         Self { values: Map::new() }
     }
 }

@@ -116,7 +116,7 @@ mod tests {
     }
 
     fn partial_valuation() -> Valuation<Arc<Variable<char>>> {
-        let mut val = Valuation::new();
+        let mut val = Valuation::empty();
         val.assign(Arc::new(get_var('a')), true);
         val.assign(Arc::new(get_var('b')), false);
         val.assign(Arc::new(get_var('c')), false);
