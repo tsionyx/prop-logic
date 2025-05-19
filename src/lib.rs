@@ -27,6 +27,7 @@ pub use self::{
         dyn_eq::{AsDynCompare, DynCompare},
         operation::Operation,
         upcast::{Upcast, UpcastFrom},
+        vec::UnsortedVec,
         zst::{Void, Zst},
     },
 };
