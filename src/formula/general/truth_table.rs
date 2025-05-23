@@ -105,7 +105,11 @@ where
     T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let atoms = &self.atoms;
+        let atoms: Vec<_> = self
+            .iter()
+            .next()
+            .map(|(args, _)| args.map(|(atom, _)| atom).collect())
+            .unwrap_or_default();
         let value_col = "VALUE";
         let padding_value = value_col.len();
         let padding_value = atoms
@@ -117,7 +121,7 @@ where
         let padding_var = padding_value;
         let padding_sep = padding_value + 2;
 
-        for atom in atoms {
+        for atom in &atoms {
             // FIXME: {atom:<padding_var$} is not working
             write!(f, "| {:<padding_var$} ", atom.to_string())?;
         }
@@ -129,10 +133,9 @@ where
         }
         write!(f, "|")?;
 
-        let rows = &self.table;
-        for (args, res) in rows {
+        for (args, res) in self.iter() {
             writeln!(f)?;
-            for arg in args {
+            for (_atom, arg) in args {
                 write!(f, "| {arg:<padding_value$} ")?;
             }
             write!(f, "| {res:<padding_value$} |")?;
