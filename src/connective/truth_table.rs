@@ -61,18 +61,12 @@ impl<const ARITY: usize> TruthTable<ARITY> for FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
 {
-    type Input = [bool; ARITY];
+    type Row<'a> = [bool; ARITY];
 
-    type Repr = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
-
-    fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)> {
+    fn iter(&self) -> impl Iterator<Item = (Self::Row<'_>, bool)> {
         use crate::utils::dependent_array::SizedArray;
 
-        self.table.as_ref().iter()
-    }
-
-    fn into_inner(self) -> Self::Repr {
-        self.table.into_inner()
+        self.table.as_ref().iter().map(|(args, res)| (*args, *res))
     }
 }
 

@@ -37,22 +37,17 @@ pub trait TruthTabled<const ARITY: usize = 0> {
 /// to allow indetermine ARITY
 pub trait TruthTable<const ARITY: usize = 0> {
     /// The input values holding a set of `bool` values.
-    type Input;
-
-    /// The representation of the truth table.
-    type Repr: IntoIterator<Item = (Self::Input, bool)>;
+    type Row<'a>
+    where
+        Self: 'a;
 
     /// Iterate over the rows of the truth table.
-    fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)>;
-
-    /// Convert the whole table into the ordered sequence
-    /// of `(Self::Input, bool)` pairs.
-    fn into_inner(self) -> Self::Repr;
+    fn iter(&self) -> impl Iterator<Item = (Self::Row<'_>, bool)>;
 
     /// Iterate over the `bool` values of the truth table
     /// in the default order (the sequence of incrementing binary numbers).
     fn iter_values(&self) -> impl Iterator<Item = bool> {
-        self.iter().map(|(_k, v)| *v)
+        self.iter().map(|(_k, v)| v)
     }
 
     /// Convert the whole table into the ordered sequence
