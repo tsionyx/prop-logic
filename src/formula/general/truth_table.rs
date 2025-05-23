@@ -1,6 +1,6 @@
 //! Define [truth table](https://en.wikipedia.org/wiki/Truth_table)
 //! for [`BoolFn`]-s.
-use std::{fmt, hash::Hash};
+use std::{borrow::Cow, fmt, hash::Hash};
 
 use crate::{
     formula::Valuation,
@@ -63,16 +63,16 @@ where
 }
 
 impl<T> TruthTable for FormulaTruthTable<T> {
-    type Input = Vec<bool>;
+    type Row<'a>
+        = Cow<'a, [bool]>
+    where
+        T: 'a;
 
-    type Repr = Vec<Row>;
-
-    fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)> {
-        self.table.iter()
-    }
-
-    fn into_inner(self) -> Self::Repr {
-        self.table
+    fn iter(&self) -> impl Iterator<Item = (Self::Row<'_>, bool)> {
+        self.table.iter().map(|(args, res)| {
+            let args = Cow::Borrowed(args.as_ref());
+            (args, *res)
+        })
     }
 }
 
