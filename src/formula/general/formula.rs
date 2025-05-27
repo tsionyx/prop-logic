@@ -76,7 +76,7 @@ impl<T> Formula<T> {
         Self::Atomic(atom)
     }
 
-    #[allow(clippy::should_implement_trait)]
+    #[expect(clippy::should_implement_trait)]
     /// Create a [negated formula][Self::Not].
     pub fn not(op: Self) -> Self {
         Self::Not(Box::new(op))

@@ -1,5 +1,5 @@
 //! Print truth tables for all the binary functions.
-#![allow(clippy::wildcard_imports)]
+#![expect(clippy::wildcard_imports)]
 
 use prop_logic::{connective::*, two_powers, CheckedArray, TruthTabled as _};
 

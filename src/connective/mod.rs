@@ -25,7 +25,7 @@ pub use self::{
     truth_table::FixedTruthTable,
 };
 
-#[allow(path_statements, clippy::no_effect)]
+#[expect(path_statements)]
 const _ASSERT_ZST: () = {
     use crate::utils::Zst;
 
@@ -64,7 +64,6 @@ mod tests {
 
     use super::*;
 
-    #[allow(clippy::needless_pass_by_value)]
     fn apply_and_compose_is_equivalent<const ARITY: usize, F>(f: F)
     where
         F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY>,

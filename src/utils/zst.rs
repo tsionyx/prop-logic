@@ -10,7 +10,7 @@ pub struct Void(void::Void);
 
 impl Eq for Void {}
 
-#[allow(clippy::derive_ord_xor_partial_ord)]
+#[expect(clippy::derive_ord_xor_partial_ord)]
 impl Ord for Void {
     fn cmp(&self, _other: &Self) -> std::cmp::Ordering {
         void::unreachable(self.0)

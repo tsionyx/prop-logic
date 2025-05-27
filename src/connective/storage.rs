@@ -39,14 +39,14 @@ const _ASSERT_0: () = <AllFunctions<0>>::ASSERT_SIZE;
 const _ASSERT_1: () = <AllFunctions<1>>::ASSERT_SIZE;
 const _ASSERT_2: () = <AllFunctions<2>>::ASSERT_SIZE;
 
-#[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
+#[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible 0-arity functions up to equivalence.
 pub const NULLARY_FUNCTIONS: AllFunctions<0> = CheckedStorage::new([
     &functions::Falsity as &'static dyn StoredBoolFn<0>,
     &functions::Truth,
 ]);
 
-#[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
+#[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible unary functions up to equivalence.
 pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
     &functions::Falsity as &'static dyn StoredBoolFn<1>,
@@ -55,7 +55,7 @@ pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
     &functions::Truth,
 ]);
 
-#[allow(trivial_casts)] // need to define at least one cast to prevent compile-error
+#[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible binary functions up to equivalence.
 pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage::new([
     &functions::Falsity as &'static dyn StoredBoolFn<2>, // 0 0 0 0

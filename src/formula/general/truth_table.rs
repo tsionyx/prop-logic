@@ -21,7 +21,7 @@ where
         let atoms = self.atoms();
         let arity = atoms.len();
 
-        #[allow(clippy::manual_repeat_n)]
+        #[expect(clippy::manual_repeat_n)]
         let table: Vec<_> = std::iter::repeat([false, true])
             .take(arity)
             .multi_cartesian_product()

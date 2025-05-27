@@ -125,7 +125,7 @@ impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
             + PartialEq
             + 'static,
     {
-        #[allow(path_statements, clippy::no_effect)]
+        #[expect(path_statements)]
         {
             C::ASSERT_ZST; // `Sized` ensured by `Clone`
         }
