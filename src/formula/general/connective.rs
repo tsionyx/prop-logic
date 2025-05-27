@@ -149,13 +149,10 @@ impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
     where
         OPERAND: AsRef<U>,
     {
-        // TODO: use `each_ref` stabilized in 1.77 to do conversion without allocating `Vec`
-        let operands: Vec<_> = self.operands.iter().map(OPERAND::as_ref).collect();
+        let operands = self.operands.each_ref().map(OPERAND::as_ref);
         DynConnective {
             connective: self.connective.clone(),
-            operands: operands
-                .try_into()
-                .unwrap_or_else(|_| unreachable!("the size of ARITY is preserved")),
+            operands,
         }
     }
 

@@ -13,7 +13,9 @@ on:
   workflow_dispatch:
 
 env:
-  RUST_VERSIONS: "['1.75.0','stable','beta']"
+  # MSRV history:
+  #  - 1.81 to support #[expect]: https://blog.rust-lang.org/2024/09/05/Rust-1.81.0/#expect-lint
+  RUST_VERSIONS: "['1.81.0','stable','beta']"
   APT_DEPENDENCIES: "[]"
 
 jobs:
