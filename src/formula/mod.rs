@@ -24,4 +24,4 @@ pub use self::{
 };
 
 #[cfg(feature = "arbitrary")]
-pub use self::general::arbitrary::Parameters as FormulaParameters;
+pub use self::general::arbitrary::{BinaryWeights, Parameters as FormulaParameters};
