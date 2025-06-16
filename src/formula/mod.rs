@@ -15,6 +15,7 @@ pub use self::{
     eval::Valuation,
     general::{
         connective::{AnyConnective, DynConnective},
+        equivalences,
         formula::Formula,
         truth_table::FormulaTruthTable,
     },
