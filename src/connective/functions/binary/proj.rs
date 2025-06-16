@@ -104,6 +104,11 @@ where
         let expr = Projection::<I> {}.compose(terms);
         UnaryOp::init().compose([expr])
     }
+
+    fn fold_or_compose(&self, terms: [E; 2]) -> E {
+        let expr = Projection::<I> {}.fold_or_compose(terms);
+        UnaryOp::init().fold_or_compose([expr])
+    }
 }
 
 impl Connective<2> for First {

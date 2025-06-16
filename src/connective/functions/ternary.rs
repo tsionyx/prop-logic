@@ -60,6 +60,16 @@ where
             self.op1.compose([x, intermediate])
         }
     }
+
+    fn fold_or_compose(&self, [x, y, z]: [E; 3]) -> E {
+        if LEFT {
+            let intermediate = self.op1.fold_or_compose([x, y]);
+            self.op2.fold_or_compose([intermediate, z])
+        } else {
+            let intermediate = self.op2.fold_or_compose([y, z]);
+            self.op1.fold_or_compose([x, intermediate])
+        }
+    }
 }
 
 #[cfg(test)]

@@ -31,8 +31,8 @@ where
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| x | y)
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        x | y
     }
 }
 
@@ -111,16 +111,14 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        self.fold(terms).unwrap_or_else(|terms| {
-            terms.into_iter().rfold(E::contradiction(), |acc, t| {
-                if acc.is_contradiction() {
-                    t
-                } else if t.is_contradiction() {
-                    acc
-                } else {
-                    t | acc
-                }
-            })
+        terms.into_iter().rfold(E::contradiction(), |acc, t| {
+            if acc.is_contradiction() {
+                t
+            } else if t.is_contradiction() {
+                acc
+            } else {
+                t | acc
+            }
         })
     }
 }

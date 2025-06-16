@@ -198,11 +198,11 @@ where
     }
 
     fn is_falsity_preserving(&self) -> bool {
-        !self.compose([false; ARITY])
+        !self.fold_or_compose([false; ARITY])
     }
 
     fn is_truth_preserving(&self) -> bool {
-        self.compose([true; ARITY])
+        self.fold_or_compose([true; ARITY])
     }
 
     fn is_monotonic(&self) -> bool {

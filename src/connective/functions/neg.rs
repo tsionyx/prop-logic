@@ -23,8 +23,8 @@ where
             .map_err(|partial| [E::partial(partial)])
     }
 
-    fn compose(&self, formula: [E; 1]) -> E {
-        self.fold(formula).unwrap_or_else(|[x]| !x)
+    fn compose(&self, [x]: [E; 1]) -> E {
+        !x
     }
 }
 

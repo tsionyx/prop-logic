@@ -34,8 +34,8 @@ where
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| !(x ^ y))
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        !(x ^ y)
     }
 }
 
@@ -141,29 +141,31 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        self.fold(terms).unwrap_or_else(|terms| {
-            terms
-                .into_iter()
-                .rfold(E::tautology(), |acc, t| match acc.into_terminal() {
-                    Ok(truth_acc) => {
-                        if truth_acc {
-                            t
+        if ARITY < 2 {
+            return E::tautology();
+        }
+
+        terms
+            .into_iter()
+            .rfold(E::tautology(), |acc, t| match acc.into_terminal() {
+                Ok(truth_acc) => {
+                    if truth_acc {
+                        t
+                    } else {
+                        !t
+                    }
+                }
+                Err(partial_acc) => match t.into_terminal() {
+                    Ok(truth_term) => {
+                        if truth_term {
+                            E::partial(partial_acc)
                         } else {
-                            !t
+                            !E::partial(partial_acc)
                         }
                     }
-                    Err(partial_acc) => match t.into_terminal() {
-                        Ok(truth_term) => {
-                            if truth_term {
-                                E::partial(partial_acc)
-                            } else {
-                                !E::partial(partial_acc)
-                            }
-                        }
-                        Err(partial_term) => !(E::partial(partial_term) ^ E::partial(partial_acc)),
-                    },
-                })
-        })
+                    Err(partial_term) => !(E::partial(partial_term) ^ E::partial(partial_acc)),
+                },
+            })
     }
 }
 

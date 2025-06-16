@@ -27,6 +27,12 @@ pub trait TruthFn<const ARITY: usize, E: Evaluable> {
 
     /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective.
     fn compose(&self, terms: [E; ARITY]) -> E;
+
+    /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective
+    /// by [simplyfying][Self::fold] the input terms if possible.
+    fn fold_or_compose(&self, terms: [E; ARITY]) -> E {
+        self.fold(terms).unwrap_or_else(|terms| self.compose(terms))
+    }
 }
 
 /// Extension of the [`TruthFn`] to create a [callable object][Operation]

@@ -66,10 +66,12 @@ mod tests {
 
     fn apply_and_compose_is_equivalent<const ARITY: usize, F>(f: F)
     where
-        F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY>,
+        F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY> + std::fmt::Debug,
         two_powers::D: CheckedArray<ARITY>,
     {
         use crate::truth_table::TruthTabled as _;
+
+        eprintln!("Checking {f:?}");
 
         let truth_table = f.get_truth_table().into_iter();
         let eval_variants = truth_table.map(|(assignment, eval)| {
@@ -77,20 +79,26 @@ mod tests {
                 .into_iter()
                 .map(Formula::<()>::truth)
                 .collect_vec();
-            let formulas = formulas
-                .try_into()
+            let formulas = <[Formula<()>; ARITY]>::try_from(formulas)
                 .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-            (f.compose(formulas), eval)
+            (
+                f.compose(formulas.clone()),
+                f.fold_or_compose(formulas),
+                eval,
+            )
         });
 
         let empty_interpretation: Valuation<()> = Valuation::empty();
-        for (fully_interpreted_formula, expected_eval) in eval_variants {
+        for (composed_formula, fully_interpreted_formula, expected_eval) in eval_variants {
             eprintln!("{fully_interpreted_formula:?} -> {expected_eval:?}");
             if let Formula::TruthValue(val) =
                 fully_interpreted_formula.interpret(&empty_interpretation)
             {
                 assert_eq!(val, expected_eval);
+
+                let composed = composed_formula.interpret(&empty_interpretation);
+                assert!(matches!(composed, Formula::TruthValue(x) if x == expected_eval));
             } else {
                 panic!("The formula was not fully reduced");
             }

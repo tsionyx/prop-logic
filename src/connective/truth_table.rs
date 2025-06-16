@@ -38,14 +38,14 @@ where
             let assignment = assignment
                 .try_into()
                 .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
-            (assignment, f.compose(assignment))
+            (assignment, f.fold_or_compose(assignment))
         })
         .collect();
 
     let table = if ARITY == 0 {
         assert!(table.is_empty());
         let dummy_empty_array = [false; ARITY];
-        let row: Row<ARITY> = (dummy_empty_array, f.compose(dummy_empty_array));
+        let row: Row<ARITY> = (dummy_empty_array, f.fold_or_compose(dummy_empty_array));
         vec![row]
     } else {
         table.into_iter().collect()

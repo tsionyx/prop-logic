@@ -38,9 +38,8 @@ where
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms)
-            .unwrap_or_else(|[antecedent, consequent]| !antecedent | consequent)
+    fn compose(&self, [antecedent, consequent]: [E; 2]) -> E {
+        !antecedent | consequent
     }
 }
 
