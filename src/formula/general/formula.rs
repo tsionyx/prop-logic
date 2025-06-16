@@ -170,7 +170,7 @@ impl<T> Formula<T> {
             Self::Equivalent(x1, x2) => {
                 AnyConnective::new_2(functions::LogicalBiconditional, (x1, x2))
             }
-            Self::Other(inner) => inner.as_ref(),
+            Self::Other(inner) => inner.get_borrowed(),
         }
     }
 

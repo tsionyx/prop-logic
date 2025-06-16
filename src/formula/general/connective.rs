@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{borrow::Borrow, fmt::Debug};
 
 use derive_where::derive_where;
 
@@ -87,22 +87,18 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
 
     /// Forget the operands and return 'only-operator' version of [`AnyConnective`].
     pub fn clear_operands(&self) -> AnyConnective<(), Atom> {
-        match self {
-            Self::Nullary(x) => AnyConnective::Nullary(x.clear_operands()),
-            Self::Unary(x) => AnyConnective::Unary(x.clear_operands()),
-            Self::Binary(x) => AnyConnective::Binary(x.clear_operands()),
-        }
+        self.get_borrowed::<OPERAND>().map(drop)
     }
 
     /// The 'reference' version of [`AnyConnective`].
-    pub fn as_ref<U: ?Sized>(&self) -> AnyConnective<&U, Atom>
+    pub fn get_borrowed<U: ?Sized>(&self) -> AnyConnective<&U, Atom>
     where
-        OPERAND: AsRef<U>,
+        OPERAND: Borrow<U>,
     {
         match self {
-            Self::Nullary(x) => AnyConnective::Nullary(x.as_ref()),
-            Self::Unary(x) => AnyConnective::Unary(x.as_ref()),
-            Self::Binary(x) => AnyConnective::Binary(x.as_ref()),
+            Self::Nullary(x) => AnyConnective::Nullary(x.get_borrowed()),
+            Self::Unary(x) => AnyConnective::Unary(x.get_borrowed()),
+            Self::Binary(x) => AnyConnective::Binary(x.get_borrowed()),
         }
     }
 
@@ -254,11 +250,11 @@ impl<const ARITY: usize, OPERAND, Atom> DynConnective<ARITY, OPERAND, Atom> {
     }
 
     /// The 'reference' version of [`DynConnective`].
-    pub fn as_ref<U: ?Sized>(&self) -> DynConnective<ARITY, &U, Atom>
+    pub fn get_borrowed<U: ?Sized>(&self) -> DynConnective<ARITY, &U, Atom>
     where
-        OPERAND: AsRef<U>,
+        OPERAND: Borrow<U>,
     {
-        let operands = self.operands.each_ref().map(OPERAND::as_ref);
+        let operands = self.operands.each_ref().map(OPERAND::borrow);
         DynConnective {
             connective: self.connective.clone(),
             operands,
@@ -413,9 +409,9 @@ mod tests {
         assert_ne!(x, y);
         assert_eq!(x, z);
 
-        let x_ref = x.as_ref::<str>();
-        let y_ref = y.as_ref();
-        let z_ref = z.as_ref();
+        let x_ref = x.get_borrowed::<str>();
+        let y_ref = y.get_borrowed();
+        let z_ref = z.get_borrowed();
 
         assert_ne!(x_ref, y_ref);
         assert_eq!(x_ref, z_ref);
