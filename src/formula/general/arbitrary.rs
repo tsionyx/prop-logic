@@ -45,7 +45,7 @@ pub struct Parameters<T> {
     /// How many levels of depth the generated [`Formula`] can have.
     pub max_depth: u32,
 
-    /// Whether to use [dynamic connectives][Formula::Other] or not.
+    /// Whether to use [dynamic connectives][Formula::Dynamic] or not.
     pub use_dynamic: bool,
 }
 

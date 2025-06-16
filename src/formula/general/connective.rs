@@ -11,7 +11,7 @@ use super::formula::Formula;
 
 use self::usable::UsableConnective;
 
-#[derive(Debug)]
+#[derive_where(Debug; OPERAND: Debug)]
 #[derive_where(Clone; OPERAND: Clone)]
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
 #[derive_where(Eq; OPERAND: Eq, Atom: 'static)]
@@ -27,7 +27,7 @@ pub enum AnyConnective<OPERAND, Atom> {
 
 impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
-    pub fn new_0<C>(connective: C) -> Self
+    pub fn nullary<C>(connective: C) -> Self
     where
         C: Connective<0>
             + TruthFn<0, Formula<Atom>>
@@ -41,7 +41,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     }
 
     /// Create a [`DynConnective`] with a [`Connective<1>`].
-    pub fn new_1<C>(connective: C, operand: OPERAND) -> Self
+    pub fn unary<C>(connective: C, operand: OPERAND) -> Self
     where
         C: Connective<1>
             + TruthFn<1, Formula<Atom>>
@@ -55,7 +55,7 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
     }
 
     /// Create a [`DynConnective`] with a [`Connective<2>`].
-    pub fn new_2<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
+    pub fn binary<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
     where
         C: Connective<2>
             + TruthFn<2, Formula<Atom>>
@@ -116,6 +116,19 @@ impl<OPERAND, Atom> AnyConnective<OPERAND, Atom> {
 }
 
 impl<Atom> AnyConnective<Box<Formula<Atom>>, Atom> {
+    /// Convert [`AnyConnective`] into the [`Formula`].
+    ///
+    /// If the `is_dynamic` is `true`, keep the dynamic nature of the connective
+    /// by returning [`Formula::Dynamic`].
+    /// Otherwise, convert it into the [canonical form][Self::into_canonical].
+    pub fn into_formula(self, is_dynamic: bool) -> Formula<Atom> {
+        if is_dynamic {
+            Formula::Dynamic(self)
+        } else {
+            self.into_canonical()
+        }
+    }
+
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
     pub fn into_canonical(self) -> Formula<Atom> {
         use crate::{
@@ -201,13 +214,34 @@ impl<Atom> AnyConnective<Box<Formula<Atom>>, Atom> {
 }
 
 impl<Atom> AnyConnective<Formula<Atom>, Atom> {
+    /// Convert [`AnyConnective`] into the [`Formula`].
+    ///
+    /// If the `is_dynamic` is `true`, keep the dynamic nature of the connective
+    /// by returning [`Formula::Dynamic`].
+    /// Otherwise, convert it into the [canonical form][Self::into_canonical].
+    pub fn into_formula(self, is_dynamic: bool) -> Formula<Atom> {
+        self.map(Box::new).into_formula(is_dynamic)
+    }
+
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
     pub fn into_canonical(self) -> Formula<Atom> {
         self.map(Box::new).into_canonical()
     }
 }
 
-#[derive(Debug)]
+impl<Atom> From<AnyConnective<Box<Self>, Atom>> for Formula<Atom> {
+    fn from(value: AnyConnective<Box<Self>, Atom>) -> Self {
+        value.into_formula(true)
+    }
+}
+
+impl<Atom> From<AnyConnective<Self, Atom>> for Formula<Atom> {
+    fn from(value: AnyConnective<Self, Atom>) -> Self {
+        value.into_formula(true)
+    }
+}
+
+#[derive_where(Debug; OPERAND: Debug)]
 #[derive_where(Clone; OPERAND: Clone)]
 // requires `Atom: 'static` because of the `UsableConnective`: `DynCompare`: `AsDynCompare`: `Any`: `'static`
 #[derive_where(PartialEq; OPERAND: PartialEq, Atom: 'static)]
@@ -415,5 +449,47 @@ mod tests {
 
         assert_ne!(x_ref, y_ref);
         assert_eq!(x_ref, z_ref);
+    }
+}
+
+#[cfg(all(test, feature = "arbitrary"))]
+mod prop_test {
+    use proptest::prelude::*;
+
+    use super::super::super::{Formula, FormulaParameters};
+
+    fn params_static() -> FormulaParameters<char> {
+        FormulaParameters {
+            atoms: vec!['a', 'b', 'c', 'd'],
+            leaf_atom_weight: Some(10),
+            ..FormulaParameters::default()
+        }
+    }
+
+    fn params_dynamic() -> FormulaParameters<char> {
+        FormulaParameters {
+            use_dynamic: true,
+            ..params_static()
+        }
+    }
+
+    proptest! {
+        // https://proptest-rs.github.io/proptest/proptest/tutorial/config.html
+        #![proptest_config(ProptestConfig::with_cases(1000))]
+
+        #[test]
+        fn round_trip_static_any_connective(f in Formula::arbitrary_with(params_static())) {
+            let f2 = f.get_connective().map(Clone::clone);
+            println!("{f} -> {f2:?}");
+            assert_eq!(f, f2.clone().into_canonical());
+            assert_eq!(f, f2.into_formula(false));
+        }
+
+        #[test]
+        fn round_trip_dymanic_any_connective(f in Formula::arbitrary_with(params_dynamic())) {
+            let f2 = f.get_connective().map(Clone::clone);
+            println!("{f} -> {f2:?}");
+            assert_eq!(f, f2.into_formula(f.is_dynamic()));
+        }
     }
 }

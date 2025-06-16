@@ -59,14 +59,14 @@ where
                 .collect()
         };
 
-        assert_eq!(table.len(), 1 << arity, "The table is complete");
+        assert_eq!(table.len(), 1 << arity, "The table is incomplete");
         let atoms = atoms.into_iter().cloned().collect();
         FormulaTruthTable { atoms, table }
     }
 
     fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
     where
-        Rhs: TruthTabled<0, TT = Self::TT>,
+        Rhs: TruthTabled<TT = Self::TT> + ?Sized,
     {
         self.get_truth_table()
             .is_equivalent(&other.get_truth_table())

@@ -9,7 +9,7 @@ impl<T> Not for Formula<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        // Do not use the `functions::Negation.try_reduce([f])`
+        // Do not use the `functions::Negation.compose([f])`
         // since it recursively calls the same function again.
         if let Self::TruthValue(value) = &self {
             Self::truth(!*value)

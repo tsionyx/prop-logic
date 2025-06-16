@@ -8,11 +8,13 @@
 //! Each row of the truth table contains one possible configuration of the input variables
 //! (for instance, A=true, B=false), and the result of the operation for those values.
 
+const MAX_ARITY: usize = usize::MAX;
+
 /// Defines the operation of getting the [truth table](https://en.wikipedia.org/wiki/Truth_table).
 ///
 /// Also, the `TruthTabled::is_equivalent` method has a default implementation
 /// of comparing the truth tables of two functions.
-pub trait TruthTabled<const ARITY: usize = 0> {
+pub trait TruthTabled<const ARITY: usize = MAX_ARITY> {
     /// The [`TruthTable`] type associated with the function.
     type TT: TruthTable<ARITY>;
 
@@ -24,10 +26,7 @@ pub trait TruthTabled<const ARITY: usize = 0> {
     /// Check if the truth tables of two functions are equivalent.
     fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
     where
-        Rhs: TruthTabled<ARITY, TT = Self::TT>,
-    {
-        self.get_truth_table().values() == other.get_truth_table().values()
-    }
+        Rhs: TruthTabled<ARITY, TT = Self::TT> + ?Sized;
 }
 
 /// Generic `TruthTable` to allow to implement the trait
@@ -35,7 +34,7 @@ pub trait TruthTabled<const ARITY: usize = 0> {
 ///
 /// TODO: the constant should be of type `Option<usize>`
 /// to allow indetermine ARITY
-pub trait TruthTable<const ARITY: usize = 0> {
+pub trait TruthTable<const ARITY: usize = MAX_ARITY> {
     /// The input values holding a set of `bool` values.
     type Row<'a>
     where

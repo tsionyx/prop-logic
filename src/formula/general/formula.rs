@@ -50,7 +50,7 @@ pub enum Formula<T> {
     Equivalent(Box<Self>, Box<Self>),
 
     /// The operator is specified dynamically.
-    Other(AnyConnective<Box<Self>, T>),
+    Dynamic(AnyConnective<Box<Self>, T>),
 }
 
 impl<T> From<bool> for Formula<T> {
@@ -145,32 +145,49 @@ impl<T> Formula<T> {
         F: FnMut(Self) -> Self,
     {
         match self {
-            Self::TruthValue(_) | Self::Atomic(_) => self,
+            Self::TruthValue(_) | Self::Atomic(_) => transform(self),
             Self::Not(f) => Self::not(transform(*f)),
             Self::And(f1, f2) => Self::and(transform(*f1), transform(*f2)),
             Self::Or(f1, f2) => Self::or(transform(*f1), transform(*f2)),
             Self::Xor(f1, f2) => Self::xor(transform(*f1), transform(*f2)),
             Self::Implies(f1, f2) => Self::implies(transform(*f1), transform(*f2)),
             Self::Equivalent(f1, f2) => Self::equivalent(transform(*f1), transform(*f2)),
-            Self::Other(conn) => Self::Other(conn.map(|f| Box::new(transform(*f)))),
+            Self::Dynamic(conn) => Self::Dynamic(conn.map(|f| Box::new(transform(*f)))),
+        }
+    }
+
+    /// Transform a [`Formula`] by reversing order of its operands
+    /// if it is a binary function. Otherwise, just return it as is.
+    pub fn swap_operands(self) -> Self {
+        match self {
+            Self::TruthValue(_) | Self::Atomic(_) => self,
+            Self::Not(f) => Self::Not(f),
+            Self::And(f1, f2) => Self::And(f2, f1),
+            Self::Or(f1, f2) => Self::Or(f2, f1),
+            Self::Xor(f1, f2) => Self::Xor(f2, f1),
+            Self::Implies(f1, f2) => Self::Implies(f2, f1),
+            Self::Equivalent(f1, f2) => Self::Equivalent(f2, f1),
+            Self::Dynamic(inner) => Self::Dynamic(inner.swap_operands()),
         }
     }
 
     /// Get a top-level connective for a given [`Formula`] along with the operands.
     pub fn get_connective(&self) -> AnyConnective<&Self, T> {
         match self {
-            Self::TruthValue(true) => AnyConnective::new_0(functions::Truth),
-            Self::TruthValue(false) => AnyConnective::new_0(functions::Falsity),
-            Self::Atomic(_) => AnyConnective::new_1(functions::LogicalIdentity, self),
-            Self::Not(x) => AnyConnective::new_1(functions::Negation, x),
-            Self::And(x1, x2) => AnyConnective::new_2(functions::Conjunction, (x1, x2)),
-            Self::Or(x1, x2) => AnyConnective::new_2(functions::Disjunction, (x1, x2)),
-            Self::Xor(x1, x2) => AnyConnective::new_2(functions::ExclusiveDisjunction, (x1, x2)),
-            Self::Implies(x1, x2) => AnyConnective::new_2(functions::MaterialImplication, (x1, x2)),
-            Self::Equivalent(x1, x2) => {
-                AnyConnective::new_2(functions::LogicalBiconditional, (x1, x2))
+            Self::TruthValue(true) => AnyConnective::nullary(functions::Truth),
+            Self::TruthValue(false) => AnyConnective::nullary(functions::Falsity),
+            Self::Atomic(_) => AnyConnective::unary(functions::LogicalIdentity, self),
+            Self::Not(x) => AnyConnective::unary(functions::Negation, x),
+            Self::And(x1, x2) => AnyConnective::binary(functions::Conjunction, (x1, x2)),
+            Self::Or(x1, x2) => AnyConnective::binary(functions::Disjunction, (x1, x2)),
+            Self::Xor(x1, x2) => AnyConnective::binary(functions::ExclusiveDisjunction, (x1, x2)),
+            Self::Implies(x1, x2) => {
+                AnyConnective::binary(functions::MaterialImplication, (x1, x2))
             }
-            Self::Other(inner) => inner.get_borrowed(),
+            Self::Equivalent(x1, x2) => {
+                AnyConnective::binary(functions::LogicalBiconditional, (x1, x2))
+            }
+            Self::Dynamic(inner) => inner.get_borrowed(),
         }
     }
 
@@ -184,6 +201,11 @@ impl<T> Formula<T> {
     /// Whether the given [`Formula`] contains other [`Formula`]-s.
     pub const fn is_complex(&self) -> bool {
         !matches!(self, Self::TruthValue(..) | Self::Atomic(..))
+    }
+
+    /// Whether the given [`Formula`] is [dynamic][Self::Dynamic].
+    pub const fn is_dynamic(&self) -> bool {
+        matches!(self, Self::Dynamic(_))
     }
 
     fn priority(&self) -> Priority {
@@ -210,20 +232,26 @@ impl<T> Formula<T> {
     }
 }
 
-impl<T> From<Formula<T>> for AnyConnective<Formula<T>, T> {
+impl<T> From<Formula<T>> for AnyConnective<Box<Formula<T>>, T> {
     fn from(formula: Formula<T>) -> Self {
         match formula {
-            Formula::TruthValue(true) => Self::new_0(functions::Truth),
-            Formula::TruthValue(false) => Self::new_0(functions::Falsity),
-            Formula::Atomic(_) => Self::new_1(functions::LogicalIdentity, formula),
-            Formula::Not(x) => Self::new_1(functions::Negation, *x),
-            Formula::And(x1, x2) => Self::new_2(functions::Conjunction, (*x1, *x2)),
-            Formula::Or(x1, x2) => Self::new_2(functions::Disjunction, (*x1, *x2)),
-            Formula::Xor(x1, x2) => Self::new_2(functions::ExclusiveDisjunction, (*x1, *x2)),
-            Formula::Implies(x1, x2) => Self::new_2(functions::MaterialImplication, (*x1, *x2)),
-            Formula::Equivalent(x1, x2) => Self::new_2(functions::LogicalBiconditional, (*x1, *x2)),
-            Formula::Other(inner) => inner.map(|f| *f),
+            Formula::TruthValue(true) => Self::nullary(functions::Truth),
+            Formula::TruthValue(false) => Self::nullary(functions::Falsity),
+            Formula::Atomic(_) => Self::unary(functions::LogicalIdentity, Box::new(formula)),
+            Formula::Not(x) => Self::unary(functions::Negation, x),
+            Formula::And(x1, x2) => Self::binary(functions::Conjunction, (x1, x2)),
+            Formula::Or(x1, x2) => Self::binary(functions::Disjunction, (x1, x2)),
+            Formula::Xor(x1, x2) => Self::binary(functions::ExclusiveDisjunction, (x1, x2)),
+            Formula::Implies(x1, x2) => Self::binary(functions::MaterialImplication, (x1, x2)),
+            Formula::Equivalent(x1, x2) => Self::binary(functions::LogicalBiconditional, (x1, x2)),
+            Formula::Dynamic(inner) => inner,
         }
+    }
+}
+
+impl<T> From<Formula<T>> for AnyConnective<Formula<T>, T> {
+    fn from(formula: Formula<T>) -> Self {
+        AnyConnective::<Box<Formula<T>>, T>::from(formula).map(|f| *f)
     }
 }
 
@@ -233,7 +261,7 @@ impl<T> Formula<T> {
     where
         C: Connective<0> + TruthFn<0, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
-        Self::Other(AnyConnective::new_0(connective))
+        Self::Dynamic(AnyConnective::nullary(connective))
     }
 
     /// Create a new [`Formula`] using the _unary_ [`Connective`]
@@ -242,7 +270,7 @@ impl<T> Formula<T> {
     where
         C: Connective<1> + TruthFn<1, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
-        Self::Other(AnyConnective::new_1(connective, Box::new(f)))
+        Self::Dynamic(AnyConnective::unary(connective, Box::new(f)))
     }
 
     /// Create a new [`Formula`] using the _binary_ [`Connective`]
@@ -251,7 +279,7 @@ impl<T> Formula<T> {
     where
         C: Connective<2> + TruthFn<2, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
-        Self::Other(AnyConnective::new_2(
+        Self::Dynamic(AnyConnective::binary(
             connective,
             (Box::new(f1), Box::new(f2)),
         ))
@@ -306,18 +334,18 @@ impl<T: PartialEq> Formula<T> {
     /// Get all the atomic values of the [`Formula`].
     pub fn atoms(&self) -> Vec<&T> {
         match self {
-            Self::TruthValue(_) | Self::Other(AnyConnective::Nullary(_)) => vec![],
+            Self::TruthValue(_) | Self::Dynamic(AnyConnective::Nullary(_)) => vec![],
             Self::Atomic(atom) => vec![atom],
 
             Self::Not(f)
-            | Self::Other(AnyConnective::Unary(DynConnective { operands: [f], .. })) => f.atoms(),
+            | Self::Dynamic(AnyConnective::Unary(DynConnective { operands: [f], .. })) => f.atoms(),
 
             Self::And(f1, f2)
             | Self::Or(f1, f2)
             | Self::Xor(f1, f2)
             | Self::Implies(f1, f2)
             | Self::Equivalent(f1, f2)
-            | Self::Other(AnyConnective::Binary(DynConnective {
+            | Self::Dynamic(AnyConnective::Binary(DynConnective {
                 operands: [f1, f2], ..
             })) => {
                 let mut atoms = f1.atoms();

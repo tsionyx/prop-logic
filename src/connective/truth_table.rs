@@ -20,6 +20,17 @@ where
     fn get_truth_table(&self) -> Self::TT {
         bool_truth_table(self)
     }
+
+    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
+    where
+        Rhs: TruthTabled<ARITY, TT = Self::TT> + ?Sized,
+    {
+        use std::collections::HashMap as Map;
+
+        let a: Map<_, _> = self.get_truth_table().iter().collect();
+        let b: Map<_, _> = other.get_truth_table().iter().collect();
+        a == b
+    }
 }
 
 fn bool_truth_table<const ARITY: usize, F>(f: &F) -> FixedTruthTable<ARITY>
