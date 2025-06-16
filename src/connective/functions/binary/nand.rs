@@ -52,3 +52,20 @@ impl Connective<2> for NonConjunction {
         ])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Formula;
+
+    use super::*;
+
+    #[test]
+    fn terminal_formula() {
+        assert_eq!(
+            NonConjunction
+                .try_reduce([Formula::<()>::truth(true), Formula::truth(false)])
+                .unwrap(),
+            Formula::truth(true)
+        );
+    }
+}

@@ -132,84 +132,63 @@ impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
     pub fn into_canonical(self) -> Formula<VAR> {
         use crate::{
-            connective::{functions, Evaluable as _, TruthFn as _},
+            connective::{functions, TruthFn},
             truth_table::TruthTabled as _,
         };
 
         match self {
-            Self::Nullary(DynConnective {
-                connective,
-                operands: [],
-            }) => {
-                if connective.is_equivalent(&functions::Falsity) {
-                    Formula::contradiction()
-                } else if connective.is_equivalent(&functions::Truth) {
-                    Formula::tautology()
-                } else {
+            Self::Nullary(conn) => {
+                conn.map(|f| *f)
+                    .compose_if_equivalent(functions::Falsity)
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
                     // should be unreachable because of exhaustive checks before
-                    connective.compose([])
-                }
+                    .unwrap_or_else(DynConnective::compose)
             }
 
-            Self::Unary(DynConnective {
-                connective,
-                operands: [f],
-            }) => {
-                if connective.is_equivalent(&functions::Falsity) {
-                    Formula::contradiction()
-                } else if connective.is_equivalent(&functions::LogicalIdentity) {
-                    *f
-                } else if connective.is_equivalent(&functions::Negation) {
-                    Formula::Not(f)
-                } else if connective.is_equivalent(&functions::Truth) {
-                    Formula::tautology()
-                } else {
+            Self::Unary(conn) => {
+                conn.map(|f| *f)
+                    .compose_if_equivalent(functions::Falsity)
+                    .or_else(|conn| conn.compose_if_equivalent(functions::LogicalIdentity))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Negation))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
                     // should be unreachable because of exhaustive checks before
-                    connective.compose([*f])
-                }
+                    .unwrap_or_else(DynConnective::compose)
             }
-            Self::Binary(DynConnective {
-                connective,
-                operands: [f1, f2],
-            }) => {
-                use super::super::ops::Not as _; // TODO: use `TruthFn::compose``
+            Self::Binary(conn) => {
+                conn.map(|f| *f)
+                    .compose_if_equivalent(functions::Falsity)
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Conjunction))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::MaterialNonImplication))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::First {}))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::ConverseNonImplication))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Last {}))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::ExclusiveDisjunction))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Disjunction))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::NonDisjunction))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::LogicalBiconditional))
+                    // .or_else(|conn| conn.compose_if_equivalent(functions::NotSecond::new()))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::ConverseImplication))
+                    // .or_else(|conn| conn.compose_if_equivalent(functions::NotFirst::new()))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::MaterialImplication))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::NonConjunction))
+                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
+                    .unwrap_or_else(
+                        |DynConnective {
+                             connective,
+                             operands: [f1, f2],
+                         }| {
+                            use super::super::ops::Not as _;
 
-                if connective.is_equivalent(&functions::Falsity) {
-                    Formula::contradiction()
-                } else if connective.is_equivalent(&functions::Conjunction) {
-                    Formula::And(f1, f2)
-                } else if connective.is_equivalent(&functions::MaterialNonImplication) {
-                    Formula::not(Formula::Implies(f1, f2))
-                } else if connective.is_equivalent(&functions::First {}) {
-                    *f1
-                } else if connective.is_equivalent(&functions::ConverseNonImplication) {
-                    Formula::not(Formula::Implies(f2, f1))
-                } else if connective.is_equivalent(&functions::Last {}) {
-                    *f2
-                } else if connective.is_equivalent(&functions::ExclusiveDisjunction) {
-                    Formula::Xor(f1, f2)
-                } else if connective.is_equivalent(&functions::Disjunction) {
-                    Formula::Or(f1, f2)
-                } else if connective.is_equivalent(&functions::NonDisjunction) {
-                    Formula::not(Formula::Or(f1, f2))
-                } else if connective.is_equivalent(&functions::LogicalBiconditional) {
-                    Formula::Equivalent(f1, f2)
-                } else if connective.is_equivalent(&functions::NotSecond::new()) {
-                    Formula::Not(f2)
-                } else if connective.is_equivalent(&functions::ConverseImplication) {
-                    Formula::Implies(f2, f1)
-                } else if connective.is_equivalent(&functions::NotFirst::new()) {
-                    Formula::Not(f1)
-                } else if connective.is_equivalent(&functions::MaterialImplication) {
-                    Formula::Implies(f1, f2)
-                } else if connective.is_equivalent(&functions::NonConjunction) {
-                    Formula::not(Formula::And(f1, f2))
-                } else if connective.is_equivalent(&functions::Truth) {
-                    Formula::tautology()
-                } else {
-                    // should be unreachable because of exhaustive checks before
-                    connective.compose([*f1, *f2])
-                }
+                            if connective.is_equivalent(&functions::NotSecond::new()) {
+                                Formula::not(f2)
+                            } else if connective.is_equivalent(&functions::NotFirst::new()) {
+                                Formula::not(f1)
+                            } else {
+                                // should be unreachable because of exhaustive checks before
+                                connective.compose([f1, f2])
+                            }
+                        },
+                    )
             }
         }
     }
@@ -311,6 +290,31 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
             connective,
             operands: operands.map(f),
         }
+    }
+
+    fn compose_if_equivalent<F>(self, truth_fn: F) -> Result<OPERAND, Self>
+    where
+        OPERAND: crate::connective::Evaluable,
+        crate::arity::two_powers::D: crate::CheckedArray<ARITY>,
+        F: crate::connective::BoolFn<ARITY> + TruthFn<ARITY, OPERAND>,
+    {
+        use crate::truth_table::TruthTabled as _;
+
+        if self.connective.is_equivalent(&truth_fn) {
+            Ok(truth_fn.compose(self.operands))
+        } else {
+            Err(self)
+        }
+    }
+}
+
+impl<const ARITY: usize, VAR> DynConnective<ARITY, Formula<VAR>, VAR> {
+    fn compose(self) -> Formula<VAR> {
+        let Self {
+            connective,
+            operands,
+        } = self;
+        connective.compose(operands)
     }
 }
 
