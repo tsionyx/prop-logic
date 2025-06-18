@@ -15,10 +15,10 @@ pub use self::{
     eval::Valuation,
     general::{
         connective::{AnyConnective, DynConnective},
-        formula::{Directed, Formula},
+        formula::Formula,
         truth_table::FormulaTruthTable,
     },
-    lit::{Lit, Literal},
+    lit::{Lit, Literal, Signed},
     ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},
 };

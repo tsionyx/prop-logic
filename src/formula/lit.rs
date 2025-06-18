@@ -4,42 +4,52 @@ use crate::utils::zst::Void;
 
 pub use super::{Formula, Variable};
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+/// The wrapper around a value to represent the attachment of a sign to it.
+pub enum Signed<T> {
+    /// The value itself.
+    Pos(T),
+    /// The negated value.
+    Neg(T),
+}
+
+impl<T> From<T> for Signed<T> {
+    fn from(value: T) -> Self {
+        Self::Pos(value)
+    }
+}
+
+impl<T> AsRef<T> for Signed<T> {
+    fn as_ref(&self) -> &T {
+        match self {
+            Self::Pos(p) | Self::Neg(p) => p,
+        }
+    }
+}
+
+impl<T> Not for Signed<T> {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Self::Pos(var) => Self::Neg(var),
+            Self::Neg(var) => Self::Pos(var),
+        }
+    }
+}
+
 /// A [literal][Literal] is a kind of generalization of a [Variable]
 /// that can be either:
 /// - in plain form, or just
 ///   the variable's [identity][crate::connective::LogicalIdentity];
 /// - in negated form, or
 ///   the variable's [negation][crate::connective::Negation];
-pub enum Literal<T> {
-    /// The [Variable] itself.
-    Var(Variable<T>),
-
-    /// The [negated][crate::connective::Negation] [Variable].
-    Neg(Variable<T>),
-}
+pub type Literal<T> = Signed<Variable<T>>;
 
 /// The most primitive instantiation of the [`Literal`]
 /// without any additional info attached
 /// optimized for memory usage.
 pub type Lit = Literal<Void>;
-
-impl<T> From<Variable<T>> for Literal<T> {
-    fn from(value: Variable<T>) -> Self {
-        Self::Var(value)
-    }
-}
-
-impl<T> Not for Literal<T> {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        match self {
-            Self::Var(var) => Self::Neg(var),
-            Self::Neg(var) => Self::Var(var),
-        }
-    }
-}
 
 impl<T> Not for Variable<T> {
     type Output = Literal<T>;
@@ -52,7 +62,7 @@ impl<T> Not for Variable<T> {
 impl<T> From<Literal<T>> for Formula<Variable<T>> {
     fn from(lit: Literal<T>) -> Self {
         match lit {
-            Literal::Var(var) => Self::atom(var),
+            Literal::Pos(var) => Self::atom(var),
             Literal::Neg(var) => !Self::atom(var),
         }
     }

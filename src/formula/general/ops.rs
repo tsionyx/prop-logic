@@ -2,7 +2,7 @@ use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 use super::{
     super::{Equivalent, Implies},
-    formula::{Directed, Formula},
+    formula::Formula,
 };
 
 impl<T> Not for Box<Formula<T>> {
@@ -29,17 +29,6 @@ where
 
     fn bitand(self, other: Rhs) -> Self::Output {
         Formula::And(self, other.into())
-    }
-}
-
-impl<T> Not for Directed<T> {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
-        match self {
-            Self::Straight(x) => Self::Negated(x),
-            Self::Negated(x) => Self::Straight(x),
-        }
     }
 }
 

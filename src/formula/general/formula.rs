@@ -10,7 +10,7 @@ use crate::connective::{
 };
 
 pub use super::{
-    super::ops::*,
+    super::{lit::Signed, ops::*},
     connective::{AnyConnective, DynConnective},
 };
 
@@ -56,31 +56,6 @@ pub enum Formula<V> {
 impl<T> From<T> for Formula<T> {
     fn from(value: T) -> Self {
         Self::atom(value)
-    }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-/// The wrapper around the atomic value of a [`Formula`]
-/// to represent the simplest structures:
-/// - an [atomic value][Formula::Atomic] ('p');
-/// - a [negated][Formula::Not] [atomic value][Formula::Atomic] ('¬p').
-///
-/// See the [`Formula::as_directed_atom`] for usage.
-///
-/// It is somewhat similar to the [`Literal`][super::super::Literal]
-/// but the wrapped value is not constrained to the [`Variable`][super::super::Variable].
-pub enum Directed<T> {
-    /// The atomic value itself.
-    Straight(T),
-    /// The negated atomic value.
-    Negated(T),
-}
-
-impl<T> AsRef<T> for Directed<T> {
-    fn as_ref(&self) -> &T {
-        match self {
-            Self::Straight(p) | Self::Negated(p) => p,
-        }
     }
 }
 
@@ -174,13 +149,13 @@ impl<T> Formula<T> {
         self.priority() > e.priority()
     }
 
-    /// Represent a [`Formula`] as a [`Directed`] atomic value if possible.
-    pub fn as_directed_atom(&self) -> Option<Directed<&T>> {
+    /// Represent a [`Formula`] as a single [`Signed`] variable, if possible.
+    pub fn as_signed_var(&self) -> Option<Signed<&T>> {
         if let Self::Atomic(p) = self {
-            Some(Directed::Straight(p))
+            Some(Signed::Pos(p))
         } else if let Self::Not(f) = self {
             if let Self::Atomic(p) = f.as_ref() {
-                Some(Directed::Negated(p))
+                Some(Signed::Neg(p))
             } else {
                 None
             }
