@@ -38,7 +38,7 @@ where
 {
     #[must_use]
     /// Trying to get the value of [`Formula`]
-    /// by reducing it using available [`Atom`][super::super::Atom]'s [`Valuation`].
+    /// by reducing it using available variables' [`Valuation`].
     ///
     /// If the [`Valuation`] is incomplete,
     /// the reduced [`Formula`] is going to be produced
@@ -86,7 +86,7 @@ mod tests {
     use super::{
         super::super::{
             ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
-            Atom, Variable,
+            Variable,
         },
         *,
     };
@@ -124,8 +124,6 @@ mod tests {
         val
     }
 
-    impl<T> Atom for Arc<Variable<T>> {}
-
     #[test]
     fn tautology() {
         let f: Formula<Arc<Variable<char>>> = Formula::tautology();
@@ -139,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn known_atom() {
+    fn known_var() {
         let f = Formula::atom(Arc::new(get_var('a')));
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
@@ -148,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn unknown_atom() {
+    fn unknown_var() {
         let var = get_var('p');
         let f = Formula::atom(Arc::new(var));
         assert_eq!(
@@ -285,7 +283,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f = Formula::from(var1).xor(var2).xor(var3.clone());
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3));
     }
 
     #[test]
@@ -321,7 +319,7 @@ mod tests {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var1).implies(var2);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -345,7 +343,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var2).implies(var1);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -356,7 +354,7 @@ mod tests {
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
         let f = Formula::from(var2).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -367,7 +365,7 @@ mod tests {
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
 
         let f = Formula::from(var2).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), false.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
@@ -382,7 +380,7 @@ mod tests {
         );
 
         let f = Formula::from(var2.clone()).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2));
     }
 
     #[test]

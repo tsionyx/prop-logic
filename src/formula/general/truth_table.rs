@@ -21,8 +21,8 @@ where
     fn get_truth_table(&self) -> Self::TT {
         use itertools::Itertools as _;
 
-        let atoms = self.atoms();
-        let arity = atoms.len();
+        let vars = self.variables();
+        let arity = vars.len();
 
         #[expect(clippy::manual_repeat_n)]
         let table: Vec<_> = if arity == 0 {
@@ -31,7 +31,7 @@ where
             let row = if let Self::TruthValue(value) = self.interpret(&valuation) {
                 (dummy_assignment, value)
             } else {
-                panic!("Cannot evaluate formala with no atoms")
+                panic!("Cannot evaluate formula with no variables")
             };
             vec![row]
         } else {
@@ -44,7 +44,7 @@ where
                         arity,
                         "The array size is guaranteed by Itertools::multi_cartesian_product"
                     );
-                    let valuation: Valuation<_> = atoms
+                    let valuation: Valuation<_> = vars
                         .iter()
                         .copied()
                         .cloned()
@@ -60,8 +60,8 @@ where
         };
 
         assert_eq!(table.len(), 1 << arity, "The table is incomplete");
-        let atoms = atoms.into_iter().cloned().collect();
-        FormulaTruthTable { atoms, table }
+        let variables = vars.into_iter().cloned().collect();
+        FormulaTruthTable { variables, table }
     }
 
     fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
@@ -86,7 +86,7 @@ impl<T> TruthTable for FormulaTruthTable<T> {
             (b, a)
         }
         self.table.iter().map(|(args, res)| {
-            let args: Self::Row<'_> = Box::new(args.iter().copied().zip(&self.atoms).map(swap));
+            let args: Self::Row<'_> = Box::new(args.iter().copied().zip(&self.variables).map(swap));
             (args, *res)
         })
     }
@@ -97,10 +97,10 @@ impl<T> TruthTable for FormulaTruthTable<T> {
 /// for an arbitrary [`Formula`]
 ///
 /// with the values produced by assigning values to
-/// the [`Formula`]'s atoms in default order
+/// the [`Formula`]'s variables in default order
 /// (as the sequence of incrementing binary numbers).
 pub struct FormulaTruthTable<T> {
-    atoms: Vec<T>,
+    variables: Vec<T>,
     table: Table,
 }
 
@@ -158,36 +158,36 @@ where
         let a = self.reduce().unwrap_or_else(|_| self.as_ref());
         let b = other.reduce().unwrap_or_else(|_| other.as_ref());
 
-        let a_atoms: UnsortedVec<_> = a.atoms.iter().collect();
-        let b_atoms: UnsortedVec<_> = b.atoms.iter().collect();
-        if a_atoms != b_atoms {
+        let a_vars: UnsortedVec<_> = a.variables.iter().collect();
+        let b_vars: UnsortedVec<_> = b.variables.iter().collect();
+        if a_vars != b_vars {
             return false;
         }
 
         // The following piece tries to compare the rows even if they are mixed up.
         //
         // The complexity of a single row-to-row comparison is `O(n²)`
-        // where `n` is the number of atoms in the formula.
-        // Having `n` atoms we have `2ⁿ` total rows. ([U+207F](https://unicodeplus.com/U+207F) can be entered with `Ctrl-Shift-U + 2 + 0 + 7 + f`).
+        // where `n` is the number of variables in the formula.
+        // Having `n` variables we have `2ⁿ` total rows. ([U+207F](https://unicodeplus.com/U+207F) can be entered with `Ctrl-Shift-U + 2 + 0 + 7 + f`).
         // Comparing that many rows with each other requires `O(2²ⁿ)` row comparisons
         // or `O(2²ⁿ * n²)` atomic comparisons in total.
         //
-        // That gets pretty soon out of control as the number of atoms grows:
+        // That gets pretty soon out of control as the number of variables grows:
         //
-        // | atoms | # comparisons |
-        // |-------|---------------|
-        // |     1 |             4 |
-        // |     2 |            64 |
-        // |     3 |           576 |
-        // |     4 |         4_096 |
-        // |     5 |        25_600 |
-        // |     6 |       147_456 |
-        // |     7 |       802_816 |
-        // |     8 |     4_194_304 |
-        // |     9 |    21_233_664 |
-        // |    10 |   104_857_600 |
-        // |    11 |   507_510_784 |
-        // |    12 | 2_415_919_104 |
+        // | vars | # comparisons |
+        // |------|---------------|
+        // |    1 |             4 |
+        // |    2 |            64 |
+        // |    3 |           576 |
+        // |    4 |         4_096 |
+        // |    5 |        25_600 |
+        // |    6 |       147_456 |
+        // |    7 |       802_816 |
+        // |    8 |     4_194_304 |
+        // |    9 |    21_233_664 |
+        // |   10 |   104_857_600 |
+        // |   11 |   507_510_784 |
+        // |   12 | 2_415_919_104 |
 
         let a_rows: UnsortedVec<_> = a
             .iter()
@@ -200,75 +200,78 @@ where
         a_rows == b_rows
     }
 
-    /// Remove the non-significant atoms (by shrinking the table twice for each of it).
+    /// Remove the non-significant variables (by shrinking the table twice for each of it).
     ///
-    /// - select a candidate atom to remove (the column in a table);
+    /// - select a candidate variable to remove (the column in a table);
     /// - split the table into two sorted sides by taking the next unprocessed row and placing its counterpart in the other side;
-    /// - if the values column of the two sides are equal, then the candidate atom is non-significant and can be removed;
+    /// - if the values column of the two sides are equal, then the candidate variable is non-significant and can be removed;
     fn reduce(&self) -> Result<FormulaTruthTable<&T>, ReduceError<&T>> {
         let mut current = self.as_ref();
 
-        let mut atoms_to_remove = Vec::new();
-        // Iterate over the atoms and try to remove them one by one.
-        for atom in &self.atoms {
-            let is_significant = current.reduce_atom(&atom)?;
+        let mut vars_to_remove = Vec::new();
+        // Iterate over the variables and try to remove them one by one.
+        for var in &self.variables {
+            let is_significant = current.reduce_var(&var)?;
 
             let table = match is_significant {
                 Significance::Significant { a, b } => {
-                    // If the atom is significant, we keep it and continue with the next one.
+                    // If the variable is significant, we keep it and continue with the next one.
                     a.into_iter().chain(b).collect()
                 }
-                Significance::NonSignificant { atom_idx, side } => {
-                    // If the atom is not significant, we remove it.
-                    atoms_to_remove.push(atom);
+                Significance::NonSignificant { var_idx, side } => {
+                    // If the variable is **not** significant, we remove it.
+                    vars_to_remove.push(var);
                     side.into_iter()
                         .map(|(mut row, value)| {
-                            let _ = row.remove(atom_idx);
+                            let _ = row.remove(var_idx);
                             (row, value)
                         })
                         .collect()
                 }
             };
 
-            let atoms = self
-                .atoms
+            let variables = self
+                .variables
                 .iter()
-                .filter(|atom| !atoms_to_remove.contains(atom))
+                .filter(|var| !vars_to_remove.contains(var))
                 .collect();
 
-            current = FormulaTruthTable { atoms, table }
+            current = FormulaTruthTable { variables, table }
         }
 
         Ok(current)
     }
 
-    fn reduce_atom(self, atom: &T) -> Result<Significance<Table>, ReduceError<&T>> {
-        let Self { atoms, mut table } = self;
-        let atom_idx = atoms.iter().position(|a| a == atom).ok_or(ReduceError {
-            reason: ReduceErrorReason::AtomNotFound,
-            atom,
+    fn reduce_var(self, var: &T) -> Result<Significance<Table>, ReduceError<&T>> {
+        let Self {
+            variables,
+            mut table,
+        } = self;
+        let var_idx = variables.iter().position(|a| a == var).ok_or(ReduceError {
+            reason: ReduceErrorReason::VarNotFound,
+            var,
         })?;
 
         let (mut a_side, mut b_side) = (Vec::new(), Vec::new());
 
         while let Some(row_with_value) = table.pop() {
             let row = &row_with_value.0;
-            let atom_value = row[atom_idx];
+            let var_value = row[var_idx];
 
-            // and its counterpart (the same row with the atom value flipped) to the `b_side`.
+            // and its counterpart (the same row with the variable's value flipped) to the `b_side`.
             let counter_part_row_idx = table.iter().map(|(row, _)| row).position(|other_row| {
-                // Find the row with the same values except for the atom at `atom_idx`.
+                // Find the row with the same values except for the variable at `var_idx`.
                 row.iter()
                     .zip(other_row)
                     .enumerate()
-                    .all(|(i, (v, u))| (v == u) || (i == atom_idx))
+                    .all(|(i, (v, u))| (v == u) || (i == var_idx))
             });
             if let Some(counter_part_row_idx) = counter_part_row_idx {
                 let counter_part = table.remove(counter_part_row_idx);
-                if counter_part.0[atom_idx] == atom_value {
+                if counter_part.0[var_idx] == var_value {
                     return Err(ReduceError {
                         reason: ReduceErrorReason::CounterRowInvalid,
-                        atom,
+                        var,
                     });
                 }
                 a_side.push(row_with_value);
@@ -278,7 +281,7 @@ where
                     reason: ReduceErrorReason::CounterRowNotFound {
                         row: row_with_value.clone(),
                     },
-                    atom,
+                    var,
                 });
             }
         }
@@ -308,7 +311,7 @@ where
             }
         } else {
             Significance::NonSignificant {
-                atom_idx,
+                var_idx,
                 side: a_side,
             }
         })
@@ -316,7 +319,7 @@ where
 
     fn as_ref(&self) -> FormulaTruthTable<&T> {
         FormulaTruthTable {
-            atoms: self.atoms.iter().collect(),
+            variables: self.variables.iter().collect(),
             table: self.table.clone(),
         }
     }
@@ -326,7 +329,7 @@ where
 #[error("Reduce failed: {reason}")]
 struct ReduceError<T> {
     reason: ReduceErrorReason,
-    atom: T,
+    var: T,
 }
 
 impl<T> From<ReduceError<&T>> for ReduceError<T>
@@ -334,18 +337,18 @@ where
     T: Clone,
 {
     fn from(value: ReduceError<&T>) -> Self {
-        let ReduceError { reason, atom } = value;
+        let ReduceError { reason, var } = value;
         Self {
             reason,
-            atom: atom.clone(),
+            var: var.clone(),
         }
     }
 }
 
 #[derive(Debug, Clone, Error)]
 enum ReduceErrorReason {
-    #[error("Atom not found in the truth table")]
-    AtomNotFound,
+    #[error("Variable not found in the truth table")]
+    VarNotFound,
     #[error("No counterpart row found for row {row:?}")]
     CounterRowNotFound { row: (Vec<bool>, bool) },
     #[error("Counterpart row should have the opposite value")]
@@ -354,7 +357,7 @@ enum ReduceErrorReason {
 
 enum Significance<T> {
     Significant { a: T, b: T },
-    NonSignificant { atom_idx: usize, side: T },
+    NonSignificant { var_idx: usize, side: T },
 }
 
 impl<T> fmt::Display for FormulaTruthTable<T>
@@ -362,14 +365,14 @@ where
     T: fmt::Display,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let atoms: Vec<_> = self
+        let variables: Vec<_> = self
             .iter()
             .next()
-            .map(|(args, _)| args.map(|(atom, _)| atom).collect())
+            .map(|(args, _)| args.map(|(var, _)| var).collect())
             .unwrap_or_default();
         let value_col = "VALUE";
         let padding_value = value_col.len();
-        let padding_value = atoms
+        let padding_value = variables
             .iter()
             .map(|a| a.to_string().len())
             .max()
@@ -378,13 +381,13 @@ where
         let padding_var = padding_value;
         let padding_sep = padding_value + 2;
 
-        for atom in &atoms {
-            // FIXME: {atom:<padding_var$} is not working
-            write!(f, "| {:<padding_var$} ", atom.to_string())?;
+        for var in &variables {
+            // FIXME: {var:<padding_var$} is not working
+            write!(f, "| {:<padding_var$} ", var.to_string())?;
         }
         writeln!(f, "| {value_col} |")?;
 
-        let arity = atoms.len();
+        let arity = variables.len();
         for _ in 0..=arity {
             write!(f, "|{:-<padding_sep$}", "")?;
         }
@@ -392,7 +395,7 @@ where
 
         for (args, res) in self.iter() {
             writeln!(f)?;
-            for (_atom, arg) in args {
+            for (_var, arg) in args {
                 write!(f, "| {arg:<padding_value$} ")?;
             }
             write!(f, "| {res:<padding_value$} |")?;
@@ -455,8 +458,8 @@ mod tests {
         );
 
         for (row, _val) in truth_table.iter() {
-            let atoms: Vec<_> = row.map(|(&atom, _)| atom).collect();
-            assert_eq!(atoms, vec![p, q, r]);
+            let vars: Vec<_> = row.map(|(&var, _)| var).collect();
+            assert_eq!(vars, vec![p, q, r]);
         }
     }
 
@@ -474,9 +477,9 @@ mod tests {
 
     #[test]
     fn large_conjunction_equivalence() {
-        const ATOMS: u8 = 10;
+        const VARS: u8 = 10;
 
-        let vars: Vec<_> = (0..ATOMS)
+        let vars: Vec<_> = (0..VARS)
             .map(|i| Variable::with_data(i.into(), (b'a' + i) as char))
             .collect();
 

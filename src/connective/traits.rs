@@ -83,12 +83,12 @@ pub trait Connective<const ARITY: usize>: BoolFn<ARITY> {
     }
 }
 
-impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Connective<N> + 'a {
-    fn up_from(value: &Atom) -> &Self {
+impl<'a, const N: usize, C: Connective<N> + 'a> UpcastFrom<C> for dyn Connective<N> + 'a {
+    fn up_from(value: &C) -> &Self {
         value
     }
 
-    fn up_from_mut(value: &mut Atom) -> &mut Self {
+    fn up_from_mut(value: &mut C) -> &mut Self {
         value
     }
 }

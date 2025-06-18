@@ -3,7 +3,7 @@
 //! which is a Boolean-valued
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
-mod atom;
+mod assign;
 mod eval;
 mod general;
 mod lit;
@@ -11,7 +11,7 @@ mod ops;
 mod var;
 
 pub use self::{
-    atom::{Assignment, Atom},
+    assign::Assignment,
     eval::Valuation,
     general::{
         connective::{AnyConnective, DynConnective},

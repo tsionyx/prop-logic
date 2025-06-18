@@ -2,16 +2,18 @@ use std::fmt;
 
 use crate::utils::zst::Void;
 
-use super::atom::Atom;
-
 type VarId = u64;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
 /// A propositional variable is a
-/// formal expression that denotes an [atomic formula][Atom].
+/// formal expression that denotes an atomic formula.
 ///
-/// It is a basic building block
-/// of the propositional calculus.  
+/// It is a basic building block of the propositional calculus.
+///
+/// For propositional logic, a [propositional variable][Variable]
+/// is often more briefly referred to as an atomic formula,
+/// but, more precisely, a [propositional variable][Variable]
+/// is not an atomic formula but a formal expression that denotes an atomic formula.
 ///
 /// <https://en.wikipedia.org/wiki/Propositional_variable>
 pub struct Variable<T> {
@@ -39,8 +41,6 @@ impl<T> Variable<T> {
         }
     }
 }
-
-impl<T> Atom for Variable<T> {}
 
 impl<T> fmt::Display for Variable<T>
 where

@@ -15,7 +15,7 @@ pub struct Parameters<T> {
     /// in the leaves of the generated [`Formula`].
     ///
     /// By default it is set to 2 to uniformly select
-    /// one of constant along with one of the atom provided.
+    /// one of constant along with one of the variables provided.
     ///
     /// Set it to 0 to prevent using boolean constants.
     pub leaf_const_weight: u32,
@@ -24,14 +24,14 @@ pub struct Parameters<T> {
     /// in the leaves of the generated [`Formula`].
     ///
     /// By default it is set to `None` in which case
-    /// it unwraps into `self.atoms.len()` to uniformly select
-    /// one of constant along with one of the atom provided.
+    /// it unwraps into `self.variables.len()` to uniformly select
+    /// one of constant along with one of the variables provided.
     ///
-    /// Set it to 0 to prevent using atoms.
-    pub leaf_atom_weight: Option<u32>,
+    /// Set it to 0 to prevent using variables.
+    pub leaf_var_weight: Option<u32>,
 
-    /// The atomic variables that can be used in the generated [`Formula`].
-    pub atoms: Vec<T>,
+    /// The variables that can be used in the generated [`Formula`].
+    pub variables: Vec<T>,
 
     /// The relative weights of the unary to binary operators
     /// in the recursive case for the generated [`Formula`].
@@ -56,8 +56,8 @@ impl<T> Default for Parameters<T> {
     fn default() -> Self {
         Self {
             leaf_const_weight: 2,
-            leaf_atom_weight: None,
-            atoms: vec![],
+            leaf_var_weight: None,
+            variables: vec![],
             unary_to_binary_ratio: (1, 2),
             binary_weights: BinaryWeights::default(),
             max_depth: 8,
@@ -223,8 +223,8 @@ where
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
         let Parameters {
             leaf_const_weight,
-            leaf_atom_weight,
-            atoms,
+            leaf_var_weight,
+            variables,
             unary_to_binary_ratio: (unary_weight, binary_weight),
             binary_weights,
             max_depth,
@@ -233,11 +233,11 @@ where
 
         let typed_consts = Self::generate_nullary(use_dynamic);
 
-        let leaf_atom_weight =
-            leaf_atom_weight.unwrap_or_else(|| u32::try_from(atoms.len()).unwrap_or(u32::MAX));
+        let leaf_var_weight =
+            leaf_var_weight.unwrap_or_else(|| u32::try_from(variables.len()).unwrap_or(u32::MAX));
         let leaf = prop_oneof![
             leaf_const_weight => typed_consts,
-            leaf_atom_weight => prop::sample::select(atoms).prop_map(Self::atom),
+            leaf_var_weight => prop::sample::select(variables).prop_map(Self::atom),
         ];
 
         let max_nodes = 1 << max_depth;

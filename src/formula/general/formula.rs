@@ -10,26 +10,26 @@ use crate::connective::{
 };
 
 pub use super::{
-    super::{atom::Atom, ops::*},
+    super::ops::*,
     connective::{AnyConnective, DynConnective},
 };
 
 #[derive(Debug, Clone)]
-#[derive_where(PartialEq; T: PartialEq + 'static)]
+#[derive_where(PartialEq; V: PartialEq + 'static)]
 /// [`Formula`] is a well-formed expression constructed from
-/// propositions or [variables][Atom]
+/// propositions variables
 /// and [logical operators][crate::connective::Connective].
 ///
 /// Based on <https://docs.rs/logic/>
-pub enum Formula<T> {
+pub enum Formula<V> {
     /// Degenerate kind of [`Formula`] having fixed
     /// [truth value](https://en.wikipedia.org/wiki/Truth_value)
-    /// without any [`Atom`]s.
+    /// without any variables.
     TruthValue(bool),
 
     /// The simplest type of [`Formula`] with no deeper propositional structure.
     /// <https://en.wikipedia.org/wiki/Atomic_formula>
-    Atomic(T),
+    Atomic(V),
 
     /// <https://en.wikipedia.org/wiki/Negation>
     Not(Box<Self>),
@@ -50,16 +50,10 @@ pub enum Formula<T> {
     Equivalent(Box<Self>, Box<Self>),
 
     /// The operator is specified dynamically.
-    Dynamic(AnyConnective<Box<Self>, T>),
+    Dynamic(AnyConnective<Box<Self>, V>),
 }
 
-impl<T> From<bool> for Formula<T> {
-    fn from(value: bool) -> Self {
-        Self::truth(value)
-    }
-}
-
-impl<T: Atom> From<T> for Formula<T> {
+impl<T> From<T> for Formula<T> {
     fn from(value: T) -> Self {
         Self::atom(value)
     }
@@ -91,12 +85,12 @@ impl<T> AsRef<T> for Directed<T> {
 }
 
 impl<T> Formula<T> {
-    /// Create a constant _truth_ or _falsity_ formula.
+    /// Create a [constant][Self::TruthValue] _truth_ or _falsity_ formula.
     pub const fn truth(value: bool) -> Self {
         Self::TruthValue(value)
     }
 
-    /// Create an [atomic][Atom] formula.
+    /// Create an [atomic formula][Self::Atomic].
     pub const fn atom(atom: T) -> Self {
         Self::Atomic(atom)
     }
@@ -295,14 +289,16 @@ where
 }
 
 impl<T: PartialEq> Formula<T> {
-    /// Get all the atomic values of the [`Formula`].
-    pub fn atoms(&self) -> Vec<&T> {
+    /// Get all the variables of the [`Formula`].
+    pub fn variables(&self) -> Vec<&T> {
         match self {
             Self::TruthValue(_) | Self::Dynamic(AnyConnective::Nullary(_)) => vec![],
-            Self::Atomic(atom) => vec![atom],
+            Self::Atomic(var) => vec![var],
 
             Self::Not(f)
-            | Self::Dynamic(AnyConnective::Unary(DynConnective { operands: [f], .. })) => f.atoms(),
+            | Self::Dynamic(AnyConnective::Unary(DynConnective { operands: [f], .. })) => {
+                f.variables()
+            }
 
             Self::And(f1, f2)
             | Self::Or(f1, f2)
@@ -312,13 +308,13 @@ impl<T: PartialEq> Formula<T> {
             | Self::Dynamic(AnyConnective::Binary(DynConnective {
                 operands: [f1, f2], ..
             })) => {
-                let mut atoms = f1.atoms();
-                for atom in f2.atoms() {
-                    if !atoms.contains(&atom) {
-                        atoms.push(atom);
+                let mut vars = f1.variables();
+                for var in f2.variables() {
+                    if !vars.contains(&var) {
+                        vars.push(var);
                     }
                 }
-                atoms
+                vars
             }
         }
     }

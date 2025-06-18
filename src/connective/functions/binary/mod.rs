@@ -10,5 +10,3 @@ pub mod or;
 pub mod proj;
 pub mod xnor;
 pub mod xor;
-
-impl crate::formula::Atom for char {}

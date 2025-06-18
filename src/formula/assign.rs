@@ -1,16 +1,7 @@
 use crate::{connective::Evaluable, utils::zst::Void};
 
-/// An atomic entity with no deeper propositional structure.
-///
-/// For propositional logic, a [propositional variable][super::super::Variable]
-/// is often more briefly referred to as an [atomic formula][Atom],
-/// but, more precisely, a [propositional variable][super::super::Variable]
-/// is not an atomic formula but a formal expression that denotes an atomic formula.
-pub trait Atom {}
-
 /// The [truth value](https://en.wikipedia.org/wiki/Truth_value)
-/// associated with the [`Atom`] variable
-/// (isomorphic to `Option<bool>`).
+/// associated with the variable (this value is isomorphic to `Option<bool>`).
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
 pub enum Assignment<T = bool> {
     #[default]
