@@ -2,9 +2,12 @@
 //! is `true` if and only if its arguments differ.
 //!
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
-use std::ops::{BitXor, Not};
+use crate::formula::{Not, Xor};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::super::{
+    super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    neg::Negation,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Exclusive disjunction is an operation on two logical values,
@@ -14,15 +17,15 @@ pub struct ExclusiveDisjunction;
 
 impl<E> TruthFn<2, E> for ExclusiveDisjunction
 where
-    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
+    E: Evaluable + Xor + Not,
 {
     fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1 ^ disjunct2)),
+            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1.xor(disjunct2))),
             // **exclusive disjunction** is _commutative_
             (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
-                    Ok(!E::partial(x))
+                    Ok(Negation.compose([E::partial(x)]))
                 } else {
                     Ok(E::partial(x))
                 }
@@ -32,7 +35,7 @@ where
     }
 
     fn compose(&self, [x, y]: [E; 2]) -> E {
-        x ^ y
+        x.xor(y)
     }
 }
 
@@ -79,21 +82,18 @@ pub struct ExclusiveDisjunctionAny;
 
 impl<const ARITY: usize, E> TruthFn<ARITY, E> for ExclusiveDisjunctionAny
 where
-    E: Evaluable + Not<Output = E> + BitXor<Output = E>,
+    E: Evaluable + Xor + Not,
 {
     fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         let tautologies = terms.iter().filter(|e| e.is_tautology()).count();
         let _contradictions = terms.iter().filter(|e| e.is_contradiction()).count();
+
         // odd number of tautologies equivalent to single Truth value
         let is_truth_constant = tautologies % 2 == 1;
 
         let partials = terms.iter().filter(|e| e.is_partial()).count();
         if partials == 0 {
-            if is_truth_constant {
-                Ok(E::tautology())
-            } else {
-                Ok(E::contradiction())
-            }
+            Ok(E::terminal(is_truth_constant))
         } else if partials == 1 {
             let Some(partial) = terms.into_iter().find(E::is_partial) else {
                 panic!("Found on previous step");
@@ -101,7 +101,7 @@ where
 
             if is_truth_constant {
                 // single truth negate the result
-                Ok(!partial)
+                Ok(Negation::negate(partial))
             } else {
                 Ok(partial)
             }
@@ -113,25 +113,11 @@ where
     fn compose(&self, terms: [E; ARITY]) -> E {
         terms
             .into_iter()
-            .rfold(E::contradiction(), |acc, t| match acc.into_terminal() {
-                Ok(truth_acc) => {
-                    if truth_acc {
-                        !t
-                    } else {
-                        t
-                    }
-                }
-                Err(partial_acc) => match t.into_terminal() {
-                    Ok(truth_term) => {
-                        if truth_term {
-                            !E::partial(partial_acc)
-                        } else {
-                            E::partial(partial_acc)
-                        }
-                    }
-                    Err(partial_term) => E::partial(partial_term) ^ E::partial(partial_acc),
-                },
+            .rfold(None, |acc, t| {
+                let t = if let Some(acc) = acc { t.xor(acc) } else { t };
+                Some(t)
             })
+            .unwrap_or_else(E::contradiction)
     }
 }
 
@@ -156,5 +142,23 @@ mod tests {
             .is_equivalent(&ExclusiveDisjunctionAny::init()));
         assert!(Ternary::<false, ExclusiveDisjunction>::init()
             .is_equivalent(&ExclusiveDisjunctionAny::init()));
+    }
+
+    #[test]
+    fn any_compose() {
+        use crate::Formula;
+
+        let f: Formula<char> = ExclusiveDisjunctionAny.compose([]);
+        assert_eq!(f, Formula::truth(false));
+
+        let f: Formula<char> = ExclusiveDisjunctionAny.compose([Formula::atom('a')]);
+        assert_eq!(f, Formula::atom('a'));
+
+        let f: Formula<char> = ExclusiveDisjunctionAny.compose(['a'.into(), 'b'.into()]);
+        assert_eq!(f, Formula::atom('a') ^ 'b');
+
+        let f: Formula<char> =
+            ExclusiveDisjunctionAny.compose(['a'.into(), 'b'.into(), 'c'.into()]);
+        assert_eq!(f, Formula::atom('a') ^ (Formula::atom('b') ^ 'c'));
     }
 }

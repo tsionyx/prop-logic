@@ -172,6 +172,8 @@ impl<Atom> AnyConnective<Box<Formula<Atom>>, Atom> {
                 connective,
                 operands: [f1, f2],
             }) => {
+                use super::super::ops::Not as _; // TODO: use `TruthFn::compose``
+
                 if connective.is_equivalent(&functions::Falsity) {
                     Formula::contradiction()
                 } else if connective.is_equivalent(&functions::Conjunction) {

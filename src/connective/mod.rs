@@ -113,6 +113,7 @@ mod tests {
         apply_and_compose_is_equivalent::<0, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<0, _>(ExclusiveDisjunctionAny);
         apply_and_compose_is_equivalent::<0, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<0, _>(AllEquivalent);
 
         apply_and_compose_is_equivalent::<0, _>(Truth);
@@ -123,6 +124,7 @@ mod tests {
 
         apply_and_compose_is_equivalent::<1, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<1, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<1, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<1, _>(AllEquivalent);
         apply_and_compose_is_equivalent::<1, _>(ExclusiveDisjunctionAny);
 
@@ -144,6 +146,7 @@ mod tests {
 
         apply_and_compose_is_equivalent::<2, _>(NonDisjunction);
         apply_and_compose_is_equivalent::<2, _>(LogicalBiconditional);
+        apply_and_compose_is_equivalent::<2, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<2, _>(AllEquivalent);
         apply_and_compose_is_equivalent::<2, _>(NotSecond::new());
         apply_and_compose_is_equivalent::<2, _>(ConverseImplication);

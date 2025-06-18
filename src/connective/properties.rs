@@ -23,7 +23,9 @@ use crate::{
 /// the [functional completeness](https://en.wikipedia.org/wiki/Functional_completeness).
 ///
 /// Also, some other properties introduced, that could describe the function's behaviour.
-/// See more at <https://en.wikipedia.org/wiki/Boolean_function#Properties>.
+/// See more at:
+/// - <https://en.wikipedia.org/wiki/Boolean_function#Properties>
+/// - <https://en.wikipedia.org/wiki/Logical_connective#Properties>
 ///
 /// Requires [`std::any::Any`] as a supertrait to enable `Any::type_id` in dyn context.
 pub trait BoolFnExt<const ARITY: usize>: BoolFn<ARITY> + Any {
@@ -371,6 +373,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_constant);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_constant);
+        assert_prop!(EquivalentAny, 0: is_constant);
         assert_prop!(AllEquivalent, 0: is_constant);
         assert_prop!(ConjunctionAny, 0: is_constant);
 
@@ -385,6 +388,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: !is_constant);
         assert_prop!(ExclusiveDisjunctionAny, 1: !is_constant);
         assert_prop!(ConjunctionAny, 1: !is_constant);
+        assert_prop!(EquivalentAny, 1: ! is_constant);
 
         assert_prop!(Negation: ! is_constant);
         assert_prop!(Truth, 1: is_constant);
@@ -407,6 +411,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_constant);
         assert_prop!(NonDisjunction: ! is_constant);
         assert_prop!(LogicalBiconditional: ! is_constant);
+        assert_prop!(EquivalentAny, 2: ! is_constant);
         assert_prop!(AllEquivalent, 2: ! is_constant);
         assert_prop!(NotSecond: ! is_constant);
         assert_prop!(ConverseImplication: ! is_constant);
@@ -422,6 +427,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_falsity_preserving);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_falsity_preserving);
+        assert_prop!(EquivalentAny, 0: ! is_falsity_preserving);
         assert_prop!(AllEquivalent, 0: ! is_falsity_preserving);
         assert_prop!(ConjunctionAny, 0: ! is_falsity_preserving);
 
@@ -436,6 +442,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_falsity_preserving);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_falsity_preserving);
         assert_prop!(ConjunctionAny, 1: is_falsity_preserving);
+        assert_prop!(EquivalentAny, 1: is_falsity_preserving);
 
         assert_prop!(Negation: ! is_falsity_preserving);
         assert_prop!(Truth, 1: ! is_falsity_preserving);
@@ -458,6 +465,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: is_falsity_preserving);
         assert_prop!(NonDisjunction: ! is_falsity_preserving);
         assert_prop!(LogicalBiconditional: ! is_falsity_preserving);
+        assert_prop!(EquivalentAny, 2: ! is_falsity_preserving);
         assert_prop!(AllEquivalent, 2: ! is_falsity_preserving);
         assert_prop!(NotSecond: ! is_falsity_preserving);
         assert_prop!(ConverseImplication: ! is_falsity_preserving);
@@ -473,6 +481,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: ! is_truth_preserving);
         assert_prop!(ExclusiveDisjunctionAny, 0: ! is_truth_preserving);
+        assert_prop!(EquivalentAny, 0: is_truth_preserving);
         assert_prop!(AllEquivalent, 0: is_truth_preserving);
         assert_prop!(ConjunctionAny, 0: is_truth_preserving);
 
@@ -491,6 +500,7 @@ mod tests {
         assert_prop!(Negation: ! is_truth_preserving);
         assert_prop!(Truth, 1: is_truth_preserving);
 
+        assert_prop!(EquivalentAny, 1: is_truth_preserving);
         assert_prop!(AllEquivalent, 1: is_truth_preserving);
     }
 
@@ -509,6 +519,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: is_truth_preserving);
         assert_prop!(NonDisjunction: ! is_truth_preserving);
         assert_prop!(LogicalBiconditional: is_truth_preserving);
+        assert_prop!(EquivalentAny, 2: is_truth_preserving);
         assert_prop!(AllEquivalent, 2: is_truth_preserving);
         assert_prop!(NotSecond: ! is_truth_preserving);
         assert_prop!(ConverseImplication: is_truth_preserving);
@@ -524,6 +535,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_monotonic);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_monotonic);
+        assert_prop!(EquivalentAny, 0: is_monotonic);
         assert_prop!(AllEquivalent, 0: is_monotonic);
         assert_prop!(ConjunctionAny, 0: is_monotonic);
 
@@ -542,6 +554,7 @@ mod tests {
         assert_prop!(Negation: ! is_monotonic);
         assert_prop!(Truth, 1: is_monotonic);
 
+        assert_prop!(EquivalentAny, 1: is_monotonic);
         assert_prop!(AllEquivalent, 1: is_monotonic);
     }
 
@@ -560,6 +573,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: is_monotonic);
         assert_prop!(NonDisjunction: ! is_monotonic);
         assert_prop!(LogicalBiconditional: ! is_monotonic);
+        assert_prop!(EquivalentAny, 2: ! is_monotonic);
         assert_prop!(AllEquivalent, 2: ! is_monotonic);
         assert_prop!(NotSecond: ! is_monotonic);
         assert_prop!(ConverseImplication: ! is_monotonic);
@@ -575,6 +589,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_affine);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_affine);
+        assert_prop!(EquivalentAny, 0: is_affine);
         assert_prop!(AllEquivalent, 0: is_affine);
         assert_prop!(ConjunctionAny, 0: is_affine);
 
@@ -593,6 +608,7 @@ mod tests {
         assert_prop!(Negation: is_affine);
         assert_prop!(Truth, 1: is_affine);
 
+        assert_prop!(EquivalentAny, 1: is_affine);
         assert_prop!(AllEquivalent, 1: is_affine);
     }
 
@@ -611,6 +627,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_affine);
         assert_prop!(NonDisjunction: ! is_affine);
         assert_prop!(LogicalBiconditional: is_affine);
+        assert_prop!(EquivalentAny, 2: is_affine);
         assert_prop!(AllEquivalent, 2: is_affine);
         assert_prop!(NotSecond: is_affine);
         assert_prop!(ConverseImplication: ! is_affine);
@@ -626,6 +643,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_parity);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_parity);
+        assert_prop!(EquivalentAny, 0: ! is_parity);
         assert_prop!(AllEquivalent, 0: ! is_parity);
         assert_prop!(ConjunctionAny, 0: ! is_parity);
 
@@ -640,6 +658,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_parity);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_parity);
         assert_prop!(ConjunctionAny, 1: is_parity);
+        assert_prop!(EquivalentAny, 1: is_parity);
 
         assert_prop!(Negation: ! is_parity);
         assert_prop!(Truth, 1: ! is_parity);
@@ -662,6 +681,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_parity);
         assert_prop!(NonDisjunction: ! is_parity);
         assert_prop!(LogicalBiconditional: ! is_parity);
+        assert_prop!(EquivalentAny, 2: ! is_parity);
         assert_prop!(AllEquivalent, 2: ! is_parity);
         assert_prop!(NotSecond: ! is_parity);
         assert_prop!(ConverseImplication: ! is_parity);
@@ -677,6 +697,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: ! is_balanced);
         assert_prop!(ExclusiveDisjunctionAny, 0: ! is_balanced);
+        assert_prop!(EquivalentAny, 0: ! is_balanced);
         assert_prop!(AllEquivalent, 0: ! is_balanced);
         assert_prop!(ConjunctionAny, 0: ! is_balanced);
 
@@ -691,6 +712,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_balanced);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_balanced);
         assert_prop!(ConjunctionAny, 1: is_balanced);
+        assert_prop!(EquivalentAny, 1: is_balanced);
 
         assert_prop!(Negation: is_balanced);
         assert_prop!(Truth, 1: ! is_balanced);
@@ -713,6 +735,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_balanced);
         assert_prop!(NonDisjunction: ! is_balanced);
         assert_prop!(LogicalBiconditional: is_balanced);
+        assert_prop!(EquivalentAny, 2: is_balanced);
         assert_prop!(AllEquivalent, 2: is_balanced);
         assert_prop!(NotSecond: is_balanced);
         assert_prop!(ConverseImplication: ! is_balanced);
@@ -728,6 +751,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_evasive);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_evasive);
+        assert_prop!(EquivalentAny, 0: is_evasive);
         assert_prop!(AllEquivalent, 0: is_evasive);
         assert_prop!(ConjunctionAny, 0: is_evasive);
 
@@ -742,6 +766,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_evasive);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_evasive);
         assert_prop!(ConjunctionAny, 1: is_evasive);
+        assert_prop!(EquivalentAny, 1: is_evasive);
 
         assert_prop!(Negation: is_evasive);
         assert_prop!(Truth, 1: ! is_evasive);
@@ -764,6 +789,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: is_evasive);
         assert_prop!(NonDisjunction: is_evasive);
         assert_prop!(LogicalBiconditional: is_evasive);
+        assert_prop!(EquivalentAny, 2: is_evasive);
         assert_prop!(AllEquivalent, 2: is_evasive);
         assert_prop!(NotSecond: ! is_evasive);
         assert_prop!(ConverseImplication: is_evasive);
@@ -779,6 +805,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: is_fully_evasive);
         assert_prop!(ExclusiveDisjunctionAny, 0: is_fully_evasive);
+        assert_prop!(EquivalentAny, 0: is_fully_evasive);
         assert_prop!(AllEquivalent, 0: is_fully_evasive);
         assert_prop!(ConjunctionAny, 0: is_fully_evasive);
 
@@ -793,6 +820,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_fully_evasive);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_fully_evasive);
         assert_prop!(ConjunctionAny, 1: is_fully_evasive);
+        assert_prop!(EquivalentAny, 1: is_fully_evasive);
 
         assert_prop!(Negation: is_fully_evasive);
         assert_prop!(Truth, 1: ! is_fully_evasive);
@@ -815,6 +843,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_fully_evasive);
         assert_prop!(NonDisjunction: ! is_fully_evasive);
         assert_prop!(LogicalBiconditional: is_fully_evasive);
+        assert_prop!(EquivalentAny, 2: is_fully_evasive);
         assert_prop!(AllEquivalent, 2: is_fully_evasive);
         assert_prop!(NotSecond: ! is_fully_evasive);
         assert_prop!(ConverseImplication: ! is_fully_evasive);
@@ -830,6 +859,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: ! is_self_dual);
         assert_prop!(ExclusiveDisjunctionAny, 0: ! is_self_dual);
+        assert_prop!(EquivalentAny, 0: ! is_self_dual);
         assert_prop!(AllEquivalent, 0: ! is_self_dual);
         assert_prop!(ConjunctionAny, 0: ! is_self_dual);
 
@@ -844,6 +874,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 1: is_self_dual);
         assert_prop!(ExclusiveDisjunctionAny, 1: is_self_dual);
         assert_prop!(ConjunctionAny, 1: is_self_dual);
+        assert_prop!(EquivalentAny, 1: is_self_dual);
 
         assert_prop!(Negation: is_self_dual);
         assert_prop!(Truth, 1: ! is_self_dual);
@@ -866,6 +897,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_self_dual);
         assert_prop!(NonDisjunction: ! is_self_dual);
         assert_prop!(LogicalBiconditional: ! is_self_dual);
+        assert_prop!(EquivalentAny, 2: ! is_self_dual);
         assert_prop!(AllEquivalent, 2: ! is_self_dual);
         assert_prop!(NotSecond: is_self_dual);
         assert_prop!(ConverseImplication: ! is_self_dual);
@@ -881,6 +913,7 @@ mod tests {
 
         assert_prop!(DisjunctionAny, 0: ! is_sheffer);
         assert_prop!(ExclusiveDisjunctionAny, 0: ! is_sheffer);
+        assert_prop!(EquivalentAny, 0: ! is_sheffer);
         assert_prop!(AllEquivalent, 0: ! is_sheffer);
         assert_prop!(ConjunctionAny, 0: ! is_sheffer);
 
@@ -899,6 +932,7 @@ mod tests {
         assert_prop!(Negation: ! is_sheffer);
         assert_prop!(Truth, 1: ! is_sheffer);
 
+        assert_prop!(EquivalentAny, 1: ! is_sheffer);
         assert_prop!(AllEquivalent, 1: ! is_sheffer);
     }
 
@@ -917,6 +951,7 @@ mod tests {
         assert_prop!(DisjunctionAny, 2: ! is_sheffer);
         assert_prop!(NonDisjunction: is_sheffer);
         assert_prop!(LogicalBiconditional: ! is_sheffer);
+        assert_prop!(EquivalentAny, 2: ! is_sheffer);
         assert_prop!(AllEquivalent, 2: ! is_sheffer);
         assert_prop!(NotSecond: ! is_sheffer);
         assert_prop!(ConverseImplication: ! is_sheffer);

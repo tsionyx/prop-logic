@@ -215,11 +215,13 @@ mod tests {
         let table = get::<T, 0>();
         assert_eq!(table, [true]);
         assert_eq!(table, get::<ConjunctionAny, 0>());
+        assert_eq!(table, get::<EquivalentAny, 0>());
         assert_eq!(table, get::<AllEquivalent, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 0>());
+        assert_eq!(table, get_mapping::<EquivalentAny, 0>());
         assert_eq!(table, get_mapping::<AllEquivalent, 0>());
     }
 
@@ -303,12 +305,14 @@ mod tests {
         assert_eq!(table, get::<ConjunctionAny, 1>());
         assert_eq!(table, get::<DisjunctionAny, 1>());
         assert_eq!(table, get::<ExclusiveDisjunctionAny, 1>());
+        assert_eq!(table, get::<EquivalentAny, 1>());
 
         let table = get_mapping::<T, 1>();
         assert_eq!(table, vec![([false], false), ([true], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 1>());
         assert_eq!(table, get_mapping::<DisjunctionAny, 1>());
         assert_eq!(table, get_mapping::<ExclusiveDisjunctionAny, 1>());
+        assert_eq!(table, get_mapping::<EquivalentAny, 1>());
     }
 
     #[test]
@@ -458,6 +462,7 @@ mod tests {
         type T = LogicalBiconditional;
         let table = get::<T, 2>();
         assert_eq!(table, [true, false, false, true]);
+        assert_eq!(table, get::<EquivalentAny, 2>());
         assert_eq!(table, get::<AllEquivalent, 2>());
 
         let table = get_mapping::<T, 2>();
@@ -470,6 +475,7 @@ mod tests {
                 ([true, true], true),
             ]
         );
+        assert_eq!(table, get_mapping::<EquivalentAny, 2>());
         assert_eq!(table, get_mapping::<AllEquivalent, 2>());
     }
 }

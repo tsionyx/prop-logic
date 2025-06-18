@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use proptest::prelude::*;
 
-use super::formula::Formula;
+use super::{
+    super::ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
+    formula::Formula,
+};
 
 #[derive(Debug, Clone)]
 /// Parameters for generating [`Formula`]-s
@@ -35,7 +38,7 @@ pub struct Parameters<T> {
     ///
     /// By default it is set to 1:2.
     ///
-    /// Setting the first to 0 prevents using unary operations (primarily [`Formula::not`]).
+    /// Setting the first to 0 prevents using unary operations (primarily [`crate::formula::Not`]).
     /// Setting the second to 0 prevents using binary operations.
     pub unary_to_binary_ratio: (u32, u32),
 

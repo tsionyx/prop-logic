@@ -9,13 +9,7 @@ impl<T> Not for Formula<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
-        // Do not use the `functions::Negation.compose([f])`
-        // since it recursively calls the same function again.
-        if let Self::TruthValue(value) = &self {
-            Self::truth(!*value)
-        } else {
-            Self::not(self)
-        }
+        Self::Not(Box::new(self))
     }
 }
 
@@ -36,8 +30,8 @@ where
 {
     type Output = Self;
 
-    fn bitand(self, e: Rhs) -> Self::Output {
-        Self::and(self, e.into())
+    fn bitand(self, other: Rhs) -> Self::Output {
+        Self::And(Box::new(self), Box::new(other.into()))
     }
 }
 
@@ -47,8 +41,8 @@ where
 {
     type Output = Self;
 
-    fn bitor(self, e: Rhs) -> Self::Output {
-        Self::or(self, e.into())
+    fn bitor(self, other: Rhs) -> Self::Output {
+        Self::Or(Box::new(self), Box::new(other.into()))
     }
 }
 
@@ -58,27 +52,17 @@ where
 {
     type Output = Self;
 
-    fn bitxor(self, e: Rhs) -> Self::Output {
-        Self::xor(self, e.into())
+    fn bitxor(self, other: Rhs) -> Self::Output {
+        Self::Xor(Box::new(self), Box::new(other.into()))
     }
 }
-
-// special implementations instead of the blanket ones,
-// since there is no special operators like `->` and `<->`
 
 impl<T, Rhs> Implies<Rhs> for Formula<T>
 where
     Rhs: Into<Self>,
 {
-    fn implies(self, rhs: Rhs) -> Self {
-        use crate::connective::TruthFn as _;
-
-        let f1 = self;
-        let f2 = rhs.into();
-
-        crate::connective::MaterialImplication
-            .fold([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Self::implies(f1, f2))
+    fn implies(self, consequent: Rhs) -> Self {
+        Self::Implies(Box::new(self), Box::new(consequent.into()))
     }
 }
 
@@ -86,14 +70,7 @@ impl<T, Rhs> Equivalent<Rhs> for Formula<T>
 where
     Rhs: Into<Self>,
 {
-    fn equivalent(self, rhs: Rhs) -> Self {
-        use crate::connective::TruthFn as _;
-
-        let f1 = self;
-        let f2 = rhs.into();
-
-        crate::connective::LogicalBiconditional
-            .fold([f1, f2])
-            .unwrap_or_else(|[f1, f2]| Self::equivalent(f1, f2))
+    fn equivalent(self, other: Rhs) -> Self {
+        Self::Equivalent(Box::new(self), Box::new(other.into()))
     }
 }

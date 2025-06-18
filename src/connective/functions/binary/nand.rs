@@ -6,10 +6,13 @@
 //! since it says in effect that at least one of its operands is `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Sheffer_stroke>
-use std::ops::{BitAnd, Not};
+use crate::formula::{And, Not};
 
 use super::{
-    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    super::{
+        super::{Connective, Evaluable, FunctionNotation, TruthFn},
+        neg::Negation,
+    },
     and::Conjunction,
 };
 
@@ -21,14 +24,14 @@ pub struct NonConjunction;
 
 impl<E> TruthFn<2, E> for NonConjunction
 where
-    E: Evaluable + Not<Output = E> + BitAnd<Output = E>,
+    E: Evaluable + And + Not,
 {
     fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
-        Conjunction.fold(terms).map(E::not)
+        Conjunction.fold(terms).map(Negation::negate)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        !Conjunction.compose(terms)
+        Negation.compose([Conjunction.compose(terms)])
     }
 }
 

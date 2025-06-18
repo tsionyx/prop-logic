@@ -85,7 +85,7 @@ mod tests {
 
     use super::{
         super::super::{
-            ops::{And, Equivalent, Implies, Not, Or, Xor},
+            ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
             Atom, Variable,
         },
         *,

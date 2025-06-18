@@ -100,41 +100,6 @@ impl<T> Formula<T> {
     pub const fn atom(atom: T) -> Self {
         Self::Atomic(atom)
     }
-
-    #[expect(clippy::should_implement_trait)]
-    /// Create a [negated formula][Self::Not].
-    pub fn not(op: Self) -> Self {
-        Self::Not(Box::new(op))
-    }
-
-    /// Create a [conjunction][Self::And] of two formulae.
-    pub fn and(op1: Self, op2: Self) -> Self {
-        Self::And(Box::new(op1), Box::new(op2))
-    }
-
-    /// Create a [disjunction][Self::Or] of two formulae.
-    pub fn or(op1: Self, op2: Self) -> Self {
-        Self::Or(Box::new(op1), Box::new(op2))
-    }
-
-    /// Create an [exclusive disjunction][Self::Xor] of two formulae.
-    pub fn xor(op1: Self, op2: Self) -> Self {
-        Self::Xor(Box::new(op1), Box::new(op2))
-    }
-
-    /// Create a formula of [implication][Self::Implies]
-    /// from the first formula (antecedent) to the second one (consequent).
-    ///
-    /// Be aware that this operation is **not commutative**
-    /// (i.e. `a -> b != b -> a` in common case).
-    pub fn implies(op1: Self, op2: Self) -> Self {
-        Self::Implies(Box::new(op1), Box::new(op2))
-    }
-
-    /// Create a formula of [equivalence][Self::Equivalent] between the two formulae.
-    pub fn equivalent(op1: Self, op2: Self) -> Self {
-        Self::Equivalent(Box::new(op1), Box::new(op2))
-    }
 }
 
 impl<T> Formula<T> {
@@ -160,8 +125,7 @@ impl<T> Formula<T> {
     /// if it is a binary function. Otherwise, just return it as is.
     pub fn swap_operands(self) -> Self {
         match self {
-            Self::TruthValue(_) | Self::Atomic(_) => self,
-            Self::Not(f) => Self::Not(f),
+            Self::TruthValue(_) | Self::Atomic(_) | Self::Not(_) => self,
             Self::And(f1, f2) => Self::And(f2, f1),
             Self::Or(f1, f2) => Self::Or(f2, f1),
             Self::Xor(f1, f2) => Self::Xor(f2, f1),
@@ -362,8 +326,6 @@ impl<T: PartialEq> Formula<T> {
 
 #[cfg(test)]
 mod tests {
-    use std::ops::Not;
-
     use super::{super::super::var::Variable, *};
 
     #[test]
