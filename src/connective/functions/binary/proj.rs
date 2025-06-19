@@ -32,7 +32,7 @@ pub type First = Projection<0>;
 pub type Last = Projection<1>;
 
 impl<E: Evaluable> TruthFn<2, E> for First {
-    fn fold(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [val0, _]: [E; 2]) -> Result<E, [E; 2]> {
         Ok(val0)
     }
 
@@ -42,7 +42,7 @@ impl<E: Evaluable> TruthFn<2, E> for First {
 }
 
 impl<E: Evaluable> TruthFn<2, E> for Last {
-    fn fold(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [_, val1]: [E; 2]) -> Result<E, [E; 2]> {
         Ok(val1)
     }
 
@@ -95,19 +95,19 @@ where
     UnaryOp: TruthFn<1, E> + InitFn,
     Projection<I>: TruthFn<2, E>,
 {
-    fn fold(&self, values: [E; 2]) -> Result<E, [E; 2]> {
-        let expr = Projection::<I> {}.fold(values.clone())?;
-        UnaryOp::init().fold([expr]).map_err(|_| values)
+    fn try_reduce(&self, values: [E; 2]) -> Result<E, [E; 2]> {
+        let expr = Projection::<I>.try_reduce(values.clone())?;
+        UnaryOp::init().try_reduce([expr]).map_err(|_| values)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        let expr = Projection::<I> {}.compose(terms);
+        let expr = Projection::<I>.compose(terms);
         UnaryOp::init().compose([expr])
     }
 
-    fn fold_or_compose(&self, terms: [E; 2]) -> E {
-        let expr = Projection::<I> {}.fold_or_compose(terms);
-        UnaryOp::init().fold_or_compose([expr])
+    fn eval(&self, terms: [E; 2]) -> E {
+        let expr = Projection::<I>.eval(terms);
+        UnaryOp::init().eval([expr])
     }
 }
 

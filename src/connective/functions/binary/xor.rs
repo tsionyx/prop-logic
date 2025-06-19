@@ -19,7 +19,7 @@ impl<E> TruthFn<2, E> for ExclusiveDisjunction
 where
     E: Evaluable + Xor + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
             (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1.xor(disjunct2))),
             // **exclusive disjunction** is _commutative_
@@ -84,7 +84,7 @@ impl<const ARITY: usize, E> TruthFn<ARITY, E> for ExclusiveDisjunctionAny
 where
     E: Evaluable + Xor + Not,
 {
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         let tautologies = terms.iter().filter(|e| e.is_tautology()).count();
         let _contradictions = terms.iter().filter(|e| e.is_contradiction()).count();
 

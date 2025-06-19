@@ -82,11 +82,8 @@ mod tests {
             let formulas = <[Formula<()>; ARITY]>::try_from(formulas)
                 .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-            (
-                f.compose(formulas.clone()),
-                f.fold_or_compose(formulas),
-                eval,
-            )
+            dbg!(&f, &formulas);
+            (f.compose(formulas.clone()), f.eval(formulas), eval)
         });
 
         let empty_interpretation: Valuation<()> = Valuation::empty();
@@ -98,7 +95,10 @@ mod tests {
                 assert_eq!(val, expected_eval);
 
                 let composed = composed_formula.interpret(&empty_interpretation);
-                assert!(matches!(composed, Formula::TruthValue(x) if x == expected_eval));
+                assert!(
+                    matches!(composed, Formula::TruthValue(x) if x == expected_eval),
+                    "{composed_formula:?} -> {composed:?}"
+                );
             } else {
                 panic!("The formula was not fully reduced");
             }

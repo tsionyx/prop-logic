@@ -16,7 +16,7 @@ impl<E> TruthFn<2, E> for Conjunction
 where
     E: Evaluable + And,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
             (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(conjunct1.and(conjunct2))),
             // **conjunction** is _commutative_
@@ -82,7 +82,7 @@ impl<const ARITY: usize, E> TruthFn<ARITY, E> for ConjunctionAny
 where
     E: Evaluable + And,
 {
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         if terms.iter().any(E::is_contradiction) {
             return Ok(E::contradiction());
         }

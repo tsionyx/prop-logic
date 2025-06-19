@@ -20,7 +20,7 @@ impl<E> TruthFn<2, E> for MaterialImplication
 where
     E: Evaluable + Implies + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
             (Ok(antecedent), Ok(consequent)) => Ok(E::terminal(antecedent.implies(consequent))),
             (Ok(antecedent), Err(consequent)) => {

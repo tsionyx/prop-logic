@@ -27,8 +27,8 @@ impl<E> TruthFn<2, E> for NonDisjunction
 where
     E: Evaluable + Or + Not,
 {
-    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
-        Disjunction.fold(terms).map(Negation::negate)
+    fn try_reduce(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        Disjunction.try_reduce(terms).map(Negation::negate)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {

@@ -21,8 +21,8 @@ impl<E> TruthFn<2, E> for ConverseImplication
 where
     E: Evaluable + Implies + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialImplication.fold([y, x])
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialImplication.try_reduce([y, x])
     }
 
     fn compose(&self, [x, y]: [E; 2]) -> E {

@@ -62,18 +62,18 @@ where
 
         let conn = self.get_connective();
         match &conn {
-            AnyConnective::Nullary(operator) => operator.connective.fold_or_compose([]),
+            AnyConnective::Nullary(operator) => operator.connective.eval([]),
             AnyConnective::Unary(conn) => {
                 let operator = &conn.connective;
                 let [operand] = &conn.operands;
                 let reduced = operand.try_reduce(i12n);
-                operator.fold_or_compose([reduced])
+                operator.eval([reduced])
             }
             AnyConnective::Binary(conn) => {
                 let operator = &conn.connective;
                 let [op1, op2] = &conn.operands;
                 let reduced = [op1.try_reduce(i12n), op2.try_reduce(i12n)];
-                operator.fold_or_compose(reduced)
+                operator.eval(reduced)
             }
         }
     }

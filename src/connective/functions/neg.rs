@@ -17,7 +17,7 @@ impl<E> TruthFn<1, E> for Negation
 where
     E: Evaluable + Not,
 {
-    fn fold(&self, [e]: [E; 1]) -> Result<E, [E; 1]> {
+    fn try_reduce(&self, [e]: [E; 1]) -> Result<E, [E; 1]> {
         e.into_terminal()
             .map(|value| E::terminal(value.not()))
             .map_err(|partial| [E::partial(partial)])
@@ -33,7 +33,7 @@ impl Negation {
     where
         E: Evaluable + Not,
     {
-        Self.fold_or_compose([e])
+        Self.eval([e])
     }
 }
 

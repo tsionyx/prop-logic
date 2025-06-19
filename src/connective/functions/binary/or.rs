@@ -16,7 +16,7 @@ impl<E> TruthFn<2, E> for Disjunction
 where
     E: Evaluable + Or,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
             (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1.or(disjunct2))),
             // **disjunction** is _commutative_
@@ -81,7 +81,7 @@ impl<const ARITY: usize, E> TruthFn<ARITY, E> for DisjunctionAny
 where
     E: Evaluable + Or,
 {
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         if terms.iter().any(E::is_tautology) {
             return Ok(E::tautology());
         }

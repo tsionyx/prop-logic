@@ -12,7 +12,7 @@ use super::{evaluation::Evaluable, notation::FunctionNotation};
 ///
 /// <https://en.wikipedia.org/wiki/Truth_function>
 pub trait TruthFn<const ARITY: usize, E: Evaluable> {
-    /// Try to reduce the propistional [`Evaluable`]-s
+    /// Try to reduce the propositional [`Evaluable`]-s
     /// into a single one by taking
     /// into account the partial knowledge of them.
     ///
@@ -23,15 +23,16 @@ pub trait TruthFn<const ARITY: usize, E: Evaluable> {
     ///
     /// If the set of [`Evaluable`]-s is not reducible,
     /// produce the inputs wrapped in an `Err` as a last resort.
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]>;
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]>;
 
     /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective.
     fn compose(&self, terms: [E; ARITY]) -> E;
 
     /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective
-    /// by [simplyfying][Self::fold] the input terms if possible.
-    fn fold_or_compose(&self, terms: [E; ARITY]) -> E {
-        self.fold(terms).unwrap_or_else(|terms| self.compose(terms))
+    /// by [simplyfying][Self::try_reduce] the input terms if possible.
+    fn eval(&self, terms: [E; ARITY]) -> E {
+        self.try_reduce(terms)
+            .unwrap_or_else(|terms| self.compose(terms))
     }
 }
 

@@ -23,8 +23,8 @@ impl<E> TruthFn<2, E> for MaterialNonImplication
 where
     E: Evaluable + Implies + Not,
 {
-    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialImplication.fold(terms).map(Negation::negate)
+    fn try_reduce(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialImplication.try_reduce(terms).map(Negation::negate)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
