@@ -2,7 +2,7 @@ use std::ops::Not;
 
 use crate::utils::zst::Void;
 
-pub use super::{Formula, Variable};
+pub use super::Variable;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 /// The wrapper around a value to represent the attachment of a sign to it.
@@ -56,14 +56,5 @@ impl<T> Not for Variable<T> {
 
     fn not(self) -> Self::Output {
         Literal::Neg(self)
-    }
-}
-
-impl<T> From<Literal<T>> for Formula<Variable<T>> {
-    fn from(lit: Literal<T>) -> Self {
-        match lit {
-            Literal::Pos(var) => Self::atom(var),
-            Literal::Neg(var) => !Self::atom(var),
-        }
     }
 }

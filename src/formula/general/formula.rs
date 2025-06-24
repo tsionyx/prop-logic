@@ -165,6 +165,33 @@ impl<T> Formula<T> {
     }
 }
 
+impl<T> From<Signed<T>> for Formula<T> {
+    fn from(value: Signed<T>) -> Self {
+        match value {
+            Signed::Pos(x) => Self::from(x),
+            Signed::Neg(x) => !Self::from(x),
+        }
+    }
+}
+
+impl<T> TryFrom<Formula<T>> for Signed<T> {
+    type Error = Formula<T>;
+
+    fn try_from(f: Formula<T>) -> Result<Self, Self::Error> {
+        match f {
+            Formula::Atomic(p) => Ok(Self::Pos(p)),
+            Formula::Not(f) => {
+                if let Formula::Atomic(n) = *f {
+                    Ok(Self::Neg(n))
+                } else {
+                    Err(Formula::Not(f))
+                }
+            }
+            other => Err(other),
+        }
+    }
+}
+
 impl<T> From<Formula<T>> for AnyConnective<Box<Formula<T>>, T> {
     fn from(formula: Formula<T>) -> Self {
         match formula {
