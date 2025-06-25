@@ -8,6 +8,6 @@ fn main() {
     let r = Variable::with_data(3, "r");
     let f = (Formula::from(p) | !q) & (Formula::from(q) ^ !r);
 
-    println!("{f}");
+    println!("{f:#}");
     println!("{}", f.get_truth_table());
 }

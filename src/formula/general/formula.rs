@@ -1,7 +1,7 @@
 //! A [Formula](https://en.wikipedia.org/wiki/Propositional_formula) is a Boolean-valued
 //! well-formed expression denoting a proposition and having as such
 //! a [truth value](https://en.wikipedia.org/wiki/Truth_value).
-use std::fmt;
+use std::fmt::{self, Debug, Display};
 
 use derive_where::derive_where;
 
@@ -231,13 +231,7 @@ impl<T> Formula<T> {
     /// Create a new [`Formula`] using the _nullary_ [`Connective`] (a constant).
     pub fn nullary<C>(connective: C) -> Self
     where
-        C: Connective<0>
-            + TruthFn<0, Self>
-            + Prioritized
-            + fmt::Debug
-            + Clone
-            + PartialEq
-            + 'static,
+        C: Connective<0> + TruthFn<0, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
         Self::Other(AnyConnective::new_0(connective))
     }
@@ -246,13 +240,7 @@ impl<T> Formula<T> {
     /// to transform a given formula.
     pub fn unary<C>(connective: C, f: Self) -> Self
     where
-        C: Connective<1>
-            + TruthFn<1, Self>
-            + Prioritized
-            + fmt::Debug
-            + Clone
-            + PartialEq
-            + 'static,
+        C: Connective<1> + TruthFn<1, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
         Self::Other(AnyConnective::new_1(connective, Box::new(f)))
     }
@@ -261,13 +249,7 @@ impl<T> Formula<T> {
     /// to combine two given formulae.
     pub fn binary<C>(connective: C, f1: Self, f2: Self) -> Self
     where
-        C: Connective<2>
-            + TruthFn<2, Self>
-            + Prioritized
-            + fmt::Debug
-            + Clone
-            + PartialEq
-            + 'static,
+        C: Connective<2> + TruthFn<2, Self> + Prioritized + Debug + Clone + PartialEq + 'static,
     {
         Self::Other(AnyConnective::new_2(
             connective,
@@ -276,49 +258,45 @@ impl<T> Formula<T> {
     }
 }
 
-impl<T> fmt::Display for Formula<T>
+impl<T> Display for Formula<T>
 where
-    T: fmt::Display + 'static,
+    T: Display + 'static,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Self::Atomic(p) = self {
-            return write!(f, "{p}");
+            return Display::fmt(p, f);
         }
 
-        let conn = self.get_connective();
+        let print_operand = |sub: &Self, is_associative_op, f: &mut fmt::Formatter<'_>| {
+            let skip_parentheses = sub.has_obvious_priority_over(self)
+                || (!f.alternate() && is_associative_op && sub.has_same_operation(self));
 
-        match &conn {
-            AnyConnective::Nullary(operator) => write!(f, "{}", operator.connective.notation()),
-            AnyConnective::Unary(conn) => {
-                let operator = &conn.connective;
-                let [operand] = &conn.operands;
-
-                let notation = operator.notation();
-                if operand.has_obvious_priority_over(self) || operand.has_same_operation(self) {
-                    write!(f, "{notation}{operand}")
-                } else {
-                    write!(f, "{notation}({operand})")
-                }
+            if skip_parentheses {
+                Display::fmt(&sub, f)
+            } else {
+                write!(f, "(")?;
+                Display::fmt(&sub, f)?;
+                write!(f, ")")
             }
-            AnyConnective::Binary(conn) => {
-                let operator = &conn.connective;
-                let [op1, op2] = &conn.operands;
-                let is_associative = operator.is_associative();
-                let notation = operator.notation();
-                if op1.has_obvious_priority_over(self)
-                    || (is_associative && op1.has_same_operation(self))
-                {
-                    write!(f, "{op1}{notation}")
-                } else {
-                    write!(f, "({op1}){notation}")
-                }?;
-                if op2.has_obvious_priority_over(self)
-                    || (is_associative && op2.has_same_operation(self))
-                {
-                    write!(f, "{op2}")
-                } else {
-                    write!(f, "({op2})")
-                }
+        };
+
+        match self.get_connective() {
+            AnyConnective::Nullary(operator) => Display::fmt(&operator.connective.notation(), f),
+            AnyConnective::Unary(DynConnective {
+                connective,
+                operands: [operand],
+            }) => {
+                Display::fmt(&connective.notation(), f)?;
+                print_operand(operand, true, f)
+            }
+            AnyConnective::Binary(DynConnective {
+                connective,
+                operands: [op1, op2],
+            }) => {
+                let is_associative = connective.is_associative();
+                print_operand(op1, is_associative, f)?;
+                Display::fmt(&connective.notation(), f)?;
+                print_operand(op2, is_associative, f)
             }
         }
     }
