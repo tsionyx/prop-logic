@@ -2,7 +2,7 @@
 //! is `true` when either or both of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use crate::formula::Or;
+use crate::{connective::series, formula::Or};
 
 use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -111,13 +111,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        terms
-            .into_iter()
-            .rfold(None, |acc, t| {
-                let t = if let Some(acc) = acc { t.or(acc) } else { t };
-                Some(t)
-            })
-            .unwrap_or_else(E::contradiction)
+        series(&Disjunction, terms.into_iter())
     }
 }
 

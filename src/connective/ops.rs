@@ -4,7 +4,7 @@ use std::{collections::HashMap as Map, ops::Not};
 use crate::truth_table::TruthTabled as _;
 
 #[allow(clippy::wildcard_imports)]
-use super::{functions::*, ternary::Ternary, BoolFn, InitFn as _};
+use super::{evaluation::Evaluable, functions::*, ternary::Ternary, BoolFn, InitFn as _, TruthFn};
 
 /// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -193,6 +193,69 @@ where
         // println!("{}", t_left.get_truth_table());
         // println!("{}", t_right.get_truth_table());
         t_left.is_equivalent(&t_right)
+    }
+}
+
+/// Allow to introduce the concept of
+/// a (two-sided) neutral element for a binary function.
+pub trait Neutrality<E: Evaluable>: TruthFn<2, E> {
+    /// An [identity element](https://en.wikipedia.org/wiki/Identity_element)
+    /// of a binary function.
+    fn identity_element(&self) -> E;
+}
+
+/// Combine an arbitrary series of [`Evaluable`]
+/// items using an operation [with identity element][Neutrality::identity_element]
+pub fn series<I, F, E>(f: &F, it: I) -> E
+where
+    I: DoubleEndedIterator<Item = E>,
+    F: Neutrality<E>,
+    E: Evaluable,
+{
+    it.rfold(None, |acc, ev| {
+        let ev = if let Some(acc) = acc {
+            f.compose([ev, acc])
+        } else {
+            ev
+        };
+        Some(ev)
+    })
+    .unwrap_or_else(|| f.identity_element())
+}
+
+impl<E> Neutrality<E> for Conjunction
+where
+    E: Evaluable + crate::formula::And,
+{
+    fn identity_element(&self) -> E {
+        E::tautology()
+    }
+}
+
+impl<E> Neutrality<E> for Disjunction
+where
+    E: Evaluable + crate::formula::Or,
+{
+    fn identity_element(&self) -> E {
+        E::contradiction()
+    }
+}
+
+impl<E> Neutrality<E> for ExclusiveDisjunction
+where
+    E: Evaluable + crate::formula::Xor + crate::formula::Not,
+{
+    fn identity_element(&self) -> E {
+        E::contradiction()
+    }
+}
+
+impl<E> Neutrality<E> for LogicalBiconditional
+where
+    E: Evaluable + crate::formula::Equivalent + crate::formula::Not,
+{
+    fn identity_element(&self) -> E {
+        E::tautology()
     }
 }
 
@@ -412,5 +475,56 @@ mod tests {
         assert_associativity::<MaterialImplication>(false);
         assert_associativity::<NonConjunction>(false);
         assert_associativity::<Truth>(true);
+    }
+}
+
+#[cfg(all(test, feature = "arbitrary"))]
+mod prop_test {
+    use proptest::prelude::*;
+
+    use crate::formula::{Formula, FormulaParameters};
+
+    use super::*;
+
+    fn params() -> FormulaParameters<char> {
+        FormulaParameters {
+            variables: vec!['a', 'b', 'c', 'd'],
+            leaf_var_weight: Some(10),
+            use_dynamic: true,
+            ..FormulaParameters::default()
+        }
+    }
+
+    proptest! {
+        // https://proptest-rs.github.io/proptest/proptest/tutorial/config.html
+        #![proptest_config(ProptestConfig::with_cases(1000))]
+
+        #[test]
+        fn conjunction_identity(f in Formula::arbitrary_with(params())) {
+            let id: Formula<_> = Conjunction.identity_element();
+            assert_eq!(Conjunction.try_reduce([f.clone(), id.clone()]).unwrap(), f);
+            assert_eq!(Conjunction.try_reduce([id, f.clone()]).unwrap(), f);
+        }
+
+        #[test]
+        fn disjunction_identity(f in Formula::arbitrary_with(params())) {
+            let id: Formula<_> = Disjunction.identity_element();
+            assert_eq!(Disjunction.try_reduce([f.clone(), id.clone()]).unwrap(), f);
+            assert_eq!(Disjunction.try_reduce([id, f.clone()]).unwrap(), f);
+        }
+
+        #[test]
+        fn xor_identity(f in Formula::arbitrary_with(params())) {
+            let id: Formula<_> = ExclusiveDisjunction.identity_element();
+            assert_eq!(ExclusiveDisjunction.try_reduce([f.clone(), id.clone()]).unwrap(), f);
+            assert_eq!(ExclusiveDisjunction.try_reduce([id, f.clone()]).unwrap(), f);
+        }
+
+        #[test]
+        fn equiv_identity(f in Formula::arbitrary_with(params())) {
+            let id: Formula<_> = LogicalBiconditional.identity_element();
+            assert_eq!(LogicalBiconditional.try_reduce([f.clone(), id.clone()]).unwrap(), f);
+            assert_eq!(LogicalBiconditional.try_reduce([id, f.clone()]).unwrap(), f);
+        }
     }
 }

@@ -5,7 +5,10 @@
 //!
 //! <https://en.wikipedia.org/wiki/Logical_biconditional>
 //! <https://en.wikipedia.org/wiki/Logical_equality>
-use crate::formula::{Equivalent, Not};
+use crate::{
+    connective::series,
+    formula::{Equivalent, Not},
+};
 
 use super::super::{
     super::{Connective, Evaluable, FunctionNotation, TruthFn},
@@ -119,17 +122,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        terms
-            .into_iter()
-            .rfold(None, |acc, t| {
-                let t = if let Some(acc) = acc {
-                    t.equivalent(acc)
-                } else {
-                    t
-                };
-                Some(t)
-            })
-            .unwrap_or_else(E::tautology)
+        series(&LogicalBiconditional, terms.into_iter())
     }
 }
 

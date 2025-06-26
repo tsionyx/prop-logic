@@ -2,7 +2,10 @@
 //! is `true` if and only if its arguments differ.
 //!
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
-use crate::formula::{Not, Xor};
+use crate::{
+    connective::series,
+    formula::{Not, Xor},
+};
 
 use super::super::{
     super::{Connective, Evaluable, FunctionNotation, TruthFn},
@@ -111,13 +114,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        terms
-            .into_iter()
-            .rfold(None, |acc, t| {
-                let t = if let Some(acc) = acc { t.xor(acc) } else { t };
-                Some(t)
-            })
-            .unwrap_or_else(E::contradiction)
+        series(&ExclusiveDisjunction, terms.into_iter())
     }
 }
 
