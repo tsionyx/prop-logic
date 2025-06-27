@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, hash::Hash};
 
-use crate::connective::{Evaluable, TruthFn as _};
+use crate::connective::Evaluable;
 
 use super::{super::eval::Valuation, connective::AnyConnective, formula::Formula};
 

@@ -131,10 +131,7 @@ impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
 
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
     pub fn into_canonical(self) -> Formula<VAR> {
-        use crate::{
-            connective::{functions, TruthFn},
-            truth_table::TruthTabled as _,
-        };
+        use crate::{connective::functions, truth_table::TruthTabled as _};
 
         match self {
             Self::Nullary(conn) => {
@@ -318,10 +315,9 @@ impl<const ARITY: usize, VAR> DynConnective<ARITY, Formula<VAR>, VAR> {
     }
 }
 
-impl<'a, const ARITY: usize, OPERAND, VAR: 'a> AsRef<dyn Connective<ARITY> + 'a>
-    for DynConnective<ARITY, OPERAND, VAR>
-{
-    fn as_ref(&self) -> &(dyn Connective<ARITY> + 'a) {
+impl<'a, const ARITY: usize, OPERAND, VAR: 'a> DynConnective<ARITY, OPERAND, VAR> {
+    /// Get the reference to the inner `Connective`.
+    pub fn get_connective(&self) -> &(dyn Connective<ARITY> + 'a) {
         self.connective.up()
     }
 }
