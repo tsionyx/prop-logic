@@ -1,9 +1,11 @@
 use super::{functions, BoolFnExt, Connective};
 
 use crate::{
-    arity::two_powers_of_two_powers::D,
+    arity::TwoPowerOfTwoPower,
     utils::{dependent_array::CheckedStorage, dyn_eq::DynCompare, upcast::Upcast},
 };
+
+use generic_array::arr;
 
 /// Combination of [`BoolFnExt`] and [`Connective`] to allow to use in dyn context.
 ///
@@ -33,22 +35,18 @@ impl<const ARITY: usize> PartialEq for dyn StoredBoolFn<ARITY> {
 /// Also, it allows to compare the given generic function
 /// (identified by their truth tables, TO BE DONE) with the [concrete ones][BoolFnExt].
 pub type AllFunctions<const ARITY: usize> =
-    CheckedStorage<ARITY, D, &'static dyn StoredBoolFn<ARITY>>;
-
-const _ASSERT_0: () = <AllFunctions<0>>::ASSERT_SIZE;
-const _ASSERT_1: () = <AllFunctions<1>>::ASSERT_SIZE;
-const _ASSERT_2: () = <AllFunctions<2>>::ASSERT_SIZE;
+    CheckedStorage<&'static dyn StoredBoolFn<ARITY>, ARITY, TwoPowerOfTwoPower>;
 
 #[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible 0-arity functions up to equivalence.
-pub const NULLARY_FUNCTIONS: AllFunctions<0> = CheckedStorage::new([
+pub const NULLARY_FUNCTIONS: AllFunctions<0> = CheckedStorage(arr![
     &functions::Falsity as &'static dyn StoredBoolFn<0>,
     &functions::Truth,
 ]);
 
 #[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible unary functions up to equivalence.
-pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
+pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage(arr![
     &functions::Falsity as &'static dyn StoredBoolFn<1>,
     &functions::LogicalIdentity,
     &functions::Negation,
@@ -57,7 +55,7 @@ pub const UNARY_FUNCTIONS: AllFunctions<1> = CheckedStorage::new([
 
 #[expect(trivial_casts)] // need to define at least one cast to prevent compile-error
 /// The array of all possible binary functions up to equivalence.
-pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage::new([
+pub const BINARY_FUNCTIONS: AllFunctions<2> = CheckedStorage(arr![
     &functions::Falsity as &'static dyn StoredBoolFn<2>, // 0 0 0 0
     &functions::Conjunction,                             // 0 0 0 1
     &functions::MaterialNonImplication,                  // 0 0 1 0

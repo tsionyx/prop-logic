@@ -5,12 +5,9 @@ use itertools::Itertools;
 use super::BoolFn;
 
 use crate::{
-    arity::two_powers,
+    arity::TwoPower,
     truth_table::TruthTabled as _,
-    utils::{
-        dependent_array::{CheckedArray, Discriminant as _},
-        upcast::UpcastFrom,
-    },
+    utils::{dependent_array::SizeMapper, upcast::UpcastFrom},
 };
 
 /// Defines the important properies of a [`BoolFn`]
@@ -188,7 +185,7 @@ pub fn is_basis<const ARITY: usize>(functions: &[&dyn BoolFnExt<ARITY>]) -> bool
 impl<const ARITY: usize, T> BoolFnExt<ARITY> for T
 where
     T: BoolFn<ARITY> + 'static,
-    two_powers::D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY>,
 {
     fn is_constant(&self) -> bool {
         self.get_truth_table()
@@ -266,7 +263,7 @@ where
     }
 
     fn is_balanced(&self) -> bool {
-        let expected_size = two_powers::D::ARR_SIZE;
+        let expected_size = TwoPower::ArrSize.as_usize();
         let balanced = self.hamming_weight() * 2 == expected_size;
         if balanced {
             // TODO: consider checking the

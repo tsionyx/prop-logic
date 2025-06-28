@@ -11,6 +11,8 @@ repository = "https://github.com/tsionyx/prop-logic"
 [dependencies]
 void = "1.0"
 itertools = "0.11"
+typenum = { version = "1.18", features = ["const-generics"] }
+generic-array = "1.2"
 dyn-clone = "1.0"
 auto_impl = "1.2"
 derive-where = "1.2"
@@ -72,7 +74,7 @@ single_use_lifetimes = "warn"
 trivial_casts = "warn"
 trivial_numeric_casts = "warn"
 unit_bindings = "warn"
-unnameable_types = "warn"
+# unnameable_types = "warn"
 # conflicts with the `clippy::redundant_pub_crate`
 unreachable_pub = "allow"
 unsafe_attr_outside_unsafe = "warn"

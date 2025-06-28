@@ -1,109 +1,30 @@
-use std::marker::PhantomData;
+pub use generic_array::{ArrayLength, GenericArray};
 
 /// Defines the rule to map `IN` to the array size.
-pub trait Discriminant<const IN: usize> {
+pub trait SizeMapper<const IN: usize> {
     /// Final expected array size.
-    const ARR_SIZE: usize;
+    type ArrSize;
 }
 
-/// A trait containing a single associated [array type][SizedArray]
-/// which is guaranteed to have the constant size.
-pub trait CheckedArray<const IN: usize>: Discriminant<IN> {
-    /// The [`SizedArray`]
-    type Array<T>: SizedArray<T>;
-}
-
-/// Only implemented for arrays to allow to use their sizes
-/// as a constant at compile time.
-pub trait SizedArray<T>: TryFrom<Vec<T>> + Into<Vec<T>> + IntoIterator<Item = T> {
-    /// The size of the array.
-    const SIZE: usize;
-
-    /// Iterate over a [`SizedArray`].
-    fn iter<'s>(&'s self) -> impl Iterator<Item = &'s T>
-    where
-        T: 's;
-}
-
-// Implement for all fixed-size arrays
-impl<const N: usize, T> SizedArray<T> for [T; N] {
-    const SIZE: usize = N;
-
-    fn iter<'s>(&'s self) -> impl Iterator<Item = &'s T>
-    where
-        T: 's,
-    {
-        <[T]>::iter(self)
-    }
-}
-
-/// Helper trait to define the rules to assert
-/// the subtupes of [`CheckedArray`] has the size dependent on the `IN` constant.
-pub trait VerifySize<const IN: usize, ARR: CheckedArray<IN>> {
-    /// The assert expression.
-    ///
-    /// It should be called in the client code explicitly
-    /// for the specific type implemented on
-    /// to enable the compile-time assertion.
-    const ASSERT_SIZE: ();
-}
-
-impl<const IN: usize, ARR> VerifySize<IN, ARR> for ARR
-where
-    ARR: CheckedArray<IN>,
-{
-    const ASSERT_SIZE: () = assert!(<ARR::Array<()> as SizedArray<()>>::SIZE == ARR::ARR_SIZE);
-}
-
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 /// Storage of the fixed number of `T` items that is dependent on parameter `IN`.
 ///
-/// The `ARR` defines rules for how the `IN` parameter should map
-/// on the actual size of the underlying [`CheckedArray`].
+/// The `S` defines rules for how the `IN` parameter should map
+/// on the actual size of the underlying [`GenericArray`].
 ///
 /// The most straightforward use is to create a compile-time constant
 /// to be able to enumerate all the items anywhere.
-pub struct CheckedStorage<const IN: usize, ARR, T>
+pub struct CheckedStorage<T, const N: usize, S>(pub GenericArray<T, S::ArrSize>)
 where
-    ARR: CheckedArray<IN>,
-{
-    items: ARR::Array<T>,
-    _dummy: PhantomData<ARR>,
-}
+    S: SizeMapper<N>,
+    S::ArrSize: ArrayLength;
 
-impl<const IN: usize, ARR, T> CheckedStorage<IN, ARR, T>
+impl<T, const N: usize, S> AsRef<[T]> for CheckedStorage<T, N, S>
 where
-    ARR: CheckedArray<IN>,
+    S: SizeMapper<N>,
+    S::ArrSize: ArrayLength,
 {
-    /// Create a new instance of [`CheckedStorage`] from the given array.
-    pub const fn new(items: ARR::Array<T>) -> Self {
-        Self {
-            items,
-            _dummy: PhantomData,
-        }
+    fn as_ref(&self) -> &[T] {
+        self.0.as_slice()
     }
-
-    /// Return inner [array][CheckedArray::Array].
-    pub fn into_inner(self) -> ARR::Array<T> {
-        self.items
-    }
-}
-
-impl<const IN: usize, ARR, T> AsRef<ARR::Array<T>> for CheckedStorage<IN, ARR, T>
-where
-    ARR: CheckedArray<IN>,
-{
-    fn as_ref(&self) -> &ARR::Array<T> {
-        &self.items
-    }
-}
-
-impl<const IN: usize, ARR, T> CheckedStorage<IN, ARR, T>
-where
-    ARR: CheckedArray<IN> + VerifySize<IN, ARR>,
-{
-    /// Call this constant to assert that the table contains
-    /// exactly the expected number of storage defined in [`VerifySize`]
-    /// for your [`CheckedArray`].
-    pub const ASSERT_SIZE: () = ARR::ASSERT_SIZE;
 }

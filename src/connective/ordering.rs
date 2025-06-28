@@ -4,9 +4,9 @@ use std::cmp::Ordering;
 use super::{functions::*, BoolFn, InitFn as _};
 
 use crate::{
-    arity::two_powers::D,
+    arity::TwoPower,
     truth_table::{TruthTable as _, TruthTabled as _},
-    utils::{cartesian_diag, dependent_array::CheckedArray},
+    utils::{cartesian_diag, dependent_array::SizeMapper},
 };
 
 /// Defines the partial order (`<=`) between the [`TruthFn`]-s
@@ -18,7 +18,7 @@ fn partial_ordering<Op1, Op2, const ARITY: usize>() -> Option<Ordering>
 where
     Op1: BoolFn<ARITY> + Default,
     Op2: BoolFn<ARITY> + Default,
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY>,
 {
     let op1_truth_table = Op1::init().get_truth_table().values();
     let op2_truth_table = Op2::init().get_truth_table().values();

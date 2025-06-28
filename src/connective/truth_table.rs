@@ -3,17 +3,16 @@
 use std::fmt;
 
 use crate::{
-    arity::two_powers::D,
+    arity::TwoPower,
     connective::BoolFn,
     truth_table::{TruthTable, TruthTabled},
-    utils::dependent_array::CheckedStorage,
-    CheckedArray,
+    utils::dependent_array::{ArrayLength, CheckedStorage, GenericArray, SizeMapper},
 };
 
 impl<const ARITY: usize, F> TruthTabled<ARITY> for F
 where
     F: BoolFn<ARITY>,
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     type TT = FixedTruthTable<ARITY>;
 
@@ -25,7 +24,7 @@ where
 fn bool_truth_table<const ARITY: usize, F>(f: &F) -> FixedTruthTable<ARITY>
 where
     F: BoolFn<ARITY>,
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     use itertools::Itertools as _;
     use std::collections::BTreeMap as Map;
@@ -59,11 +58,9 @@ where
 
 impl<const ARITY: usize> TruthTable<ARITY> for FixedTruthTable<ARITY>
 where
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     type Input = [bool; ARITY];
-
-    type Repr = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
 
     fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)> {
         use crate::utils::dependent_array::SizedArray;
@@ -97,15 +94,14 @@ where
 /// ```
 pub struct FixedTruthTable<const ARITY: usize>
 where
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
-    table: CheckedStorage<ARITY, D, Row<ARITY>>,
+    table: CheckedStorage<Row<ARITY>, ARITY, TwoPower>,
 }
 
 impl<const ARITY: usize> fmt::Debug for FixedTruthTable<ARITY>
 where
-    D: CheckedArray<ARITY>,
-    <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: fmt::Debug,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("TruthTable")
@@ -118,38 +114,37 @@ type Row<const ARITY: usize> = ([bool; ARITY], bool);
 
 impl<const ARITY: usize> FixedTruthTable<ARITY>
 where
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
-    /// Create new [`FixedTruthTable`] from the individual rows.
-    const fn new(table: <D as CheckedArray<ARITY>>::Array<Row<ARITY>>) -> Self {
-        Self {
-            table: CheckedStorage::new(table),
-        }
-    }
+    // /// Create new [`FixedTruthTable`] from the individual rows.
+    // const fn new(table: <D as CheckedArray<ARITY>>::Array<Row<ARITY>>) -> Self {
+    //     Self {
+    //         table: CheckedStorage::new(table),
+    //     }
+    // }
 
     /// Return inner [array][CheckedArray::Array].
-    fn into_inner(self) -> <D as CheckedArray<ARITY>>::Array<Row<ARITY>> {
-        self.table.into_inner()
+    fn into_inner(self) -> GenericArray<Row<ARITY>, <TwoPower as SizeMapper<ARITY>>::ArrSize> {
+        self.table.0
     }
 }
 
 impl<const ARITY: usize> IntoIterator for FixedTruthTable<ARITY>
 where
-    D: CheckedArray<ARITY>,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     type Item = Row<ARITY>;
-
-    type IntoIter = <<D as CheckedArray<ARITY>>::Array<Row<ARITY>> as IntoIterator>::IntoIter;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
+        Vec::new().into_iter();
         self.into_inner().into_iter()
     }
 }
 
 impl<const ARITY: usize> fmt::Display for FixedTruthTable<ARITY>
 where
-    D: CheckedArray<ARITY>,
-    <D as CheckedArray<ARITY>>::Array<Row<ARITY>>: Clone,
+    TwoPower: SizeMapper<ARITY, ArrSize: ArrayLength>,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value_col = "VALUE";
@@ -187,7 +182,7 @@ mod tests {
     fn get<Op, const ARITY: usize>() -> Vec<bool>
     where
         Op: BoolFn<ARITY> + InitFn,
-        D: CheckedArray<ARITY>,
+        TwoPower: SizeMapper<ARITY>,
     {
         get_mapping::<Op, ARITY>()
             .into_iter()
@@ -198,7 +193,7 @@ mod tests {
     fn get_mapping<Op, const ARITY: usize>() -> Vec<Row<ARITY>>
     where
         Op: BoolFn<ARITY> + InitFn,
-        D: CheckedArray<ARITY>,
+        TwoPower: SizeMapper<ARITY>,
     {
         let table = Op::init().get_truth_table();
         table.table.into_inner().into()

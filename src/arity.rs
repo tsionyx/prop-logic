@@ -1,89 +1,54 @@
-use crate::utils::dependent_array::{CheckedArray, CheckedStorage, Discriminant};
+use std::ops::Shl;
 
+use typenum::{Const, Shleft, ToUInt, U, U1};
+
+use crate::utils::dependent_array::SizeMapper;
+
+#[derive(Debug, Copy, Clone)]
 /// Implement size checking for the arrays of size `2^ARITY`.
 ///
 /// Suitable to assert the number of combinations of inputs
 /// of a [`TruthFn`][crate::connective::TruthFn]-s for a given `ARITY`.
-pub mod two_powers {
-    #[allow(clippy::wildcard_imports)]
-    use super::*;
+pub struct TwoPower;
 
-    #[derive(Debug, Clone, Copy)]
-    /// Discriminant for `2^ARITY` size.
-    pub struct D;
-
-    impl<const ARITY: usize> Discriminant<ARITY> for D {
-        const ARR_SIZE: usize = (1 << ARITY);
-    }
-
-    impl CheckedArray<0> for D {
-        type Array<T> = [T; 1];
-    }
-
-    impl CheckedArray<1> for D {
-        type Array<T> = [T; 2];
-    }
-
-    impl CheckedArray<2> for D {
-        type Array<T> = [T; 4];
-    }
-
-    impl CheckedArray<3> for D {
-        type Array<T> = [T; 8];
-    }
-
-    const _ASSERT_0: () = <CheckedStorage<0, D, ()>>::ASSERT_SIZE;
-    const _ASSERT_1: () = <CheckedStorage<1, D, ()>>::ASSERT_SIZE;
-    const _ASSERT_2: () = <CheckedStorage<2, D, ()>>::ASSERT_SIZE;
-    const _ASSERT_3: () = <CheckedStorage<3, D, ()>>::ASSERT_SIZE;
+impl<const IN: usize> SizeMapper<IN> for TwoPower
+where
+    Const<IN>: ToUInt,
+    U1: Shl<U<IN>>,
+{
+    // 1 << N
+    type ArrSize = Shleft<U1, U<IN>>;
 }
 
+#[derive(Debug, Copy, Clone)]
 /// Implement size checking for the arrays of size `2^(2^ARITY)`.
 ///
 /// Suitable to assert the number of possible
 /// [`TruthFn`][crate::connective::TruthFn]-s for a given `ARITY`.
-pub mod two_powers_of_two_powers {
-    #[allow(clippy::wildcard_imports)]
-    use super::*;
+pub struct TwoPowerOfTwoPower;
 
-    #[derive(Debug, Clone, Copy)]
-    /// Discriminant for 2^(2^ARITY) size.
-    pub struct D;
-
-    impl<const ARITY: usize> Discriminant<ARITY> for D {
-        const ARR_SIZE: usize = (1 << (1 << ARITY));
-    }
-
-    impl CheckedArray<0> for D {
-        type Array<T> = [T; 2];
-    }
-
-    impl CheckedArray<1> for D {
-        type Array<T> = [T; 4];
-    }
-
-    impl CheckedArray<2> for D {
-        type Array<T> = [T; 16];
-    }
-
-    const _ASSERT_0: () = <CheckedStorage<0, D, ()>>::ASSERT_SIZE;
-    const _ASSERT_1: () = <CheckedStorage<1, D, ()>>::ASSERT_SIZE;
-    const _ASSERT_2: () = <CheckedStorage<2, D, ()>>::ASSERT_SIZE;
+impl<const IN: usize> SizeMapper<IN> for TwoPowerOfTwoPower
+where
+    Const<IN>: ToUInt,
+    U1: Shl<U<IN>>,
+    U1: Shl<Shleft<U1, U<IN>>>,
+{
+    // 1 << (1 << N)
+    type ArrSize = Shleft<U1, Shleft<U1, U<IN>>>;
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::CheckedStorage;
+    use crate::utils::dependent_array::CheckedStorage;
 
     use super::*;
 
-    const _X0: CheckedStorage<0, two_powers::D, u8> = CheckedStorage::new([1]);
-    const _X1: CheckedStorage<1, two_powers::D, u8> = CheckedStorage::new([1, 2]);
-    const _X2: CheckedStorage<2, two_powers::D, u8> = CheckedStorage::new([1, 2, 3, 4]);
+    const _X0: CheckedStorage<u8, 0, TwoPower> = CheckedStorage([1].into());
+    const _X1: CheckedStorage<u8, 1, TwoPower> = CheckedStorage([1, 2].into());
+    const _X2: CheckedStorage<u8, 2, TwoPower> = CheckedStorage([1, 2, 3, 4].into());
 
-    const _Y0: CheckedStorage<0, two_powers_of_two_powers::D, u8> = CheckedStorage::new([1, 2]);
-    const _Y1: CheckedStorage<1, two_powers_of_two_powers::D, u8> =
-        CheckedStorage::new([1, 2, 3, 4]);
-    const _Y2: CheckedStorage<2, two_powers_of_two_powers::D, u8> =
-        CheckedStorage::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
+    const _Y0: CheckedStorage<u8, 0, TwoPowerOfTwoPower> = CheckedStorage([1, 2].into());
+    const _Y1: CheckedStorage<u8, 1, TwoPowerOfTwoPower> = CheckedStorage([1, 2, 3, 4].into());
+    const _Y2: CheckedStorage<u8, 2, TwoPowerOfTwoPower> =
+        CheckedStorage([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].into());
 }
