@@ -72,22 +72,61 @@ impl<T> Formula<T> {
 }
 
 impl<T> Formula<T> {
-    /// Transform the inner parts of a [`Formula`]
-    /// preserving its structure.
-    pub fn map<F>(self, mut transform: F) -> Self
+    /// Recursively transform the type of [`Formula`]'s variable
+    /// preserving its whole structure.
+    pub fn map<F, U>(self, mut transform: F) -> Formula<U>
     where
-        F: FnMut(Self) -> Self,
+        F: FnMut(T) -> U + Clone,
     {
         match self {
-            Self::TruthValue(_) | Self::Atomic(_) => transform(self),
-            Self::Not(f) => Self::not(transform(*f)),
-            Self::And(f1, f2) => Self::and(transform(*f1), transform(*f2)),
-            Self::Or(f1, f2) => Self::or(transform(*f1), transform(*f2)),
-            Self::Xor(f1, f2) => Self::xor(transform(*f1), transform(*f2)),
-            Self::Implies(f1, f2) => Self::implies(transform(*f1), transform(*f2)),
-            Self::Equivalent(f1, f2) => Self::equivalent(transform(*f1), transform(*f2)),
-            Self::Dynamic(conn) => Self::Dynamic(conn.map(|f| Box::new(transform(*f)))),
+            Self::TruthValue(x) => Formula::TruthValue(x),
+            Self::Atomic(x) => Formula::Atomic(transform(x)),
+            Self::Not(f) => Formula::not((*f).map(transform)),
+            Self::And(f1, f2) => Formula::and((*f1).map(transform.clone()), (*f2).map(transform)),
+            Self::Or(f1, f2) => Formula::or((*f1).map(transform.clone()), (*f2).map(transform)),
+            Self::Xor(f1, f2) => Formula::xor((*f1).map(transform.clone()), (*f2).map(transform)),
+            Self::Implies(f1, f2) => {
+                Formula::implies((*f1).map(transform.clone()), (*f2).map(transform))
+            }
+            Self::Equivalent(f1, f2) => {
+                Formula::equivalent((*f1).map(transform.clone()), (*f2).map(transform))
+            }
+            Self::Dynamic(conn) => {
+                Formula::Dynamic(conn.map(|f| Box::new((*f).map(transform.clone()))))
+            }
         }
+    }
+
+    /// Recursively transform the [`Formula`]
+    /// bottom-up by applying some transformation
+    /// to every sub-formula.
+    pub fn apply_rec<F>(self, mut fun: F) -> Self
+    where
+        F: FnMut(Self) -> Self + Clone,
+    {
+        let inner = match self {
+            Self::TruthValue(_) | Self::Atomic(_) => self,
+            Self::Not(f) => Self::not((*f).apply_rec(fun.clone())),
+            Self::And(f1, f2) => {
+                Self::and((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
+            }
+            Self::Or(f1, f2) => {
+                Self::or((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
+            }
+            Self::Xor(f1, f2) => {
+                Self::xor((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
+            }
+            Self::Implies(f1, f2) => {
+                Self::implies((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
+            }
+            Self::Equivalent(f1, f2) => {
+                Self::equivalent((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
+            }
+            Self::Dynamic(conn) => {
+                Self::Dynamic(conn.map(|f| Box::new((*f).apply_rec(fun.clone()))))
+            }
+        };
+        fun(inner)
     }
 
     /// Transform a [`Formula`] by reversing order of its operands
@@ -401,5 +440,34 @@ mod tests {
         format_eq!(p_equivalent_q.clone().not(), "¬(p↔q)");
         format_eq!(p_equivalent_q.clone().equivalent(r.clone()), "p↔q↔r");
         format_eq!(r.equivalent(p_equivalent_q), "r↔p↔q");
+    }
+}
+
+#[cfg(all(test, feature = "arbitrary"))]
+mod prop_test {
+    use proptest::prelude::*;
+
+    use super::{super::arbitrary::Parameters, *};
+
+    fn params() -> Parameters<char> {
+        Parameters {
+            variables: vec!['a', 'b', 'c', 'd'],
+            leaf_var_weight: Some(10),
+            use_dynamic: true,
+            ..Parameters::default()
+        }
+    }
+
+    proptest! {
+        // https://proptest-rs.github.io/proptest/proptest/tutorial/config.html
+        #![proptest_config(ProptestConfig::with_cases(1000))]
+
+        #[test]
+        fn roundtrip_var_conversion(f in Formula::arbitrary_with(params())) {
+            let f2: Formula<u8> = f.clone().map(|x| x as u8);
+            let f3: Formula<char> = dbg!(f2).map(char::from);
+            assert_eq!(f, f3);
+        }
+
     }
 }

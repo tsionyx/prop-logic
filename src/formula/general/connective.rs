@@ -103,7 +103,7 @@ impl<Operand, Var> AnyConnective<Operand, Var> {
     }
 
     /// Convert to another [`AnyConnective`] by converting its operands.
-    pub fn map<F, OperandDst>(self, f: F) -> AnyConnective<OperandDst, Var>
+    pub fn map<F, OperandDst, VarDst>(self, f: F) -> AnyConnective<OperandDst, VarDst>
     where
         F: FnMut(Operand) -> OperandDst,
     {
@@ -221,10 +221,13 @@ impl<const ARITY: usize, Operand, Var> DynConnective<ARITY, Operand, Var> {
         }
     }
 
+    #[allow(private_bounds)]
     /// Convert to another [`DynConnective`] by converting its operands.
-    pub fn map<F, OperandDst>(self, f: F) -> DynConnective<ARITY, OperandDst, Var>
+    pub fn map<F, OperandDst, VarDst>(self, f: F) -> DynConnective<ARITY, OperandDst, VarDst>
     where
         F: FnMut(Operand) -> OperandDst,
+        for<'a> Box<dyn UsableConnective<ARITY, VarDst>>:
+            From<&'a dyn UsableConnective<ARITY, Var>>,
     {
         let Self {
             connective,
@@ -232,7 +235,7 @@ impl<const ARITY: usize, Operand, Var> DynConnective<ARITY, Operand, Var> {
         } = self;
 
         DynConnective {
-            connective,
+            connective: connective.as_ref().into(),
             operands: operands.map(f),
         }
     }
@@ -260,7 +263,12 @@ mod usable {
 
     use dyn_clone::{clone_trait_object, DynClone};
 
-    use crate::utils::dyn_eq::DynCompare;
+    use crate::{
+        arity::two_powers_of_two_powers::D,
+        connective::functions,
+        utils::{dependent_array::CheckedStorage, dyn_eq::DynCompare},
+        TruthTabled,
+    };
 
     use super::{Connective, Formula, Prioritized, TruthFn};
 
@@ -286,6 +294,71 @@ mod usable {
     }
 
     impl<const N: usize, Var: 'static> Eq for Box<dyn UsableConnective<N, Var> + '_> {}
+
+    type AllFunctions<const ARITY: usize, T> =
+        CheckedStorage<ARITY, D, Box<dyn UsableConnective<ARITY, T>>>;
+
+    impl<T, U> From<&dyn UsableConnective<0, T>> for Box<dyn UsableConnective<0, U>> {
+        fn from(value: &dyn UsableConnective<0, T>) -> Self {
+            // specified separately to explicitly cast to the Box<dyn T>
+            let falsity: Box<dyn UsableConnective<0, _>> = Box::new(functions::Falsity);
+            let variants: AllFunctions<0, _> =
+                CheckedStorage::new([falsity, Box::new(functions::Truth)]);
+            variants
+                .into_inner()
+                .into_iter()
+                .find(|f| value.is_equivalent(f))
+                .expect("The two functions should cover all the possible 0-ary functions")
+        }
+    }
+
+    impl<T, U> From<&dyn UsableConnective<1, T>> for Box<dyn UsableConnective<1, U>> {
+        fn from(value: &dyn UsableConnective<1, T>) -> Self {
+            // specified separately to explicitly cast to the Box<dyn T>
+            let falsity: Box<dyn UsableConnective<1, _>> = Box::new(functions::Falsity);
+            let variants: AllFunctions<1, _> = CheckedStorage::new([
+                falsity,
+                Box::new(functions::LogicalIdentity),
+                Box::new(functions::Negation),
+                Box::new(functions::Truth),
+            ]);
+            variants
+                .into_inner()
+                .into_iter()
+                .find(|f| value.is_equivalent(f))
+                .expect("The four functions should cover all the possible 1-ary functions")
+        }
+    }
+
+    impl<T, U> From<&dyn UsableConnective<2, T>> for Box<dyn UsableConnective<2, U>> {
+        fn from(value: &dyn UsableConnective<2, T>) -> Self {
+            // specified separately to explicitly cast to the Box<dyn T>
+            let falsity: Box<dyn UsableConnective<2, _>> = Box::new(functions::Falsity);
+            let variants: AllFunctions<2, _> = CheckedStorage::new([
+                falsity,
+                Box::new(functions::Conjunction),
+                Box::new(functions::MaterialNonImplication),
+                Box::new(functions::First {}),
+                Box::new(functions::ConverseNonImplication),
+                Box::new(functions::Last {}),
+                Box::new(functions::ExclusiveDisjunction),
+                Box::new(functions::Disjunction),
+                Box::new(functions::NonDisjunction),
+                Box::new(functions::LogicalBiconditional),
+                Box::new(functions::NotSecond::new()),
+                Box::new(functions::ConverseImplication),
+                Box::new(functions::NotFirst::new()),
+                Box::new(functions::MaterialImplication),
+                Box::new(functions::NonConjunction),
+                Box::new(functions::Truth),
+            ]);
+            variants
+                .into_inner()
+                .into_iter()
+                .find(|f| value.is_equivalent(f))
+                .expect("The sixteen functions should cover all the possible 2-ary functions")
+        }
+    }
 }
 
 mod impls {

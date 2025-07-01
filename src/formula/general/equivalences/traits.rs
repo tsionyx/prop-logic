@@ -11,13 +11,7 @@ pub trait RewritingRule<T> {
     /// to increase during the transformations,
     /// i.e. the rule will be applied even if it creates longer [`Formula`].
     fn apply_all(&self, formula: Formula<T>, allow_extend: bool) -> Formula<T> {
-        let formula = if formula.is_complex() {
-            formula.map(|f| self.apply_all(f, allow_extend))
-        } else {
-            formula
-        };
-
-        self.apply(formula, allow_extend)
+        formula.apply_rec(|f| self.apply(f, allow_extend))
     }
 
     /// Apply the rule returning the (possibly unchanged) new [`Formula`].
