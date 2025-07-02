@@ -131,62 +131,10 @@ impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
 
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
     pub fn into_canonical(self) -> Formula<VAR> {
-        use crate::{connective::functions, truth_table::TruthTabled as _};
-
-        match self {
-            Self::Nullary(conn) => {
-                conn.map(|f| *f)
-                    .compose_if_equivalent(functions::Falsity)
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
-                    // should be unreachable because of exhaustive checks before
-                    .unwrap_or_else(DynConnective::compose)
-            }
-
-            Self::Unary(conn) => {
-                conn.map(|f| *f)
-                    .compose_if_equivalent(functions::Falsity)
-                    .or_else(|conn| conn.compose_if_equivalent(functions::LogicalIdentity))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Negation))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
-                    // should be unreachable because of exhaustive checks before
-                    .unwrap_or_else(DynConnective::compose)
-            }
-            Self::Binary(conn) => {
-                conn.map(|f| *f)
-                    .compose_if_equivalent(functions::Falsity)
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Conjunction))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::MaterialNonImplication))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::First {}))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::ConverseNonImplication))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Last {}))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::ExclusiveDisjunction))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Disjunction))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::NonDisjunction))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::LogicalBiconditional))
-                    // .or_else(|conn| conn.compose_if_equivalent(functions::NotSecond::new()))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::ConverseImplication))
-                    // .or_else(|conn| conn.compose_if_equivalent(functions::NotFirst::new()))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::MaterialImplication))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::NonConjunction))
-                    .or_else(|conn| conn.compose_if_equivalent(functions::Truth))
-                    .unwrap_or_else(
-                        |DynConnective {
-                             connective,
-                             operands: [f1, f2],
-                         }| {
-                            use super::super::ops::Not as _;
-
-                            if connective.is_equivalent(&functions::NotSecond::new()) {
-                                Formula::not(f2)
-                            } else if connective.is_equivalent(&functions::NotFirst::new()) {
-                                Formula::not(f1)
-                            } else {
-                                // should be unreachable because of exhaustive checks before
-                                connective.compose([f1, f2])
-                            }
-                        },
-                    )
-            }
+        match self.map(|f| *f) {
+            AnyConnective::Nullary(conn) => conn.compose(),
+            AnyConnective::Unary(conn) => conn.compose(),
+            AnyConnective::Binary(conn) => conn.compose(),
         }
     }
 }
@@ -286,21 +234,6 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
         DynConnective {
             connective,
             operands: operands.map(f),
-        }
-    }
-
-    fn compose_if_equivalent<F>(self, truth_fn: F) -> Result<OPERAND, Self>
-    where
-        OPERAND: crate::connective::Evaluable,
-        crate::arity::two_powers::D: crate::CheckedArray<ARITY>,
-        F: crate::connective::BoolFn<ARITY> + TruthFn<ARITY, OPERAND>,
-    {
-        use crate::truth_table::TruthTabled as _;
-
-        if self.connective.is_equivalent(&truth_fn) {
-            Ok(truth_fn.compose(self.operands))
-        } else {
-            Err(self)
         }
     }
 }
