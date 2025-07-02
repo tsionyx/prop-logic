@@ -22,7 +22,9 @@ where
     E: Evaluable + Implies + Not,
 {
     fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialImplication.try_reduce([y, x])
+        MaterialImplication
+            .try_reduce([y, x])
+            .map_err(|[y, x]| [x, y])
     }
 
     fn compose(&self, [x, y]: [E; 2]) -> E {
