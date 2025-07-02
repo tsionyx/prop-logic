@@ -11,26 +11,26 @@ use super::formula::Formula;
 
 use self::usable::UsableConnective;
 
-#[derive_where(Debug; OPERAND: Debug)]
-#[derive_where(Clone; OPERAND: Clone)]
-#[derive_where(PartialEq; OPERAND: PartialEq, VAR: 'static)]
-#[derive_where(Eq; OPERAND: Eq, VAR: 'static)]
+#[derive_where(Debug; Operand: Debug)]
+#[derive_where(Clone; Operand: Clone)]
+#[derive_where(PartialEq; Operand: PartialEq, Var: 'static)]
+#[derive_where(Eq; Operand: Eq, Var: 'static)]
 /// [`Connective`] + [`TruthFn`] of ARITY from {0, 1, 2} along with their operands.
-pub enum AnyConnective<OPERAND, VAR> {
+pub enum AnyConnective<Operand, Var> {
     /// Nullary [`Connective`].
-    Nullary(DynConnective<0, OPERAND, VAR>),
+    Nullary(DynConnective<0, Operand, Var>),
     /// Unary [`Connective`].
-    Unary(DynConnective<1, OPERAND, VAR>),
+    Unary(DynConnective<1, Operand, Var>),
     /// Binary [`Connective`].
-    Binary(DynConnective<2, OPERAND, VAR>),
+    Binary(DynConnective<2, Operand, Var>),
 }
 
-impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
+impl<Operand, Var> AnyConnective<Operand, Var> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
     pub fn nullary<C>(connective: C) -> Self
     where
         C: Connective<0>
-            + TruthFn<0, Formula<VAR>>
+            + TruthFn<0, Formula<Var>>
             + Prioritized
             + Debug
             + Clone
@@ -41,10 +41,10 @@ impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
     }
 
     /// Create a [`DynConnective`] with a [`Connective<1>`].
-    pub fn unary<C>(connective: C, operand: OPERAND) -> Self
+    pub fn unary<C>(connective: C, operand: Operand) -> Self
     where
         C: Connective<1>
-            + TruthFn<1, Formula<VAR>>
+            + TruthFn<1, Formula<Var>>
             + Prioritized
             + Debug
             + Clone
@@ -55,10 +55,10 @@ impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
     }
 
     /// Create a [`DynConnective`] with a [`Connective<2>`].
-    pub fn binary<C>(connective: C, operands: (OPERAND, OPERAND)) -> Self
+    pub fn binary<C>(connective: C, operands: (Operand, Operand)) -> Self
     where
         C: Connective<2>
-            + TruthFn<2, Formula<VAR>>
+            + TruthFn<2, Formula<Var>>
             + Prioritized
             + Debug
             + Clone
@@ -86,14 +86,14 @@ impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
     }
 
     /// Forget the operands and return 'only-operator' version of [`AnyConnective`].
-    pub fn clear_operands(&self) -> AnyConnective<(), VAR> {
-        self.get_borrowed::<OPERAND>().map(drop)
+    pub fn clear_operands(&self) -> AnyConnective<(), Var> {
+        self.get_borrowed::<Operand>().map(drop)
     }
 
     /// The 'reference' version of [`AnyConnective`].
-    pub fn get_borrowed<U: ?Sized>(&self) -> AnyConnective<&U, VAR>
+    pub fn get_borrowed<U: ?Sized>(&self) -> AnyConnective<&U, Var>
     where
-        OPERAND: Borrow<U>,
+        Operand: Borrow<U>,
     {
         match self {
             Self::Nullary(x) => AnyConnective::Nullary(x.get_borrowed()),
@@ -103,9 +103,9 @@ impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
     }
 
     /// Convert to another [`AnyConnective`] by converting its operands.
-    pub fn map<F, OperandTarget>(self, f: F) -> AnyConnective<OperandTarget, VAR>
+    pub fn map<F, OperandDst>(self, f: F) -> AnyConnective<OperandDst, Var>
     where
-        F: FnMut(OPERAND) -> OperandTarget,
+        F: FnMut(Operand) -> OperandDst,
     {
         match self {
             Self::Nullary(x) => AnyConnective::Nullary(x.map(f)),
@@ -115,13 +115,13 @@ impl<OPERAND, VAR> AnyConnective<OPERAND, VAR> {
     }
 }
 
-impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
+impl<Var> AnyConnective<Box<Formula<Var>>, Var> {
     /// Convert [`AnyConnective`] into the [`Formula`].
     ///
     /// If the `is_dynamic` is `true`, keep the dynamic nature of the connective
     /// by returning [`Formula::Dynamic`].
     /// Otherwise, convert it into the [canonical form][Self::into_canonical].
-    pub fn into_formula(self, is_dynamic: bool) -> Formula<VAR> {
+    pub fn into_formula(self, is_dynamic: bool) -> Formula<Var> {
         if is_dynamic {
             Formula::Dynamic(self)
         } else {
@@ -130,7 +130,7 @@ impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
     }
 
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
-    pub fn into_canonical(self) -> Formula<VAR> {
+    pub fn into_canonical(self) -> Formula<Var> {
         match self.map(|f| *f) {
             AnyConnective::Nullary(conn) => conn.compose(),
             AnyConnective::Unary(conn) => conn.compose(),
@@ -139,51 +139,51 @@ impl<VAR> AnyConnective<Box<Formula<VAR>>, VAR> {
     }
 }
 
-impl<VAR> AnyConnective<Formula<VAR>, VAR> {
+impl<Var> AnyConnective<Formula<Var>, Var> {
     /// Convert [`AnyConnective`] into the [`Formula`].
     ///
     /// If the `is_dynamic` is `true`, keep the dynamic nature of the connective
     /// by returning [`Formula::Dynamic`].
     /// Otherwise, convert it into the [canonical form][Self::into_canonical].
-    pub fn into_formula(self, is_dynamic: bool) -> Formula<VAR> {
+    pub fn into_formula(self, is_dynamic: bool) -> Formula<Var> {
         self.map(Box::new).into_formula(is_dynamic)
     }
 
     /// Convert [`AnyConnective`] into the [`Formula`]s typed variants.
-    pub fn into_canonical(self) -> Formula<VAR> {
+    pub fn into_canonical(self) -> Formula<Var> {
         self.map(Box::new).into_canonical()
     }
 }
 
-impl<VAR> From<AnyConnective<Box<Self>, VAR>> for Formula<VAR> {
-    fn from(value: AnyConnective<Box<Self>, VAR>) -> Self {
+impl<Var> From<AnyConnective<Box<Self>, Var>> for Formula<Var> {
+    fn from(value: AnyConnective<Box<Self>, Var>) -> Self {
         value.into_formula(true)
     }
 }
 
-impl<VAR> From<AnyConnective<Self, VAR>> for Formula<VAR> {
-    fn from(value: AnyConnective<Self, VAR>) -> Self {
+impl<Var> From<AnyConnective<Self, Var>> for Formula<Var> {
+    fn from(value: AnyConnective<Self, Var>) -> Self {
         value.into_formula(true)
     }
 }
 
-#[derive_where(Debug; OPERAND: Debug)]
-#[derive_where(Clone; OPERAND: Clone)]
-// requires `VAR: 'static` because of the `UsableConnective`: `DynCompare`: `AsDynCompare`: `Any`: `'static`
-#[derive_where(PartialEq; OPERAND: PartialEq, VAR: 'static)]
-#[derive_where(Eq; OPERAND: Eq, VAR: 'static)]
+#[derive_where(Debug; Operand: Debug)]
+#[derive_where(Clone; Operand: Clone)]
+// requires `Var: 'static` because of the `UsableConnective`: `DynCompare`: `AsDynCompare`: `Any`: `'static`
+#[derive_where(PartialEq; Operand: PartialEq, Var: 'static)]
+#[derive_where(Eq; Operand: Eq, Var: 'static)]
 /// Wrapper for dynamic [`Connective`] and [`TruthFn`] with operands attached.
-pub struct DynConnective<const ARITY: usize, OPERAND, VAR> {
-    pub(super) connective: Box<dyn UsableConnective<ARITY, VAR>>,
-    pub(super) operands: [OPERAND; ARITY],
+pub struct DynConnective<const ARITY: usize, Operand, Var> {
+    pub(super) connective: Box<dyn UsableConnective<ARITY, Var>>,
+    pub(super) operands: [Operand; ARITY],
 }
 
-impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
+impl<const ARITY: usize, Operand, Var> DynConnective<ARITY, Operand, Var> {
     /// Create a [`DynConnective`] with a [`Connective<0>`].
-    pub fn new<C>(connective: C, operands: [OPERAND; ARITY]) -> Self
+    pub fn new<C>(connective: C, operands: [Operand; ARITY]) -> Self
     where
         C: Connective<ARITY>
-            + TruthFn<ARITY, Formula<VAR>>
+            + TruthFn<ARITY, Formula<Var>>
             + Prioritized
             + Debug
             + Clone
@@ -202,7 +202,7 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
     }
 
     /// Forget the operands and return 'only-operator' version of [`DynConnective`].
-    pub fn clear_operands(&self) -> DynConnective<ARITY, (), VAR> {
+    pub fn clear_operands(&self) -> DynConnective<ARITY, (), Var> {
         DynConnective {
             connective: self.connective.clone(),
             operands: [(); ARITY],
@@ -210,11 +210,11 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
     }
 
     /// The 'reference' version of [`DynConnective`].
-    pub fn get_borrowed<U: ?Sized>(&self) -> DynConnective<ARITY, &U, VAR>
+    pub fn get_borrowed<U: ?Sized>(&self) -> DynConnective<ARITY, &U, Var>
     where
-        OPERAND: Borrow<U>,
+        Operand: Borrow<U>,
     {
-        let operands = self.operands.each_ref().map(OPERAND::borrow);
+        let operands = self.operands.each_ref().map(Operand::borrow);
         DynConnective {
             connective: self.connective.clone(),
             operands,
@@ -222,9 +222,9 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
     }
 
     /// Convert to another [`DynConnective`] by converting its operands.
-    pub fn map<F, OperandTarget>(self, f: F) -> DynConnective<ARITY, OperandTarget, VAR>
+    pub fn map<F, OperandDst>(self, f: F) -> DynConnective<ARITY, OperandDst, Var>
     where
-        F: FnMut(OPERAND) -> OperandTarget,
+        F: FnMut(Operand) -> OperandDst,
     {
         let Self {
             connective,
@@ -238,8 +238,8 @@ impl<const ARITY: usize, OPERAND, VAR> DynConnective<ARITY, OPERAND, VAR> {
     }
 }
 
-impl<const ARITY: usize, VAR> DynConnective<ARITY, Formula<VAR>, VAR> {
-    fn compose(self) -> Formula<VAR> {
+impl<const ARITY: usize, Var> DynConnective<ARITY, Formula<Var>, Var> {
+    fn compose(self) -> Formula<Var> {
         let Self {
             connective,
             operands,
@@ -248,7 +248,7 @@ impl<const ARITY: usize, VAR> DynConnective<ARITY, Formula<VAR>, VAR> {
     }
 }
 
-impl<'a, const ARITY: usize, OPERAND, VAR: 'a> DynConnective<ARITY, OPERAND, VAR> {
+impl<'a, const ARITY: usize, Operand, Var: 'a> DynConnective<ARITY, Operand, Var> {
     /// Get the reference to the inner `Connective`.
     pub fn get_connective(&self) -> &(dyn Connective<ARITY> + 'a) {
         self.connective.up()
@@ -265,27 +265,27 @@ mod usable {
     use super::{Connective, Formula, Prioritized, TruthFn};
 
     /// [`Connective`]'s marker subtrait to be used in [`DynConnective`][super::DynConnective].
-    pub(in super::super) trait UsableConnective<const N: usize, VAR>:
-        Connective<N> + TruthFn<N, Formula<VAR>> + Prioritized + Debug + DynClone + DynCompare
+    pub(in super::super) trait UsableConnective<const N: usize, Var>:
+        Connective<N> + TruthFn<N, Formula<Var>> + Prioritized + Debug + DynClone + DynCompare
     {
     }
 
-    impl<const N: usize, VAR, T> UsableConnective<N, VAR> for T where
-        T: Connective<N> + TruthFn<N, Formula<VAR>> + Prioritized + Debug + DynClone + DynCompare
+    impl<const N: usize, Var, T> UsableConnective<N, Var> for T where
+        T: Connective<N> + TruthFn<N, Formula<Var>> + Prioritized + Debug + DynClone + DynCompare
     {
     }
 
-    clone_trait_object!(<const N: usize, VAR> UsableConnective<N, VAR>);
+    clone_trait_object!(<const N: usize, Var> UsableConnective<N, Var>);
 
-    // Need `VAR: 'static` to ensure conversion to `AsDynCompare`
+    // Need `Var: 'static` to ensure conversion to `AsDynCompare`
     // and the `AsDynCompare` requires `Any`, that in turn requires `'static`.
-    impl<const N: usize, VAR: 'static> PartialEq for Box<dyn UsableConnective<N, VAR> + '_> {
+    impl<const N: usize, Var: 'static> PartialEq for Box<dyn UsableConnective<N, Var> + '_> {
         fn eq(&self, other: &Self) -> bool {
             self.as_dyn_compare() == other.as_dyn_compare()
         }
     }
 
-    impl<const N: usize, VAR: 'static> Eq for Box<dyn UsableConnective<N, VAR> + '_> {}
+    impl<const N: usize, Var: 'static> Eq for Box<dyn UsableConnective<N, Var> + '_> {}
 }
 
 mod impls {
@@ -316,7 +316,7 @@ mod impls {
     impl_priority!(MaterialImplication, LogicalBiconditional: 90);
     impl_priority!(NonConjunction, NonDisjunction: 80);
 
-    impl<OPERAND, VAR> Prioritized for AnyConnective<OPERAND, VAR> {
+    impl<Operand, Var> Prioritized for AnyConnective<Operand, Var> {
         fn priority(&self) -> Priority {
             match self {
                 Self::Nullary(op) => op.connective.priority(),
