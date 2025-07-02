@@ -182,24 +182,25 @@ where
 
         if use_dynamic {
             use crate::connective::{
-                Conjunction, Disjunction, ExclusiveDisjunction, LogicalBiconditional,
-                MaterialImplication, NonConjunction, NonDisjunction,
+                Conjunction, ConverseImplication, ConverseNonImplication, Disjunction,
+                ExclusiveDisjunction, First, Last, LogicalBiconditional, MaterialImplication,
+                MaterialNonImplication, NonConjunction, NonDisjunction, NotFirst, NotSecond,
             };
 
             let dynamic_binary = (input.clone(), input).prop_flat_map(|(f1, f2)| {
                 let dynamic = vec![
                     Self::binary(Conjunction, f1.clone(), f2.clone()),
-                    // Self::binary(MaterialNonImplication, f1.clone(), f2.clone()),
-                    // Self::binary(First, f1.clone(), f2.clone()),
-                    // Self::binary(ConverseNonImplication, f1.clone(), f2.clone()),
-                    // Self::binary(Last, f1.clone(), f2.clone()),
+                    Self::binary(MaterialNonImplication, f1.clone(), f2.clone()),
+                    Self::binary(First {}, f1.clone(), f2.clone()),
+                    Self::binary(ConverseNonImplication, f1.clone(), f2.clone()),
+                    Self::binary(Last {}, f1.clone(), f2.clone()),
                     Self::binary(ExclusiveDisjunction, f1.clone(), f2.clone()),
                     Self::binary(Disjunction, f1.clone(), f2.clone()),
                     Self::binary(NonDisjunction, f1.clone(), f2.clone()),
                     Self::binary(LogicalBiconditional, f1.clone(), f2.clone()),
-                    // Self::binary(NotSecond, f1.clone(), f2.clone()),
-                    // Self::binary(ConverseImplication, f1.clone(), f2.clone()),
-                    // Self::binary(NotFirst, f1.clone(), f2.clone()),
+                    Self::binary(NotSecond::new(), f1.clone(), f2.clone()),
+                    Self::binary(ConverseImplication, f1.clone(), f2.clone()),
+                    Self::binary(NotFirst::new(), f1.clone(), f2.clone()),
                     Self::binary(MaterialImplication, f1.clone(), f2.clone()),
                     Self::binary(NonConjunction, f1, f2),
                 ];

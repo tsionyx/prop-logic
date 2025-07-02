@@ -306,15 +306,14 @@ mod impls {
         };
     }
 
-    // TODO: refine the priorities and maybe introduce some more of them
-
     // most common operations' priorities
     impl_priority!(Falsity, LogicalIdentity, Truth: 255);
     impl_priority!(Negation: 200);
     impl_priority!(Conjunction: 100);
     impl_priority!(Disjunction, ExclusiveDisjunction: 100);
-    impl_priority!(MaterialImplication, LogicalBiconditional: 90);
+    impl_priority!(LogicalBiconditional, MaterialImplication, MaterialNonImplication, ConverseImplication, ConverseNonImplication: 90);
     impl_priority!(NonConjunction, NonDisjunction: 80);
+    impl_priority!(First, Last, NotFirst, NotSecond: 10);
 
     impl<Operand, Var> Prioritized for AnyConnective<Operand, Var> {
         fn priority(&self) -> Priority {
