@@ -91,13 +91,22 @@ impl<const I: usize, UnaryOp> Default for ProjectAndUnary<I, UnaryOp> {
 
 impl<const I: usize, E, UnaryOp> TruthFn<2, E> for ProjectAndUnary<I, UnaryOp>
 where
-    E: Evaluable + Clone, // TODO: try to get rid of this `Clone` requirement
+    E: Evaluable,
     UnaryOp: TruthFn<1, E> + InitFn,
     Projection<I>: TruthFn<2, E>,
 {
     fn try_reduce(&self, values: [E; 2]) -> Result<E, [E; 2]> {
-        let expr = Projection::<I>.try_reduce(values.clone())?;
-        UnaryOp::init().try_reduce([expr]).map_err(|_| values)
+        // TODO: try to extract the ignored value somehow
+        // and use it instead of dummy one
+        let expr = Projection::<I>.try_reduce(values)?;
+        UnaryOp::init().try_reduce([expr]).map_err(|[projected]| {
+            let dummy = E::contradiction();
+            if I == 0 {
+                [projected, dummy]
+            } else {
+                [dummy, projected]
+            }
+        })
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
