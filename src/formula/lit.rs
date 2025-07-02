@@ -19,6 +19,16 @@ impl<T> From<T> for Signed<T> {
     }
 }
 
+impl<T> Signed<T> {
+    /// Get a referenced [`Signed`] value.
+    pub const fn by_ref(&self) -> Signed<&T> {
+        match self {
+            Self::Pos(p) => Signed::Pos(p),
+            Self::Neg(n) => Signed::Neg(n),
+        }
+    }
+}
+
 impl<T> AsRef<T> for Signed<T> {
     fn as_ref(&self) -> &T {
         match self {
