@@ -18,36 +18,21 @@
 //! <https://en.wikipedia.org/wiki/Algebraic_normal_form>
 //! <https://en.wikipedia.org/wiki/Zhegalkin_polynomial>
 
-use crate::{
-    connective::{Conjunction, Evaluable as _, ExclusiveDisjunction, Series},
-    utils::vec::UnsortedVec,
-};
+use crate::connective::{Evaluable as _, ExclusiveDisjunction, Series};
 
 use super::{
     super::{equivalences::RewritingRuleDebug, Formula},
     error::Error,
-    NormalForm as NormalFormTrait,
+    Conjunct, NormalForm as NormalFormTrait,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone)]
 /// Combination of [Term]-s connected with
 /// the [XOR operation][crate::connective::ExclusiveDisjunction].
-pub struct NormalForm<T> {
-    repr: UnsortedVec<Term<T>>,
-}
-
-impl<T> NormalForm<T> {
-    /// Construct a new [`NormalForm`] from the series of [`Term`]-s.
-    pub fn new(terms: impl IntoIterator<Item = Term<T>>) -> Self {
-        Self {
-            repr: terms.into_iter().collect(),
-        }
-    }
-}
+pub type NormalForm<T> = Series<Term<T>, ExclusiveDisjunction>;
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
-        Series::<_, ExclusiveDisjunction>::new(value.repr.into_iter().map(Self::from)).compose()
+        value.compose()
     }
 }
 
@@ -61,16 +46,14 @@ pub enum Term<T> {
 
     /// A combination of variables connected using
     /// the [AND operation][crate::connective::Conjunction].
-    Conjunct(UnsortedVec<T>),
+    Conjunct(Conjunct<T>),
 }
 
 impl<T> From<Term<T>> for Formula<T> {
     fn from(term: Term<T>) -> Self {
         match term {
             Term::Truth => Self::tautology(),
-            Term::Conjunct(vars) => {
-                Series::<_, Conjunction>::new(vars.into_iter().map(Self::from)).compose()
-            }
+            Term::Conjunct(vars) => vars.compose(),
         }
     }
 }

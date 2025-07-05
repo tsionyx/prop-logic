@@ -13,60 +13,27 @@
 //! - [OR][crate::connective::Disjunction].
 //!
 //! <https://en.wikipedia.org/wiki/Conjunctive_normal_form>
-use std::fmt::Debug;
-
-use crate::{
-    connective::{Conjunction, Disjunction, Series},
-    utils::vec::UnsortedVec,
-};
-
 use super::{
     super::{equivalences::RewritingRuleDebug, Formula, Signed as Literal},
     error::Error,
     NormalForm as NormalFormTrait,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-/// Combination of [Disjunct]-s connected with
-/// the [AND operation][crate::connective::Conjunction].
-pub struct NormalForm<T> {
-    repr: UnsortedVec<Disjunct<T>>,
-}
+pub type SumTerm<T> = super::Disjunct<Literal<T>>;
 
-impl<T> NormalForm<T> {
-    /// Construct a new [`NormalForm`] from the series of [`Disjunct`]-s.
-    pub fn new(disjuncts: impl IntoIterator<Item = Disjunct<T>>) -> Self {
-        Self {
-            repr: disjuncts.into_iter().collect(),
-        }
+impl<T> From<SumTerm<T>> for Formula<T> {
+    fn from(value: SumTerm<T>) -> Self {
+        value.compose()
     }
 }
+
+/// Combination of [Disjunct][super::Disjunct]-s connected with
+/// the [AND operation][crate::connective::Conjunction].
+pub type NormalForm<T> = super::Conjunct<SumTerm<T>>;
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
-        Series::<_, Conjunction>::new(value.repr.into_iter().map(Self::from)).compose()
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-/// Combination of literals connected with
-/// the [OR operation][crate::connective::Disjunction].
-pub struct Disjunct<T> {
-    repr: UnsortedVec<Literal<T>>,
-}
-
-impl<T> Disjunct<T> {
-    /// Construct a new [`Disjunct`] from the series of literals.
-    pub fn new(lits: impl IntoIterator<Item = Literal<T>>) -> Self {
-        Self {
-            repr: lits.into_iter().collect(),
-        }
-    }
-}
-
-impl<T> From<Disjunct<T>> for Formula<T> {
-    fn from(disjunct: Disjunct<T>) -> Self {
-        Series::<_, Disjunction>::new(disjunct.repr.into_iter().map(Self::from)).compose()
+        value.compose()
     }
 }
 

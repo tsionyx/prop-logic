@@ -13,60 +13,28 @@
 //! - [OR][crate::connective::Disjunction].
 //!
 //! <https://en.wikipedia.org/wiki/Disjunctive_normal_form>
-use std::fmt::Debug;
-
-use crate::{
-    connective::{Conjunction, Disjunction, Series},
-    utils::vec::UnsortedVec,
-};
-
 use super::{
     super::{equivalences::RewritingRuleDebug, Formula, Signed as Literal},
     error::Error,
     NormalForm as NormalFormTrait,
 };
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-/// Combination of [Conjunct]-s connected with
-/// the [OR operation][crate::connective::Disjunction].
-pub struct NormalForm<T> {
-    repr: UnsortedVec<Conjunct<T>>,
-}
+/// <https://en.wikipedia.org/wiki/Product_term>
+pub type ProductTerm<T> = super::Conjunct<Literal<T>>;
 
-impl<T> NormalForm<T> {
-    /// Construct a new [`NormalForm`] from the series of [`Conjunct`]-s.
-    pub fn new(conjuncts: impl IntoIterator<Item = Conjunct<T>>) -> Self {
-        Self {
-            repr: conjuncts.into_iter().collect(),
-        }
+impl<T> From<ProductTerm<T>> for Formula<T> {
+    fn from(value: ProductTerm<T>) -> Self {
+        value.compose()
     }
 }
+
+/// Combination of [Conjunct][super::Conjunct]-s connected with
+/// the [OR operation][crate::connective::Disjunction].
+pub type NormalForm<T> = super::Disjunct<ProductTerm<T>>;
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
-        Series::<_, Disjunction>::new(value.repr.into_iter().map(Self::from)).compose()
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Clone)]
-/// Combination of literals connected with
-/// the [AND operation][crate::connective::Conjunction].
-pub struct Conjunct<T> {
-    repr: UnsortedVec<Literal<T>>,
-}
-
-impl<T> Conjunct<T> {
-    /// Construct a new [`Conjunct`] from the series of literals.
-    pub fn new(lits: impl IntoIterator<Item = Literal<T>>) -> Self {
-        Self {
-            repr: lits.into_iter().collect(),
-        }
-    }
-}
-
-impl<T> From<Conjunct<T>> for Formula<T> {
-    fn from(conjunct: Conjunct<T>) -> Self {
-        Series::<_, Conjunction>::new(conjunct.repr.into_iter().map(Self::from)).compose()
+        value.compose()
     }
 }
 

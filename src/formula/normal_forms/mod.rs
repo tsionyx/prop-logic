@@ -15,9 +15,41 @@ pub(crate) mod traits;
 
 pub use self::{
     anf::{NormalForm as AlgebraicNormalForm, Term as AlgebraicTerm},
-    cnf::{Disjunct, NormalForm as ConjunctiveNormalForm},
-    dnf::{Conjunct, NormalForm as DisjunctiveNormalForm},
+    cnf::NormalForm as ConjunctiveNormalForm,
+    dnf::NormalForm as DisjunctiveNormalForm,
     error::Error,
     nnf::NormalForm as NegationNormalForm,
     traits::NormalForm,
 };
+
+/// Combination of items connected with
+/// the [AND operation][crate::connective::Conjunction].
+pub type Conjunct<T> = crate::connective::Series<T, crate::connective::Conjunction>;
+
+impl<T> Conjunct<T> {
+    /// The empty series of conjuncts forms a tautology.
+    pub fn tautology() -> Self {
+        Self::new(None)
+    }
+
+    /// No conjuncts is a tautology.
+    pub fn is_tautology(&self) -> bool {
+        self.as_ref().is_empty()
+    }
+}
+
+/// Combination of items connected with
+/// the [OR operation][crate::connective::Disjunction].
+pub type Disjunct<T> = crate::connective::Series<T, crate::connective::Disjunction>;
+
+impl<T> Disjunct<T> {
+    /// The empty series of disjuncts forms a contradiction.
+    pub fn contradiction() -> Self {
+        Self::new(None)
+    }
+
+    /// No disjuncts is a contradiction.
+    pub fn is_contradiction(&self) -> bool {
+        self.as_ref().is_empty()
+    }
+}

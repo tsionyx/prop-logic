@@ -16,15 +16,12 @@
 //! <https://en.wikipedia.org/wiki/Negation_normal_form>
 use std::fmt::{self, Debug, Display};
 
-use crate::{
-    connective::{Conjunction, Connective, Disjunction, Evaluable, Series},
-    utils::vec::UnsortedVec,
-};
+use crate::connective::Evaluable;
 
 use super::{
     super::{equivalences::RewritingRuleDebug, Formula, Signed},
     error::Error,
-    NormalForm as NormalFormTrait,
+    Conjunct, Disjunct, NormalForm as NormalFormTrait,
 };
 
 type Literal<T> = Signed<T>;
@@ -37,22 +34,18 @@ pub enum NormalForm<T> {
     Literal(Literal<T>),
 
     /// A number of conjunctions of the sub-formulae.
-    And(UnsortedVec<Self>),
+    And(Conjunct<Self>),
 
     /// A number of disunctions of the sub-formulae.
-    Or(UnsortedVec<Self>),
+    Or(Disjunct<Self>),
 }
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
         match value {
             NormalForm::Literal(lit) => lit.into(),
-            NormalForm::And(c) => {
-                Series::<_, Conjunction>::new(c.into_iter().map(Self::from)).compose()
-            }
-            NormalForm::Or(d) => {
-                Series::<_, Disjunction>::new(d.into_iter().map(Self::from)).compose()
-            }
+            NormalForm::And(c) => c.compose(),
+            NormalForm::Or(d) => d.compose(),
         }
     }
 }
@@ -61,20 +54,19 @@ impl<T> Evaluable for NormalForm<T> {
     type Partial = Self;
 
     fn terminal(value: bool) -> Self {
-        let empty = Vec::new().into();
         if value {
-            Self::And(empty)
+            Self::And(Conjunct::new(None))
         } else {
-            Self::Or(empty)
+            Self::Or(Disjunct::new(None))
         }
     }
 
     fn is_tautology(&self) -> bool {
-        matches!(self, Self::And(conjuncts) if conjuncts.as_ref().is_empty())
+        matches!(self, Self::And(conjuncts) if conjuncts.is_tautology())
     }
 
     fn is_contradiction(&self) -> bool {
-        matches!(self, Self::Or(disjuncts) if disjuncts.as_ref().is_empty())
+        matches!(self, Self::Or(disjuncts) if disjuncts.is_contradiction())
     }
 
     fn partial(val: Self) -> Self {
@@ -83,8 +75,8 @@ impl<T> Evaluable for NormalForm<T> {
 
     fn into_terminal(self) -> Result<bool, Self> {
         match self {
-            Self::And(conjuncts) if conjuncts.as_ref().is_empty() => Ok(true),
-            Self::Or(disjuncts) if disjuncts.as_ref().is_empty() => Ok(false),
+            Self::And(conjuncts) if conjuncts.is_tautology() => Ok(true),
+            Self::Or(disjuncts) if disjuncts.is_contradiction() => Ok(false),
             other => Err(other),
         }
     }
@@ -139,7 +131,7 @@ impl<T: PartialEq> NormalForm<T> {
             visited.push(conjunct);
         }
 
-        Self::And(visited.into_iter().collect())
+        Self::And(Conjunct::new(visited))
     }
 
     /// Create a [`NormalForm`] from a number of disjuncts.
@@ -180,7 +172,7 @@ impl<T: PartialEq> NormalForm<T> {
             visited.push(disjunct);
         }
 
-        Self::Or(visited.into_iter().collect())
+        Self::Or(Disjunct::new(visited))
     }
 }
 
@@ -303,30 +295,8 @@ impl<T: Display> Display for NormalForm<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Literal(lit) => Display::fmt(&lit, f),
-            Self::And(conjuncts) => {
-                write!(f, "{}(", Conjunction.notation())?;
-                let mut first = true;
-                for conjunct in conjuncts.as_ref() {
-                    if !first {
-                        write!(f, ", ")?;
-                    }
-                    Display::fmt(conjunct, f)?;
-                    first = false;
-                }
-                write!(f, ")")
-            }
-            Self::Or(disjuncts) => {
-                write!(f, "{}(", Disjunction.notation())?;
-                let mut first = true;
-                for conjunct in disjuncts.as_ref() {
-                    if !first {
-                        write!(f, ", ")?;
-                    }
-                    Display::fmt(conjunct, f)?;
-                    first = false;
-                }
-                write!(f, ")")
-            }
+            Self::And(conjuncts) => Display::fmt(&conjuncts, f),
+            Self::Or(disjuncts) => Display::fmt(&disjuncts, f),
         }
     }
 }
@@ -360,7 +330,7 @@ mod tests {
         let nf = NormalForm::convert_prepared(f).unwrap();
 
         let lit = NormalForm::Literal('a'.into());
-        assert_eq!(nf, NormalForm::And(vec![lit].into()));
+        assert_eq!(nf, NormalForm::And(Conjunct::new(Some(lit))));
     }
 
     #[test]
@@ -416,7 +386,7 @@ mod tests {
         let nf = NormalForm::convert_prepared(f).unwrap();
 
         let lit = NormalForm::Literal('a'.into());
-        assert_eq!(nf, NormalForm::Or(vec![lit].into()));
+        assert_eq!(nf, NormalForm::Or(Disjunct::new(Some(lit))));
     }
 
     #[test]
