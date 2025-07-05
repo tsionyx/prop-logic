@@ -16,7 +16,7 @@
 use std::fmt::Debug;
 
 use crate::{
-    connective::{series, Conjunction, Disjunction},
+    connective::{Conjunction, Disjunction, Series},
     utils::vec::UnsortedVec,
 };
 
@@ -44,7 +44,7 @@ impl<T> NormalForm<T> {
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
-        series(&Conjunction, value.repr.into_iter().map(Self::from))
+        Series::<_, Conjunction>::new(value.repr.into_iter().map(Self::from)).compose()
     }
 }
 
@@ -66,7 +66,7 @@ impl<T> Disjunct<T> {
 
 impl<T> From<Disjunct<T>> for Formula<T> {
     fn from(disjunct: Disjunct<T>) -> Self {
-        series(&Disjunction, disjunct.repr.into_iter().map(Self::from))
+        Series::<_, Disjunction>::new(disjunct.repr.into_iter().map(Self::from)).compose()
     }
 }
 

@@ -6,7 +6,7 @@
 //! <https://en.wikipedia.org/wiki/Logical_biconditional>
 //! <https://en.wikipedia.org/wiki/Logical_equality>
 use crate::{
-    connective::series,
+    connective::Series,
     formula::{Equivalent, Not},
 };
 
@@ -122,7 +122,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        series(&LogicalBiconditional, terms.into_iter())
+        Series::<_, LogicalBiconditional>::new(terms).compose()
     }
 }
 

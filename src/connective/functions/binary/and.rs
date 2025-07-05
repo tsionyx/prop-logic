@@ -2,7 +2,7 @@
 //! is `true` if and only if all of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
-use crate::{connective::series, formula::And};
+use crate::{connective::Series, formula::And};
 
 use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -112,7 +112,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        series(&Conjunction, terms.into_iter())
+        Series::<_, Conjunction>::new(terms).compose()
     }
 }
 

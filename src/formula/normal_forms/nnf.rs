@@ -17,7 +17,7 @@
 use std::fmt::{self, Debug, Display};
 
 use crate::{
-    connective::{series, Conjunction, Connective, Disjunction, Evaluable},
+    connective::{Conjunction, Connective, Disjunction, Evaluable, Series},
     utils::vec::UnsortedVec,
 };
 
@@ -47,8 +47,12 @@ impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
         match value {
             NormalForm::Literal(lit) => lit.into(),
-            NormalForm::And(c) => series(&Conjunction, c.into_iter().map(Self::from)),
-            NormalForm::Or(d) => series(&Disjunction, d.into_iter().map(Self::from)),
+            NormalForm::And(c) => {
+                Series::<_, Conjunction>::new(c.into_iter().map(Self::from)).compose()
+            }
+            NormalForm::Or(d) => {
+                Series::<_, Disjunction>::new(d.into_iter().map(Self::from)).compose()
+            }
         }
     }
 }

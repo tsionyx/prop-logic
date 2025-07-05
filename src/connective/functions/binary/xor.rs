@@ -3,7 +3,7 @@
 //!
 //! <https://en.wikipedia.org/wiki/Exclusive_or>
 use crate::{
-    connective::series,
+    connective::Series,
     formula::{Not, Xor},
 };
 
@@ -114,7 +114,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        series(&ExclusiveDisjunction, terms.into_iter())
+        Series::<_, ExclusiveDisjunction>::new(terms).compose()
     }
 }
 

@@ -2,7 +2,7 @@
 //! is `true` when either or both of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use crate::{connective::series, formula::Or};
+use crate::{connective::Series, formula::Or};
 
 use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -111,7 +111,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        series(&Disjunction, terms.into_iter())
+        Series::<_, Disjunction>::new(terms).compose()
     }
 }
 

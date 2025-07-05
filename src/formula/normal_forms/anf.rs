@@ -19,7 +19,7 @@
 //! <https://en.wikipedia.org/wiki/Zhegalkin_polynomial>
 
 use crate::{
-    connective::{series, Conjunction, Evaluable as _, ExclusiveDisjunction},
+    connective::{Conjunction, Evaluable as _, ExclusiveDisjunction, Series},
     utils::vec::UnsortedVec,
 };
 
@@ -47,10 +47,7 @@ impl<T> NormalForm<T> {
 
 impl<T> From<NormalForm<T>> for Formula<T> {
     fn from(value: NormalForm<T>) -> Self {
-        series(
-            &ExclusiveDisjunction,
-            value.repr.into_iter().map(Self::from),
-        )
+        Series::<_, ExclusiveDisjunction>::new(value.repr.into_iter().map(Self::from)).compose()
     }
 }
 
@@ -71,7 +68,9 @@ impl<T> From<Term<T>> for Formula<T> {
     fn from(term: Term<T>) -> Self {
         match term {
             Term::Truth => Self::tautology(),
-            Term::Conjunct(vars) => series(&Conjunction, vars.into_iter().map(Self::from)),
+            Term::Conjunct(vars) => {
+                Series::<_, Conjunction>::new(vars.into_iter().map(Self::from)).compose()
+            }
         }
     }
 }

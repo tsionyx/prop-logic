@@ -17,7 +17,7 @@ pub use self::{
     evaluation::Evaluable,
     functions::*,
     notation::FunctionNotation,
-    ops::{series, Associativity, Commutativity, Converse, Negate, Neutrality},
+    ops::{Associativity, Commutativity, Converse, Negate, Neutrality, Series},
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},

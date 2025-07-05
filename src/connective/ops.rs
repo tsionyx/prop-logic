@@ -1,10 +1,16 @@
 //! Unary operations and properties of the [`BoolFn`]-s.
-use std::{collections::HashMap as Map, ops::Not};
+use std::{
+    collections::HashMap as Map,
+    fmt::{self, Display},
+    ops::Not,
+};
 
-use crate::truth_table::TruthTabled as _;
+use crate::{truth_table::TruthTabled as _, utils::vec::UnsortedVec};
 
 #[allow(clippy::wildcard_imports)]
-use super::{evaluation::Evaluable, functions::*, ternary::Ternary, BoolFn, InitFn as _, TruthFn};
+use super::{
+    evaluation::Evaluable, functions::*, ternary::Ternary, BoolFn, Connective, InitFn as _, TruthFn,
+};
 
 /// Easily convert a `BoolFn` into its counterpart in terms
 /// of switching all the bits in its truth table.
@@ -202,6 +208,87 @@ pub trait Neutrality<E: Evaluable>: TruthFn<2, E> {
     /// An [identity element](https://en.wikipedia.org/wiki/Identity_element)
     /// of a binary function.
     fn identity_element(&self) -> E;
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+/// Combination of items connected with
+/// the binary operation.
+pub struct Series<T, Op> {
+    op: Op,
+    repr: UnsortedVec<T>,
+}
+
+impl<T, Op> Series<T, Op> {
+    /// Construct a new [`Series`] from a bunch of items.
+    pub fn new(items: impl IntoIterator<Item = T>) -> Self
+    where
+        Op: Default,
+    {
+        Self {
+            op: Op::default(),
+            repr: items.into_iter().collect(),
+        }
+    }
+
+    /// Get the glue operation for a series.
+    pub const fn operation(&self) -> &Op {
+        &self.op
+    }
+
+    /// Create an [`Evaluable`] from a bunch of items.
+    pub fn compose<E>(self) -> E
+    where
+        E: Evaluable,
+        T: Into<E>,
+        Op: Neutrality<E>,
+    {
+        series(&self.op, self.repr.into_iter().map(T::into))
+    }
+}
+
+impl<T, Op> AsRef<[T]> for Series<T, Op> {
+    fn as_ref(&self) -> &[T] {
+        self.repr.as_ref()
+    }
+}
+
+impl<T, Op> IntoIterator for Series<T, Op> {
+    type Item = T;
+
+    type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.repr.into_iter()
+    }
+}
+
+impl<T: Display, Op: Connective<2>> Display for Series<T, Op> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let notation = self.op.notation();
+
+        match self.as_ref() {
+            [] => {
+                Display::fmt(&notation, f)?;
+                write!(f, "∅")
+            }
+            [single] => Display::fmt(single, f),
+            many => {
+                Display::fmt(&notation, f)?;
+                write!(f, "(")?;
+
+                let mut first = true;
+                for item in many {
+                    if !first {
+                        write!(f, ", ")?;
+                    }
+                    Display::fmt(item, f)?;
+                    first = false;
+                }
+
+                write!(f, ")")
+            }
+        }
+    }
 }
 
 /// Combine an arbitrary series of [`Evaluable`]
