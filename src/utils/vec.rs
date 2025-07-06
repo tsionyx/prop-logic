@@ -138,6 +138,17 @@ pub fn transpose<T>(matrix: Vec<Vec<T>>) -> Vec<Vec<T>> {
     transposed
 }
 
+/// Leave only the first occurrence of every unique item in a [`Vec`].
+pub fn unique_vec<T: PartialEq>(vec: Vec<T>) -> Vec<T> {
+    let mut res = Vec::new();
+    for item in vec {
+        if !res.contains(&item) {
+            res.push(item);
+        }
+    }
+    res
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

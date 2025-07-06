@@ -70,6 +70,38 @@ impl<T: Clone> RewritingRule<T> for DistributeDisjunctionOverConjunction {
     }
 }
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+/// Simplify a [`Formula`] by applying the rule of distributivity
+/// to conjunction where one of the operand is a XOR:
+///
+/// `r ⊕ (p ∧ q) ≡ (r ∧ p) ⊕ (r ∧ q)`
+///
+/// This transformation is useful to convert a [`Formula`] into _algebraic normal form_.
+pub struct DistributeConjunctionOverXor;
+
+impl<T: Clone> RewritingRule<T> for DistributeConjunctionOverXor {
+    fn reduce(&self, formula: Formula<T>) -> Result<Formula<T>, Formula<T>> {
+        Err(formula)
+    }
+
+    fn transform(&self, formula: Formula<T>) -> Result<Formula<T>, Formula<T>> {
+        if let Formula::And(p, r) = formula {
+            // (p ⊕ q) ∧ r ≡ (p ∧ r) ⊕ (q ∧ r)
+            if let Formula::Xor(p, q) = *p {
+                Ok((p & r.clone()) ^ (q & r))
+            }
+            // p ∧ (q ⊕ r) ≡ (p ∧ q) ⊕ (p ∧ r)
+            else if let Formula::Xor(q, r) = *r {
+                Ok((p.clone() & q) ^ (p & r))
+            } else {
+                Err(p & r)
+            }
+        } else {
+            Err(formula)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{

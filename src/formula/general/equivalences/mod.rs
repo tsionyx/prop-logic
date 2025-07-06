@@ -14,6 +14,7 @@ pub(crate) mod neg;
 mod prop_test;
 pub(crate) mod sort;
 mod traits;
+pub(crate) mod xor;
 
 use std::fmt::Debug;
 

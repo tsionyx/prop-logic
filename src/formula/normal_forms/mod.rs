@@ -14,11 +14,8 @@ pub(crate) mod traits;
 // TODO: exotic normal form with the basis {0, '&', '=='}
 
 pub use self::{
-    anf::{NormalForm as AlgebraicNormalForm, Term as AlgebraicTerm},
-    cnf::NormalForm as ConjunctiveNormalForm,
-    dnf::NormalForm as DisjunctiveNormalForm,
-    error::Error,
-    nnf::NormalForm as NegationNormalForm,
+    anf::NormalForm as AlgebraicNormalForm, cnf::NormalForm as ConjunctiveNormalForm,
+    dnf::NormalForm as DisjunctiveNormalForm, error::Error, nnf::NormalForm as NegationNormalForm,
     traits::NormalForm,
 };
 
