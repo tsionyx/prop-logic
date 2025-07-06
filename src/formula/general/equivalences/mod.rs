@@ -203,4 +203,17 @@ mod examples {
         let f2 = reduce_all(f.clone(), true, None);
         assert_eq!(f2, f); // TODO: find a way to reduce to `TruthValue(false)`
     }
+
+    #[test]
+    fn hard() {
+        use crate::formula::Implies as _;
+
+        // ¬((d⊕d)∨((b⊕((d→c)∨⊥))⊕d))
+        let f = !((Formula::atom('d') ^ 'd')
+            | ((Formula::atom('b') ^ ((Formula::from('d').implies('c')) | Formula::truth(false)))
+                ^ 'd'));
+
+        let f2 = reduce_all(f.clone(), true, None);
+        assert!(f.is_equivalent(&f2));
+    }
 }

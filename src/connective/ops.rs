@@ -244,6 +244,10 @@ impl<T, Op> Series<T, Op> {
     {
         series(&self.op, self.repr.into_iter().map(T::into))
     }
+
+    pub(crate) const fn as_unsorted(&self) -> &UnsortedVec<T> {
+        &self.repr
+    }
 }
 
 impl<T, Op> AsRef<[T]> for Series<T, Op> {
