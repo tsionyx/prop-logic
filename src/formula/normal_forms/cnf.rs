@@ -13,13 +13,18 @@
 //! - [OR][crate::connective::Disjunction].
 //!
 //! <https://en.wikipedia.org/wiki/Conjunctive_normal_form>
+use std::fmt::Debug;
 
 use crate::{
     connective::{series, Conjunction, Disjunction},
     utils::vec::UnsortedVec,
 };
 
-use super::super::{Formula, Signed};
+use super::{
+    super::{equivalences::RewritingRuleDebug, Formula, Signed as Literal},
+    error::Error,
+    NormalForm as NormalFormTrait,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 /// Combination of [Disjunct]-s connected with
@@ -47,12 +52,12 @@ impl<T> From<NormalForm<T>> for Formula<T> {
 /// Combination of literals connected with
 /// the [OR operation][crate::connective::Disjunction].
 pub struct Disjunct<T> {
-    repr: UnsortedVec<Signed<T>>,
+    repr: UnsortedVec<Literal<T>>,
 }
 
 impl<T> Disjunct<T> {
     /// Construct a new [`Disjunct`] from the series of literals.
-    pub fn new(lits: impl IntoIterator<Item = Signed<T>>) -> Self {
+    pub fn new(lits: impl IntoIterator<Item = Literal<T>>) -> Self {
         Self {
             repr: lits.into_iter().collect(),
         }
@@ -65,8 +70,33 @@ impl<T> From<Disjunct<T>> for Formula<T> {
     }
 }
 
-impl<T> From<Formula<T>> for NormalForm<T> {
-    fn from(_formula: Formula<T>) -> Self {
-        todo!("use the rewriting rules: https://en.wikipedia.org/wiki/Logical_equivalence")
+impl<T> TryFrom<Formula<T>> for NormalForm<T>
+where
+    T: Clone + PartialEq + 'static,
+{
+    type Error = Error;
+
+    fn try_from(formula: Formula<T>) -> Result<Self, Self::Error> {
+        let _formula = Self::prepare(formula);
+        todo!()
+    }
+}
+
+type DummyType = u8;
+
+impl<T> NormalFormTrait<T> for NormalForm<T>
+where
+    T: PartialEq + Clone + 'static,
+{
+    fn rules<V: PartialEq + Clone>() -> Vec<Box<dyn RewritingRuleDebug<V>>> {
+        let rules = super::NegationNormalForm::<DummyType>::rules();
+
+        // At this point, the formula should be in NNF form already.
+        // To promote it to CNF, we need to apply one more rule
+        // to force the disjunction to happen only between literals.
+        let distrib_rule: Box<dyn RewritingRuleDebug<V>> =
+            Box::new(super::super::equivalences::distrib::DistributeDisjunctionOverConjunction);
+
+        rules.into_iter().chain(Some(distrib_rule)).collect()
     }
 }

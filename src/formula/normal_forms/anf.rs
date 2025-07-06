@@ -23,7 +23,11 @@ use crate::{
     utils::vec::UnsortedVec,
 };
 
-use super::super::Formula;
+use super::{
+    super::{equivalences::RewritingRuleDebug, Formula},
+    error::Error,
+    NormalForm as NormalFormTrait,
+};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 /// Combination of [Term]-s connected with
@@ -72,8 +76,40 @@ impl<T> From<Term<T>> for Formula<T> {
     }
 }
 
-impl<T> From<Formula<T>> for NormalForm<T> {
-    fn from(_formula: Formula<T>) -> Self {
-        todo!("use the rewriting rules: https://en.wikipedia.org/wiki/Logical_equivalence")
+impl<T> TryFrom<Formula<T>> for NormalForm<T>
+where
+    T: PartialEq + Clone + 'static,
+{
+    type Error = Error;
+
+    fn try_from(formula: Formula<T>) -> Result<Self, Self::Error> {
+        let _formula = Self::prepare(formula);
+        todo!()
+    }
+}
+
+impl<T> NormalFormTrait<T> for NormalForm<T>
+where
+    T: PartialEq + Clone + 'static,
+{
+    fn rules<V: PartialEq + Clone>() -> Vec<Box<dyn RewritingRuleDebug<V>>> {
+        #![allow(clippy::wildcard_imports)]
+        use super::super::equivalences::*;
+
+        vec![
+            Box::new(constant::EliminateConstants),
+            Box::new(canonical::NoDynamicConnective),
+            Box::new(neg::DoubleNegation),
+            // Box::new(sort::SortAssociativeOperators),
+            Box::new(eq::Idempotence),
+            Box::new(eq::Negation),
+            Box::new(absorption::Absorption),
+            Box::new(absorption::AbsorptionWithNeg),
+            Box::new(elimination::XorEquivNegation),
+            Box::new(elimination::Implication),
+            Box::new(elimination::Equiv),
+            Box::new(elimination::DeMorgan),
+            // TODO: special rule to convert to XOR form
+        ]
     }
 }

@@ -2,6 +2,7 @@ use crate::formula::ops::Implies as _;
 
 use super::{super::formula::Formula, RewritingRule};
 
+#[cfg_attr(not(test), allow(dead_code))]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// The rule ensures that same operands goes
 /// in right-associative and consecutive order

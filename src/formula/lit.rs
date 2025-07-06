@@ -1,4 +1,7 @@
-use std::ops::Not;
+use std::{
+    fmt::{self, Display, Write as _},
+    ops::Not,
+};
 
 use crate::utils::zst::Void;
 
@@ -66,5 +69,20 @@ impl<T> Not for Variable<T> {
 
     fn not(self) -> Self::Output {
         Literal::Neg(self)
+    }
+}
+
+impl<T: Display> Display for Signed<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Pos(p) => {
+                f.write_char('+')?;
+                Display::fmt(p, f)
+            }
+            Self::Neg(n) => {
+                f.write_char('-')?;
+                Display::fmt(n, f)
+            }
+        }
     }
 }

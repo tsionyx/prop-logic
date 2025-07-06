@@ -32,6 +32,7 @@ pub fn apply_many<T>(
     allow_extend: bool,
 ) -> Formula<T>
 where
+    // requires 'static for Formula<T>: PartialEq
     T: PartialEq + Clone + 'static,
 {
     loop {
