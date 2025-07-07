@@ -104,7 +104,7 @@ impl<T: PartialEq> RewritingRule<T> for Negation {
 }
 
 pub(super) fn are_same_var<T: PartialEq>(p: &Formula<T>, q: &Formula<T>) -> bool {
-    if let (Some(p), Some(q)) = (p.as_signed_var(), q.as_signed_var()) {
+    if let (Some(p), Some(q)) = (p.as_literal(), q.as_literal()) {
         p == q
     } else {
         false
@@ -112,7 +112,7 @@ pub(super) fn are_same_var<T: PartialEq>(p: &Formula<T>, q: &Formula<T>) -> bool
 }
 
 pub(super) fn are_each_other_negation<T: PartialEq>(p: &Formula<T>, q: &Formula<T>) -> bool {
-    if let (Some(p), Some(q)) = (p.as_signed_var(), q.as_signed_var()) {
+    if let (Some(p), Some(q)) = (p.as_literal(), q.as_literal()) {
         p == !q
     } else {
         false

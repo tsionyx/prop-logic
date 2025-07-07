@@ -50,7 +50,7 @@ macro_rules! group_consecutive {
     ($variant:ident, $p:ident, $r:ident) => {{
         use std::convert::identity;
 
-        use crate::formula::Signed;
+        use crate::formula::Literal;
 
         use Formula::$variant as Op;
 
@@ -69,11 +69,11 @@ macro_rules! group_consecutive {
                 // (p + q) + r => p + (q + r)
                 Ok(Op(p, Box::new(Op(q, $r))))
             } else {
-                let vars = [*p, *q, *$r].map(Signed::try_from);
+                let vars = [*p, *q, *$r].map(Literal::try_from);
                 if let [Ok(atom_p), Ok(atom_q), Ok(atom_r)] = vars {
                     // ensure original right-associativity but with ordering:
                     // (p + r) + q => (p + q) + r
-                    let atoms = sort_three(atom_p, atom_q, atom_r, |x, y| x.as_ref() < y.as_ref());
+                    let atoms = sort_three(atom_p, atom_q, atom_r, |x, y| x.as_var() < y.as_var());
                     let [p, q, r] = <[_; 3]>::from(atoms).map(Formula::from).map(Box::new);
                     Ok(Op(Box::new(Op(p, q)), r))
                 } else {
@@ -111,11 +111,11 @@ macro_rules! group_consecutive {
                 // p + (q + r)
                 Err(Op($p, Box::new(Op(q, r))))
             } else {
-                let vars = [*$p, *q, *r].map(Signed::try_from);
+                let vars = [*$p, *q, *r].map(Literal::try_from);
                 let [p, q, r] = if let [Ok(atom_p), Ok(atom_q), Ok(atom_r)] = vars {
                     // ensure right-associativity but with ordering:
                     // r + (p + q) => (p + q) + r
-                    let atoms = sort_three(atom_p, atom_q, atom_r, |x, y| x.as_ref() < y.as_ref());
+                    let atoms = sort_three(atom_p, atom_q, atom_r, |x, y| x.as_var() < y.as_var());
                     <[_; 3]>::from(atoms).map(Formula::from)
                 } else {
                     // simply ensure right-associativity:
@@ -126,9 +126,9 @@ macro_rules! group_consecutive {
                 Ok(Op(Box::new(Op(p, q)), r))
             }
         } else {
-            let swap_operands = if let Some(f1) = $p.as_signed_var() {
-                if let Some(f2) = $r.as_signed_var() {
-                    f1.as_ref() > f2.as_ref()
+            let swap_operands = if let Some(f1) = $p.as_literal() {
+                if let Some(f2) = $r.as_literal() {
+                    f1.as_var() > f2.as_var()
                 } else {
                     // Atom + Complex converted to Complex + Atom
                     true
@@ -163,12 +163,12 @@ impl<T: Ord> RewritingRule<T> for SortAssociativeOperators {
                     let swap_operands = if are_same_var(&p, &r) {
                         // if p and r is of the same variable, group them together
                         true
-                    } else if let (Some(p), Some(q)) = (p.as_signed_var(), q.as_signed_var()) {
+                    } else if let (Some(p), Some(q)) = (p.as_literal(), q.as_literal()) {
                         // If both p and q are literals, move the lower one (q) closer to the beginning.
                         //
                         // This rule originally should belong to the [`SortOperands`],
                         // because it relies on the commutativity but in the complex associativity-like case.
-                        p.as_ref() > q.as_ref()
+                        p.as_var() > q.as_var()
                     } else {
                         false
                     };
@@ -189,8 +189,8 @@ impl<T: Ord> RewritingRule<T> for SortAssociativeOperators {
 }
 
 fn are_same_var<T: PartialEq>(p: &Formula<T>, q: &Formula<T>) -> bool {
-    if let (Some(p), Some(q)) = (p.as_signed_var(), q.as_signed_var()) {
-        p.as_ref() == q.as_ref()
+    if let (Some(p), Some(q)) = (p.as_literal(), q.as_literal()) {
+        p.as_var() == q.as_var()
     } else {
         false
     }

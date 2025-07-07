@@ -5,15 +5,16 @@ use crate::utils::zst::Void;
 type VarId = u64;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, PartialOrd, Ord, Hash)]
-/// A propositional variable is a
+/// A [propositional variable][Variable] is a
 /// formal expression that denotes an atomic formula.
 ///
-/// It is a basic building block of the propositional calculus.
+/// Despite of the fact a [`Formula`][crate::Formula]
+/// could be created using arbitrary type as a variable,
+/// this wrapper type allows to assign unified IDs
+/// and provides some more useful methods:
 ///
-/// For propositional logic, a [propositional variable][Variable]
-/// is often more briefly referred to as an atomic formula,
-/// but, more precisely, a [propositional variable][Variable]
-/// is not an atomic formula but a formal expression that denotes an atomic formula.
+/// - `std::ops::Neg` to create a [`Literal`][crate::Literal];
+/// - assign auto-incremented IDs for all atoms in a [`Formula`][crate::Formula];
 ///
 /// <https://en.wikipedia.org/wiki/Propositional_variable>
 pub struct Variable<T> {
@@ -70,7 +71,25 @@ where
 }
 
 mod impls {
-    use super::{super::Formula, Var, Variable};
+    use super::{
+        super::{Formula, Literal},
+        Var, Variable,
+    };
+
+    impl<T> std::ops::Not for Variable<T> {
+        type Output = Literal<Self>;
+
+        fn not(self) -> Self::Output {
+            Literal::Neg(self)
+        }
+    }
+
+    impl<T> Variable<T> {
+        /// Create a [`Formula`] from the given [`Variable`].
+        pub const fn atomize(self) -> Formula<Self> {
+            Formula::atom(self)
+        }
+    }
 
     impl<T: PartialEq + Clone> From<Formula<T>> for Formula<Variable<T>> {
         fn from(f: Formula<T>) -> Self {
@@ -102,12 +121,10 @@ mod impls {
 
     impl<T> Formula<Variable<T>> {
         /// Clear the payload data from the atoms' [`Variable`].
-        pub fn to_pure_var(self) -> Formula<Var> {
+        pub fn into_var_id(self) -> Formula<Var> {
             self.map(|x| Var::new(x.id()))
         }
-    }
 
-    impl<T: Clone> Formula<Variable<T>> {
         #[cfg(test)]
         #[expect(dead_code)]
         /// Clear the variable ID from the atoms' [`Variable`],
@@ -117,7 +134,7 @@ mod impls {
         ///
         /// The function will panic if any variable has no defined payload.
         pub(crate) fn into_payload_var(self) -> Formula<T> {
-            self.map(|x| x.extra().unwrap().clone())
+            self.map(|x| x.extra.unwrap())
         }
     }
 }

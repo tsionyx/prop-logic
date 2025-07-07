@@ -3,85 +3,111 @@ use std::{
     ops::Not,
 };
 
-use crate::utils::zst::Void;
-
-pub use super::Variable;
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-/// The wrapper around a value to represent the attachment of a sign to it.
-pub enum Signed<T> {
-    /// The value itself.
-    Pos(T),
+/// A [literal][Literal] is a kind of generalization of
+/// a propositional variable that can be either:
+/// - in plain form, or just
+///   the variable's [identity][crate::connective::LogicalIdentity];
+/// - in negated form, or
+///   the variable's [negation][crate::connective::Negation]
+///
+/// <https://en.wikipedia.org/wiki/Literal_(mathematical_logic)>
+pub enum Literal<T> {
     /// The negated value.
     Neg(T),
+
+    /// The value itself.
+    Pos(T),
 }
 
-impl<T> From<T> for Signed<T> {
+impl<T> From<T> for Literal<T> {
     fn from(value: T) -> Self {
         Self::Pos(value)
     }
 }
 
-impl<T> Signed<T> {
-    /// Get a referenced [`Signed`] value.
-    pub const fn by_ref(&self) -> Signed<&T> {
+impl<T> Literal<T> {
+    /// Get a referenced [`Literal`] value.
+    pub const fn as_ref(&self) -> Literal<&T> {
         match self {
-            Self::Pos(p) => Signed::Pos(p),
-            Self::Neg(n) => Signed::Neg(n),
+            Self::Neg(n) => Literal::Neg(n),
+            Self::Pos(p) => Literal::Pos(p),
+        }
+    }
+
+    /// Get the underlying variable, ignoring the polarity.
+    pub const fn as_var(&self) -> &T {
+        match self {
+            Self::Neg(p) | Self::Pos(p) => p,
+        }
+    }
+
+    /// Get the sign of the [`Literal`].
+    pub const fn polarity(&self) -> bool {
+        match self {
+            Self::Neg(_) => false,
+            Self::Pos(_) => true,
         }
     }
 }
 
-impl<T> AsRef<T> for Signed<T> {
-    fn as_ref(&self) -> &T {
-        match self {
-            Self::Pos(p) | Self::Neg(p) => p,
-        }
-    }
-}
-
-impl<T> Not for Signed<T> {
+impl<T> Not for Literal<T> {
     type Output = Self;
 
     fn not(self) -> Self::Output {
         match self {
-            Self::Pos(var) => Self::Neg(var),
             Self::Neg(var) => Self::Pos(var),
+            Self::Pos(var) => Self::Neg(var),
         }
     }
 }
 
-/// A [literal][Literal] is a kind of generalization of a [Variable]
-/// that can be either:
-/// - in plain form, or just
-///   the variable's [identity][crate::connective::LogicalIdentity];
-/// - in negated form, or
-///   the variable's [negation][crate::connective::Negation];
-pub type Literal<T> = Signed<Variable<T>>;
-
-/// The most primitive instantiation of the [`Literal`]
-/// without any additional info attached
-/// optimized for memory usage.
-pub type Lit = Literal<Void>;
-
-impl<T> Not for Variable<T> {
-    type Output = Literal<T>;
-
-    fn not(self) -> Self::Output {
-        Literal::Neg(self)
-    }
-}
-
-impl<T: Display> Display for Signed<T> {
+impl<T: Display> Display for Literal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Neg(n) => {
+                f.write_char('-')?;
+                Display::fmt(n, f)
+            }
             Self::Pos(p) => {
                 f.write_char('+')?;
                 Display::fmt(p, f)
             }
-            Self::Neg(n) => {
-                f.write_char('-')?;
-                Display::fmt(n, f)
+        }
+    }
+}
+
+mod impls {
+    use super::{super::Formula, Literal};
+
+    impl<T> Formula<T> {
+        /// Represent a [`Formula`] as a single [`Literal`] variable, if possible.
+        pub fn as_literal(&self) -> Option<Literal<&T>> {
+            match self {
+                Self::Atomic(p) => Some(Literal::Pos(p)),
+                Self::Not(f) => f.as_literal().map(|lit| !lit),
+                _ => None,
+            }
+        }
+    }
+
+    impl<T> From<Literal<T>> for Formula<T> {
+        fn from(value: Literal<T>) -> Self {
+            match value {
+                Literal::Pos(x) => Self::atom(x),
+                Literal::Neg(x) => !Self::atom(x),
+            }
+        }
+    }
+
+    impl<T> TryFrom<Formula<T>> for Literal<T> {
+        type Error = Formula<T>;
+
+        fn try_from(f: Formula<T>) -> Result<Self, Self::Error> {
+            match f {
+                Formula::Atomic(p) => Ok(Self::Pos(p)),
+                Formula::Not(f) => Self::try_from(*f).map(|lit| !lit).map_err(|f| !f),
+                other => Err(other),
             }
         }
     }

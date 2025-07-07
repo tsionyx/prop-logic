@@ -414,7 +414,7 @@ mod tests {
         let p = Variable::with_data(1, "p");
         let q = Variable::with_data(2, "q");
         let r = Variable::with_data(3, "r");
-        let f = (Formula::from(p) | !q) & (Formula::from(q) ^ !r);
+        let f = (p.atomize() | !q) & (q.atomize() ^ !r);
 
         let truth_table = f.get_truth_table();
         println!("{f}");
@@ -465,8 +465,8 @@ mod tests {
 
     #[test]
     fn commutative_equivalence() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
+        let p = 'p';
+        let q = 'q';
 
         let f1 = Formula::atom(p) & q;
         let f2 = Formula::atom(q) & p;
@@ -479,9 +479,7 @@ mod tests {
     fn large_conjunction_equivalence() {
         const VARS: u8 = 10;
 
-        let vars: Vec<_> = (0..VARS)
-            .map(|i| Variable::with_data(i.into(), (b'a' + i) as char))
-            .collect();
+        let vars: Vec<_> = (0..VARS).map(|i| (b'a' + i) as char).collect();
 
         let f_straight = vars
             .iter()
@@ -506,8 +504,8 @@ mod tests {
 
     #[test]
     fn absorption_equivalence() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
+        let p = 'p';
+        let q = 'q';
 
         let f1 = Formula::atom(p);
         let f2 = (Formula::atom(p) | q) & p;
@@ -519,8 +517,8 @@ mod tests {
 
     #[test]
     fn absorption_equivalence_2() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
+        let p = 'p';
+        let q = 'q';
 
         let f1 = Formula::atom(p);
         let f2 = (Formula::atom(q) & p) | p;
@@ -538,9 +536,9 @@ mod tests {
 
     #[test]
     fn rename_is_not_equivalent() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
-        let r = Variable::with_data(3, 'r');
+        let p = 'p';
+        let q = 'q';
+        let r = 'r';
 
         let f1 = Formula::atom(p) & q;
         let f2 = Formula::atom(p) & r;

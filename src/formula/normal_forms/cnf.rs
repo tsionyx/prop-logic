@@ -16,7 +16,7 @@
 use crate::connective::Evaluable;
 
 use super::{
-    super::{equivalences::RewritingRuleDebug, Formula, Signed as Literal},
+    super::{equivalences::RewritingRuleDebug, Formula, Literal},
     error::Error,
     NormalForm as NormalFormTrait,
 };
@@ -119,7 +119,7 @@ where
 
         for lit in disjuncts {
             // detect repeating variables
-            let found_negated = unique.iter().any(|v| v.by_ref() == !lit.by_ref());
+            let found_negated = unique.iter().any(|v| v.as_ref() == !lit.as_ref());
             // if have `p` and `¬p`, then we can reduce the whole sequence to `⊤`
             if found_negated {
                 return None;

@@ -19,12 +19,10 @@ use std::fmt::{self, Debug, Display};
 use crate::connective::Evaluable;
 
 use super::{
-    super::{equivalences::RewritingRuleDebug, Formula, Signed},
+    super::{equivalences::RewritingRuleDebug, Formula, Literal},
     error::Error,
     Conjunct, Disjunct, NormalForm as NormalFormTrait,
 };
-
-type Literal<T> = Signed<T>;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 /// Arbitrary set of literals and sub-expressions connected with
@@ -113,7 +111,7 @@ impl<T: PartialEq> NormalForm<T> {
                 let found_negated = visited
                     .iter()
                     .filter_map(Self::as_literal)
-                    .any(|l| l.by_ref() == !lit.by_ref());
+                    .any(|l| l.as_ref() == !lit.as_ref());
 
                 // if have `p` and `¬p`, then we can reduce the whole sequence to `⊥`
                 if found_negated {
@@ -154,7 +152,7 @@ impl<T: PartialEq> NormalForm<T> {
                 let found_negated = visited
                     .iter()
                     .filter_map(Self::as_literal)
-                    .any(|l| l.by_ref() == !lit.by_ref());
+                    .any(|l| l.as_ref() == !lit.as_ref());
 
                 // if have `p` and `¬p`, then we can reduce the whole sequence to `⊥`
                 if found_negated {

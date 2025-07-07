@@ -74,7 +74,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{Formula, Var};
+    use crate::Formula;
 
     use super::{
         super::super::{
@@ -99,8 +99,8 @@ mod tests {
 
     #[test]
     fn reduce_3_conjunction() {
-        let x = Var::new(1);
-        let y = Var::new(2);
+        let x = 'x';
+        let y = 'y';
         let falsity = Formula::contradiction();
 
         let left = Ternary::<true, Conjunction>::init();
@@ -117,8 +117,8 @@ mod tests {
 
     #[test]
     fn reduce_3_disjunction() {
-        let x = Var::new(1);
-        let y = Var::new(2);
+        let x = 'x';
+        let y = 'y';
         let truth = Formula::tautology();
 
         let left = Ternary::<true, Disjunction>::init();

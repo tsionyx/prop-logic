@@ -20,7 +20,7 @@ pub use self::{
         formula::Formula,
         truth_table::FormulaTruthTable,
     },
-    lit::{Lit, Literal, Signed},
+    lit::Literal,
     ops::{And, Equivalent, Implies, Not, Or, Xor},
     var::{Var, Variable},
 };

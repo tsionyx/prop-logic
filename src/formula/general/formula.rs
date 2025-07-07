@@ -10,7 +10,7 @@ use crate::connective::{
 };
 
 pub use super::{
-    super::{lit::Signed, ops::*},
+    super::ops::*,
     connective::{AnyConnective, DynConnective},
 };
 
@@ -187,48 +187,6 @@ impl<T> Formula<T> {
     fn has_obvious_priority_over(&self, e: &Self) -> bool {
         self.priority() > e.priority()
     }
-
-    /// Represent a [`Formula`] as a single [`Signed`] variable, if possible.
-    pub fn as_signed_var(&self) -> Option<Signed<&T>> {
-        if let Self::Atomic(p) = self {
-            Some(Signed::Pos(p))
-        } else if let Self::Not(f) = self {
-            if let Self::Atomic(p) = f.as_ref() {
-                Some(Signed::Neg(p))
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-}
-
-impl<T> From<Signed<T>> for Formula<T> {
-    fn from(value: Signed<T>) -> Self {
-        match value {
-            Signed::Pos(x) => Self::from(x),
-            Signed::Neg(x) => !Self::from(x),
-        }
-    }
-}
-
-impl<T> TryFrom<Formula<T>> for Signed<T> {
-    type Error = Formula<T>;
-
-    fn try_from(f: Formula<T>) -> Result<Self, Self::Error> {
-        match f {
-            Formula::Atomic(p) => Ok(Self::Pos(p)),
-            Formula::Not(f) => {
-                if let Formula::Atomic(n) = *f {
-                    Ok(Self::Neg(n))
-                } else {
-                    Err(Formula::Not(f))
-                }
-            }
-            other => Err(other),
-        }
-    }
 }
 
 impl<T> From<Formula<T>> for AnyConnective<Box<Formula<T>>, T> {
@@ -363,12 +321,12 @@ impl<T: PartialEq> Formula<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{super::super::var::Variable, *};
+    use super::*;
 
     #[test]
     fn operation() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
+        let p = 'p';
+        let q = 'q';
         let (p, q) = (Formula::atom(p), Formula::atom(q));
         assert_eq!(p.clone().not(), !p.clone());
         assert_eq!(p.clone().and(q.clone()), p.clone() & q.clone());
@@ -395,8 +353,8 @@ mod tests {
 
     #[test]
     fn formula_display() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
+        let p = 'p';
+        let q = 'q';
         let (p, q) = (Formula::atom(p), Formula::atom(q));
 
         format_eq!(Formula::<i32>::truth(true), "⊤");
@@ -411,9 +369,9 @@ mod tests {
 
     #[test]
     fn formula_priority_display() {
-        let p = Variable::with_data(1, 'p');
-        let q = Variable::with_data(2, 'q');
-        let r = Variable::with_data(3, 'r');
+        let p = 'p';
+        let q = 'q';
+        let r = 'r';
         let (p, q, r) = (Formula::atom(p), Formula::atom(q), Formula::atom(r));
 
         format_eq!(p.clone().not().not(), "¬¬p");

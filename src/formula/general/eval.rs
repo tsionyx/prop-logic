@@ -81,28 +81,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicU64, Ordering};
-
     use super::{
-        super::super::{
-            ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
-            Variable,
-        },
+        super::super::ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
         *,
     };
 
-    static VAR_ID_COUNTER: AtomicU64 = AtomicU64::new(4);
-
-    fn get_var(name: char) -> Variable<char> {
-        let id = match name {
-            'a' => 0,
-            'b' => 1,
-            'c' => 2,
-            'd' => 3,
-            _ => VAR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
-        };
-
-        Variable::with_data(id, name)
+    const fn get_var(name: char) -> char {
+        name
     }
 
     // emulate std::sync::Arc
@@ -115,7 +100,7 @@ mod tests {
         }
     }
 
-    fn partial_valuation() -> Valuation<Arc<Variable<char>>> {
+    fn partial_valuation() -> Valuation<Arc<char>> {
         let mut val = Valuation::empty();
         val.assign(Arc::new(get_var('a')), true);
         val.assign(Arc::new(get_var('b')), false);
@@ -126,13 +111,13 @@ mod tests {
 
     #[test]
     fn tautology() {
-        let f: Formula<Arc<Variable<char>>> = Formula::tautology();
+        let f: Formula<Arc<char>> = Formula::tautology();
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
     fn contradiction() {
-        let f: Formula<Arc<Variable<char>>> = Formula::contradiction();
+        let f: Formula<Arc<char>> = Formula::contradiction();
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
