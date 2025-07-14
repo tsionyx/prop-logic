@@ -85,7 +85,17 @@ mod impls {
         pub fn as_literal(&self) -> Option<Literal<&T>> {
             match self {
                 Self::Atomic(p) => Some(Literal::Pos(p)),
-                Self::Not(f) => f.as_literal().map(|lit| !lit),
+                // The following (simpler) recursive defintion implies double negation elimination
+                // and therefore formally not correct since during conversion back to `Formula`
+                // the information on both of negations will be lost:
+                //Self::Not(f) => f.as_literal().map(|lit| !lit),
+                Self::Not(n) => {
+                    if let Self::Atomic(x) = n.as_ref() {
+                        Some(Literal::Neg(x))
+                    } else {
+                        None
+                    }
+                }
                 _ => None,
             }
         }
@@ -106,7 +116,17 @@ mod impls {
         fn try_from(f: Formula<T>) -> Result<Self, Self::Error> {
             match f {
                 Formula::Atomic(p) => Ok(Self::Pos(p)),
-                Formula::Not(f) => Self::try_from(*f).map(|lit| !lit).map_err(|f| !f),
+                // The following (simpler) recursive defintion implies double negation elimination
+                // and therefore formally not correct since during conversion back to `Formula`
+                // the information on both of negations will be lost:
+                // Formula::Not(f) => Self::try_from(*f).map(|lit| !lit).map_err(|f| !f),
+                Formula::Not(n) => {
+                    if let Formula::Atomic(x) = *n {
+                        Ok(Self::Neg(x))
+                    } else {
+                        Err(Formula::Not(n))
+                    }
+                }
                 other => Err(other),
             }
         }

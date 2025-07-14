@@ -216,4 +216,14 @@ mod examples {
         let f2 = reduce_all(f.clone(), true, None);
         assert!(f.is_equivalent(&f2));
     }
+
+    #[test]
+    fn conversion_to_literals_with_associative() {
+        let f = Formula::atom('a') & (Formula::atom('a') | 'b') & (!(!Formula::atom('b')));
+
+        let f2 = sort::SortAssociativeOperators
+            .reduce(f.clone())
+            .unwrap_err();
+        assert_eq!(f, f2);
+    }
 }
