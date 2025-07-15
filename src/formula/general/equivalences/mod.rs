@@ -67,93 +67,93 @@ impl<'a, T, R: RewritingRule<T> + 'a> UpcastFrom<R> for dyn RewritingRule<T> + '
 }
 
 #[cfg(test)]
-fn basic_rules<T>() -> Vec<Box<dyn RewritingRuleDebug<T>>>
-where
-    T: Ord + Clone,
-{
-    vec![
-        Box::new(constant::EliminateConstants),
-        Box::new(canonical::NoDynamicConnective),
-        Box::new(neg::DoubleNegation),
-        Box::new(sort::SortAssociativeOperators),
-        Box::new(eq::Idempotence),
-        Box::new(eq::Negation),
-        Box::new(absorption::Absorption),
-        Box::new(absorption::AbsorptionWithNeg),
-        Box::new(elimination::DeMorgan),
-        Box::new(elimination::XorEquivNegation),
-        Box::new(elimination::Implication),
-        Box::new(elimination::Xor),
-        Box::new(elimination::Equiv),
-    ]
-}
-
-#[cfg(test)]
-/// Apply the [basic rules][basic_rules]
-/// in order to reduce the [`Formula`] to the max.
-///
-/// This function prints the debug information to be observed during testing.
-fn reduce_all<T, I>(mut f: Formula<T>, allow_extend: bool, additional_rules: I) -> Formula<T>
-where
-    T: Debug + std::fmt::Display + Ord + Clone + 'static,
-    Formula<T>: crate::TruthTabled<TT: std::fmt::Display>,
-    I: IntoIterator<Item = Box<dyn RewritingRuleDebug<T>>>,
-{
-    use crate::TruthTabled as _;
-
-    println!("{:=<80}", "");
-    println!("{f:#}\n{}", f.get_truth_table());
-
-    let all_rules: Vec<_> = basic_rules::<T>()
-        .into_iter()
-        .chain(additional_rules)
-        .collect();
-    loop {
-        let original = f.clone();
-        for rule in &all_rules {
-            let f2 = rule.apply_all(f.clone(), allow_extend);
-            if f != f2 {
-                println!("{rule:?}: \n{f:#} \n{f2:#}");
-                // println!("{}", f2.get_truth_table());
-                f = f2;
-            }
-        }
-
-        if f == original {
-            println!("{f:#}: ({f:#?})");
-            println!("{}", f.get_truth_table());
-            return f;
-        }
-    }
-}
-
-#[cfg(test)]
 mod examples {
     use crate::truth_table::TruthTabled;
 
     use super::*;
 
-    use Formula::*;
+    /// Apply the [basic rules][basic_rules]
+    /// in order to reduce the [`Formula`] to the max.
+    ///
+    /// This function prints the debug information to be observed during testing.
+    pub fn reduce_all_with_basic_rules<T, I>(
+        f: Formula<T>,
+        allow_extend: bool,
+        additional_rules: I,
+    ) -> Formula<T>
+    where
+        T: Debug + std::fmt::Display + Ord + Clone + 'static,
+        Formula<T>: TruthTabled<TT: std::fmt::Display>,
+        I: IntoIterator<Item = Box<dyn RewritingRuleDebug<T>>>,
+    {
+        let basic_rules: Vec<Box<dyn RewritingRuleDebug<T>>> = vec![
+            Box::new(constant::EliminateConstants),
+            Box::new(canonical::NoDynamicConnective),
+            Box::new(neg::DoubleNegation),
+            Box::new(sort::SortAssociativeOperators),
+            Box::new(eq::Idempotence),
+            Box::new(eq::Negation),
+            Box::new(absorption::Absorption),
+            Box::new(absorption::AbsorptionWithNeg),
+            Box::new(elimination::DeMorgan),
+            Box::new(elimination::XorEquivNegation),
+            Box::new(elimination::Implication),
+            Box::new(elimination::Xor),
+            Box::new(elimination::Equiv),
+        ];
+
+        reduce_all(
+            f,
+            allow_extend,
+            basic_rules.into_iter().chain(additional_rules),
+        )
+    }
+
+    /// Apply the set of rules
+    /// in order to reduce the [`Formula`] to the max.
+    ///
+    /// This function prints the debug information to be observed during testing.
+    pub fn reduce_all<T, I>(mut f: Formula<T>, allow_extend: bool, rules: I) -> Formula<T>
+    where
+        T: Debug + std::fmt::Display + Ord + Clone + 'static,
+        Formula<T>: TruthTabled<TT: std::fmt::Display>,
+        I: IntoIterator<Item = Box<dyn RewritingRuleDebug<T>>>,
+    {
+        println!("{:=<80}", "");
+        println!("{f:#}\n{}", f.get_truth_table());
+
+        let all_rules: Vec<_> = rules.into_iter().collect();
+        loop {
+            let original = f.clone();
+            for rule in &all_rules {
+                let f2 = rule.apply_all(f.clone(), allow_extend);
+                if f != f2 {
+                    println!("{rule:?}: \n{f:#} \n{f2:#}");
+                    // println!("{}", f2.get_truth_table());
+                    f = f2;
+                }
+            }
+
+            if f == original {
+                println!("{f:#}: ({f:#?})");
+                println!("{}", f.get_truth_table());
+                return f;
+            }
+        }
+    }
 
     #[test]
     fn many_conjunction() {
-        let f = Equivalent(
-            Box::new(Not(Box::new(Atomic('b')))),
-            Box::new(And(
-                Box::new(Atomic('b')),
-                Box::new(Or(
-                    Box::new(Not(Box::new(Atomic('b')))),
-                    Box::new(Or(
-                        Box::new(Not(Box::new(Atomic('c')))),
-                        Box::new(Xor(Box::new(Atomic('a')), Box::new(Atomic('b')))),
-                    )),
-                )),
-            )),
+        use crate::formula::Equivalent as _;
+
+        let f = (!Formula::atom('b')).equivalent(
+            Formula::atom('b')
+                & (!Formula::atom('b') | (!Formula::atom('c') | (Formula::atom('a') ^ 'b'))),
         );
 
         let plus_distrib: Box<dyn RewritingRuleDebug<char>> =
             Box::new(distrib::DistributeConjunctionOverDisjunction);
-        let f2 = reduce_all(f, true, Some(plus_distrib));
+        let f2 = reduce_all_with_basic_rules(f, true, Some(plus_distrib));
         let expected = Formula::atom('a') & 'b' & 'c';
         assert!(f2.is_equivalent(&expected));
         assert_eq!(f2, expected);
@@ -161,46 +161,43 @@ mod examples {
 
     #[test]
     fn negation_absorption() {
-        let f = And(
-            Box::new(Not(Box::new(Atomic('c')))),
-            Box::new(And(
-                Box::new(Atomic('b')),
-                Box::new(Not(Box::new(Atomic('c')))),
-            )),
-        );
+        let f = (!Formula::atom('c')) & (Formula::atom('b') & !Formula::atom('c'));
 
-        let f2 = reduce_all(f, true, None);
-        let expected = !Formula::from('c') & 'b';
+        let f2 = reduce_all_with_basic_rules(f, true, None);
+        let expected = !Formula::atom('c') & 'b';
         assert!(f2.is_equivalent(&expected));
     }
 
     #[test]
     fn repeating() {
-        let f = (Atomic('p') & 'q') & !Atomic('q');
-        let f2 = reduce_all(f, true, None);
-        assert_eq!(f2, TruthValue(false));
+        let f = (Formula::atom('p') & 'q') & !Formula::atom('q');
+        let f2 = reduce_all_with_basic_rules(f, true, None);
+        assert_eq!(f2, Formula::TruthValue(false));
     }
 
     #[test]
     fn sort_right_assoc() {
-        let f = !Atomic('r') | (!Atomic('p') | !Atomic('q'));
-        let f2 = reduce_all(f, true, None);
-        assert_eq!(f2, !Atomic('p') | !Atomic('q') | !Atomic('r'));
+        let f = !Formula::atom('r') | (!Formula::atom('p') | !Formula::atom('q'));
+        let f2 = reduce_all_with_basic_rules(f, true, None);
+        assert_eq!(
+            f2,
+            !Formula::atom('p') | !Formula::atom('q') | !Formula::atom('r')
+        );
     }
 
     #[test]
     fn group_same_operations() {
         // (p∧q)∧((¬p∧q)∧¬r)
-        let f = (Atomic('p') & Atomic('q')) & ((!Atomic('p') & Atomic('q')) & !Atomic('r'));
-        let f2 = reduce_all(f, true, None);
-        assert_eq!(f2, TruthValue(false));
+        let f = (Formula::atom('p') & 'q') & ((!Formula::atom('p') & 'q') & !Formula::atom('r'));
+        let f2 = reduce_all_with_basic_rules(f, true, None);
+        assert_eq!(f2, Formula::TruthValue(false));
     }
 
     #[test]
     fn group_same_operations_2() {
         // ((p∧q)∧¬r)∧¬p
-        let f = ((Atomic('p') & Atomic('q')) & !Atomic('r')) & !Atomic('p');
-        let f2 = reduce_all(f.clone(), true, None);
+        let f = ((Formula::atom('p') & 'q') & !Formula::atom('r')) & !Formula::atom('p');
+        let f2 = reduce_all_with_basic_rules(f.clone(), true, None);
         assert_eq!(f2, f); // TODO: find a way to reduce to `TruthValue(false)`
     }
 
@@ -213,7 +210,7 @@ mod examples {
             | ((Formula::atom('b') ^ ((Formula::from('d').implies('c')) | Formula::truth(false)))
                 ^ 'd'));
 
-        let f2 = reduce_all(f.clone(), true, None);
+        let f2 = reduce_all_with_basic_rules(f.clone(), true, None);
         assert!(f.is_equivalent(&f2));
     }
 

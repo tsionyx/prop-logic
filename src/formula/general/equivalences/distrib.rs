@@ -73,7 +73,7 @@ impl<T: Clone> RewritingRule<T> for DistributeDisjunctionOverConjunction {
 #[cfg(test)]
 mod tests {
     use super::{
-        super::{reduce_all, RewritingRuleDebug},
+        super::{examples::reduce_all_with_basic_rules, RewritingRuleDebug},
         *,
     };
 
@@ -95,7 +95,7 @@ mod tests {
 
         let plus_distrib: Box<dyn RewritingRuleDebug<char>> =
             Box::new(DistributeConjunctionOverDisjunction);
-        let f2 = reduce_all(f, true, Some(plus_distrib));
+        let f2 = reduce_all_with_basic_rules(f, true, Some(plus_distrib));
 
         let expected = (!p.clone() & r.clone()) | (!p & !q.clone()) | (!q & r);
         assert!(f2.is_equivalent(&expected));
@@ -120,7 +120,7 @@ mod tests {
 
         let plus_distrib: Box<dyn RewritingRuleDebug<char>> =
             Box::new(DistributeDisjunctionOverConjunction);
-        let f2 = reduce_all(f, true, Some(plus_distrib));
+        let f2 = reduce_all_with_basic_rules(f, true, Some(plus_distrib));
 
         let expected = (!p.clone() | !q.clone() | !r.clone())
             & (!p.clone() | !q.clone() | r.clone())

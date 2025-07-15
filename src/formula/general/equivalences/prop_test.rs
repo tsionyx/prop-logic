@@ -4,6 +4,7 @@ use crate::{formula::ops::Equivalent as _, TruthTabled};
 
 use super::{
     super::{super::FormulaParameters, formula::Formula},
+    examples::reduce_all_with_basic_rules,
     *,
 };
 
@@ -251,14 +252,14 @@ proptest! {
         // NoDynamicConnective: ¬¬b -> ¬¬b
         // DoubleNegation: ¬¬b -> b
         // ```
-        let res = reduce_all(f.clone(), false, None);
+        let res = reduce_all_with_basic_rules(f.clone(), false, None);
         assert!(f.is_equivalent(&res));
         let eq_f = f.equivalent(res);
         assert!(
             eq_f.is_equivalent(&Formula::truth(true)),
         );
 
-        let tr_f = reduce_all(eq_f, true, None);
+        let tr_f = reduce_all_with_basic_rules(eq_f, true, None);
         assert!(
             tr_f.is_equivalent(&Formula::truth(true)),
         );
