@@ -1,4 +1,7 @@
-use super::{super::formula::Formula, RewritingRule};
+use super::{
+    super::{formula::Formula, RecursiveApplicationOrder},
+    RewritingRule,
+};
 
 // TODO: compose normal forms using the combination of specific rules for every kind of NF.
 
@@ -14,6 +17,10 @@ use super::{super::formula::Formula, RewritingRule};
 pub struct DistributeConjunctionOverDisjunction;
 
 impl<T: Clone> RewritingRule<T> for DistributeConjunctionOverDisjunction {
+    fn application_order(&self) -> RecursiveApplicationOrder {
+        RecursiveApplicationOrder::TopDown
+    }
+
     fn reduce(&self, formula: Formula<T>) -> Result<Formula<T>, Formula<T>> {
         Err(formula)
     }
@@ -48,6 +55,10 @@ impl<T: Clone> RewritingRule<T> for DistributeConjunctionOverDisjunction {
 pub struct DistributeDisjunctionOverConjunction;
 
 impl<T: Clone> RewritingRule<T> for DistributeDisjunctionOverConjunction {
+    fn application_order(&self) -> RecursiveApplicationOrder {
+        RecursiveApplicationOrder::TopDown
+    }
+
     fn reduce(&self, formula: Formula<T>) -> Result<Formula<T>, Formula<T>> {
         Err(formula)
     }
@@ -80,6 +91,10 @@ impl<T: Clone> RewritingRule<T> for DistributeDisjunctionOverConjunction {
 pub struct DistributeConjunctionOverXor;
 
 impl<T: Clone> RewritingRule<T> for DistributeConjunctionOverXor {
+    fn application_order(&self) -> RecursiveApplicationOrder {
+        RecursiveApplicationOrder::TopDown
+    }
+
     fn reduce(&self, formula: Formula<T>) -> Result<Formula<T>, Formula<T>> {
         Err(formula)
     }

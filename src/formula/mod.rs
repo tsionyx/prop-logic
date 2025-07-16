@@ -19,6 +19,7 @@ pub use self::{
         equivalences,
         formula::Formula,
         truth_table::FormulaTruthTable,
+        RecursiveApplicationOrder,
     },
     lit::Literal,
     ops::{And, Equivalent, Implies, Not, Or, Xor},

@@ -12,6 +12,7 @@ use crate::connective::{
 pub use super::{
     super::ops::*,
     connective::{AnyConnective, DynConnective},
+    RecursiveApplicationOrder,
 };
 
 #[derive(Debug, Clone)]
@@ -98,35 +99,50 @@ impl<T> Formula<T> {
     }
 
     /// Recursively transform the [`Formula`]
-    /// bottom-up by applying some transformation
-    /// to every sub-formula.
-    pub fn apply_rec<F>(self, mut fun: F) -> Self
+    /// by applying some transformation to every sub-formula.
+    pub fn apply_rec<F>(self, mut fun: F, direction: RecursiveApplicationOrder) -> Self
     where
         F: FnMut(Self) -> Self + Clone,
     {
-        let inner = match self {
-            Self::TruthValue(_) | Self::Atomic(_) => self,
-            Self::Not(f) => Self::not((*f).apply_rec(fun.clone())),
-            Self::And(f1, f2) => {
-                Self::and((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
-            }
-            Self::Or(f1, f2) => {
-                Self::or((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
-            }
-            Self::Xor(f1, f2) => {
-                Self::xor((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
-            }
-            Self::Implies(f1, f2) => {
-                Self::implies((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
-            }
-            Self::Equivalent(f1, f2) => {
-                Self::equivalent((*f1).apply_rec(fun.clone()), (*f2).apply_rec(fun.clone()))
-            }
+        let formula = if matches!(direction, RecursiveApplicationOrder::TopDown) {
+            fun.clone()(self)
+        } else {
+            self
+        };
+
+        let sub_processed = match formula {
+            Self::TruthValue(_) | Self::Atomic(_) => formula,
+            Self::Not(f) => Self::not((*f).apply_rec(fun.clone(), direction)),
+            Self::And(f1, f2) => Self::and(
+                (*f1).apply_rec(fun.clone(), direction),
+                (*f2).apply_rec(fun.clone(), direction),
+            ),
+            Self::Or(f1, f2) => Self::or(
+                (*f1).apply_rec(fun.clone(), direction),
+                (*f2).apply_rec(fun.clone(), direction),
+            ),
+            Self::Xor(f1, f2) => Self::xor(
+                (*f1).apply_rec(fun.clone(), direction),
+                (*f2).apply_rec(fun.clone(), direction),
+            ),
+            Self::Implies(f1, f2) => Self::implies(
+                (*f1).apply_rec(fun.clone(), direction),
+                (*f2).apply_rec(fun.clone(), direction),
+            ),
+            Self::Equivalent(f1, f2) => Self::equivalent(
+                (*f1).apply_rec(fun.clone(), direction),
+                (*f2).apply_rec(fun.clone(), direction),
+            ),
             Self::Dynamic(conn) => {
-                Self::Dynamic(conn.map(|f| Box::new((*f).apply_rec(fun.clone()))))
+                Self::Dynamic(conn.map(|f| Box::new((*f).apply_rec(fun.clone(), direction))))
             }
         };
-        fun(inner)
+
+        if matches!(direction, RecursiveApplicationOrder::BottomUp) {
+            fun(sub_processed)
+        } else {
+            sub_processed
+        }
     }
 
     /// Transform a [`Formula`] by reversing order of its operands

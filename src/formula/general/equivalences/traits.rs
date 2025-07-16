@@ -1,4 +1,4 @@
-use super::super::formula::Formula;
+use super::super::{formula::Formula, RecursiveApplicationOrder};
 
 /// Represent the logical law to convert a [`Formula`]
 /// to the equivalent one.
@@ -11,7 +11,19 @@ pub trait RewritingRule<T> {
     /// to increase during the transformations,
     /// i.e. the rule will be applied even if it creates longer [`Formula`].
     fn apply_all(&self, formula: Formula<T>, allow_extend: bool) -> Formula<T> {
-        formula.apply_rec(|f| self.apply(f, allow_extend))
+        formula.apply_rec(|f| self.apply(f, allow_extend), self.application_order())
+    }
+
+    /// The order in which the rule should be applied recursively.
+    ///
+    /// The default is [`RecursiveApplicationOrder::BottomUp`],
+    /// meaning that the rule will be applied to the sub-formulae first,
+    /// and then to the top-level formula.
+    ///
+    /// For the distributive rules, it should return [`RecursiveApplicationOrder::TopDown`]
+    /// to effectively distribute the operation down to the leaf formulae.
+    fn application_order(&self) -> RecursiveApplicationOrder {
+        RecursiveApplicationOrder::BottomUp
     }
 
     /// Apply the rule returning the (possibly unchanged) new [`Formula`].
