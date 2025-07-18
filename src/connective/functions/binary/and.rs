@@ -2,7 +2,7 @@
 //! is `true` if and only if all of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_conjunction>
-use std::ops::BitAnd;
+use crate::{connective::Series, formula::And};
 
 use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -14,11 +14,11 @@ pub struct Conjunction;
 
 impl<E> TruthFn<2, E> for Conjunction
 where
-    E: Evaluable + BitAnd<Output = E>,
+    E: Evaluable + And,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(conjunct1 && conjunct2)),
+            (Ok(conjunct1), Ok(conjunct2)) => Ok(E::terminal(conjunct1.and(conjunct2))),
             // **conjunction** is _commutative_
             (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
@@ -31,8 +31,8 @@ where
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| x & y)
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        x.and(y)
     }
 }
 
@@ -80,9 +80,9 @@ pub struct ConjunctionAny;
 
 impl<const ARITY: usize, E> TruthFn<ARITY, E> for ConjunctionAny
 where
-    E: Evaluable + BitAnd<Output = E>,
+    E: Evaluable + And,
 {
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         if terms.iter().any(E::is_contradiction) {
             return Ok(E::contradiction());
         }
@@ -112,17 +112,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        self.fold(terms).unwrap_or_else(|terms| {
-            terms.into_iter().rfold(E::tautology(), |acc, t| {
-                if acc.is_tautology() {
-                    t
-                } else if t.is_tautology() {
-                    acc
-                } else {
-                    t & acc
-                }
-            })
-        })
+        Series::<_, Conjunction>::new(terms).compose()
     }
 }
 
@@ -145,5 +135,22 @@ mod tests {
         assert!(Conjunction.is_equivalent(&ConjunctionAny::init()));
         assert!(Ternary::<true, Conjunction>::init().is_equivalent(&ConjunctionAny::init()));
         assert!(Ternary::<false, Conjunction>::init().is_equivalent(&ConjunctionAny::init()));
+    }
+
+    #[test]
+    fn any_compose() {
+        use crate::Formula;
+
+        let f: Formula<char> = ConjunctionAny.compose([]);
+        assert_eq!(f, Formula::truth(true));
+
+        let f: Formula<char> = ConjunctionAny.compose([Formula::atom('a')]);
+        assert_eq!(f, Formula::atom('a'));
+
+        let f: Formula<char> = ConjunctionAny.compose(['a'.into(), 'b'.into()]);
+        assert_eq!(f, Formula::atom('a') & 'b');
+
+        let f: Formula<char> = ConjunctionAny.compose(['a'.into(), 'b'.into(), 'c'.into()]);
+        assert_eq!(f, Formula::atom('a') & (Formula::atom('b') & 'c'));
     }
 }

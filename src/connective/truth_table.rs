@@ -20,6 +20,17 @@ where
     fn get_truth_table(&self) -> Self::TT {
         bool_truth_table(self)
     }
+
+    fn is_equivalent<Rhs>(&self, other: &Rhs) -> bool
+    where
+        Rhs: TruthTabled<ARITY, TT = Self::TT> + ?Sized,
+    {
+        use std::collections::HashMap as Map;
+
+        let a: Map<_, _> = self.get_truth_table().iter().collect();
+        let b: Map<_, _> = other.get_truth_table().iter().collect();
+        a == b
+    }
 }
 
 fn bool_truth_table<const ARITY: usize, F>(f: &F) -> FixedTruthTable<ARITY>
@@ -38,14 +49,14 @@ where
             let assignment = assignment
                 .try_into()
                 .expect("The array size is guaranteed by Itertools::multi_cartesian_product");
-            (assignment, f.compose(assignment))
+            (assignment, f.eval(assignment))
         })
         .collect();
 
     let table = if ARITY == 0 {
         assert!(table.is_empty());
         let dummy_empty_array = [false; ARITY];
-        let row: Row<ARITY> = (dummy_empty_array, f.compose(dummy_empty_array));
+        let row: Row<ARITY> = (dummy_empty_array, f.eval(dummy_empty_array));
         vec![row]
     } else {
         table.into_iter().collect()
@@ -61,18 +72,12 @@ impl<const ARITY: usize> TruthTable<ARITY> for FixedTruthTable<ARITY>
 where
     D: CheckedArray<ARITY>,
 {
-    type Input = [bool; ARITY];
+    type Row<'a> = [bool; ARITY];
 
-    type Repr = <D as CheckedArray<ARITY>>::Array<Row<ARITY>>;
-
-    fn iter(&self) -> impl Iterator<Item = &(Self::Input, bool)> {
+    fn iter(&self) -> impl Iterator<Item = (Self::Row<'_>, bool)> {
         use crate::utils::dependent_array::SizedArray;
 
-        self.table.as_ref().iter()
-    }
-
-    fn into_inner(self) -> Self::Repr {
-        self.table.into_inner()
+        self.table.as_ref().iter().map(|(args, res)| (*args, *res))
     }
 }
 
@@ -210,11 +215,13 @@ mod tests {
         let table = get::<T, 0>();
         assert_eq!(table, [true]);
         assert_eq!(table, get::<ConjunctionAny, 0>());
+        assert_eq!(table, get::<EquivalentAny, 0>());
         assert_eq!(table, get::<AllEquivalent, 0>());
 
         let table = get_mapping::<T, 0>();
         assert_eq!(table, vec![([], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 0>());
+        assert_eq!(table, get_mapping::<EquivalentAny, 0>());
         assert_eq!(table, get_mapping::<AllEquivalent, 0>());
     }
 
@@ -298,12 +305,14 @@ mod tests {
         assert_eq!(table, get::<ConjunctionAny, 1>());
         assert_eq!(table, get::<DisjunctionAny, 1>());
         assert_eq!(table, get::<ExclusiveDisjunctionAny, 1>());
+        assert_eq!(table, get::<EquivalentAny, 1>());
 
         let table = get_mapping::<T, 1>();
         assert_eq!(table, vec![([false], false), ([true], true)]);
         assert_eq!(table, get_mapping::<ConjunctionAny, 1>());
         assert_eq!(table, get_mapping::<DisjunctionAny, 1>());
         assert_eq!(table, get_mapping::<ExclusiveDisjunctionAny, 1>());
+        assert_eq!(table, get_mapping::<EquivalentAny, 1>());
     }
 
     #[test]
@@ -453,6 +462,7 @@ mod tests {
         type T = LogicalBiconditional;
         let table = get::<T, 2>();
         assert_eq!(table, [true, false, false, true]);
+        assert_eq!(table, get::<EquivalentAny, 2>());
         assert_eq!(table, get::<AllEquivalent, 2>());
 
         let table = get_mapping::<T, 2>();
@@ -465,6 +475,7 @@ mod tests {
                 ([true, true], true),
             ]
         );
+        assert_eq!(table, get_mapping::<EquivalentAny, 2>());
         assert_eq!(table, get_mapping::<AllEquivalent, 2>());
     }
 }

@@ -12,7 +12,7 @@ use super::{evaluation::Evaluable, notation::FunctionNotation};
 ///
 /// <https://en.wikipedia.org/wiki/Truth_function>
 pub trait TruthFn<const ARITY: usize, E: Evaluable> {
-    /// Try to reduce the propistional [`Evaluable`]-s
+    /// Try to reduce the propositional [`Evaluable`]-s
     /// into a single one by taking
     /// into account the partial knowledge of them.
     ///
@@ -23,10 +23,17 @@ pub trait TruthFn<const ARITY: usize, E: Evaluable> {
     ///
     /// If the set of [`Evaluable`]-s is not reducible,
     /// produce the inputs wrapped in an `Err` as a last resort.
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]>;
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]>;
 
     /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective.
     fn compose(&self, terms: [E; ARITY]) -> E;
+
+    /// Compose an [`Evaluable`] from other [`Evaluable`]-s using self as a connective
+    /// by [simplyfying][Self::try_reduce] the input terms if possible.
+    fn eval(&self, terms: [E; ARITY]) -> E {
+        self.try_reduce(terms)
+            .unwrap_or_else(|terms| self.compose(terms))
+    }
 }
 
 /// Extension of the [`TruthFn`] to create a [callable object][Operation]
@@ -76,12 +83,12 @@ pub trait Connective<const ARITY: usize>: BoolFn<ARITY> {
     }
 }
 
-impl<'a, const N: usize, Atom: Connective<N> + 'a> UpcastFrom<Atom> for dyn Connective<N> + 'a {
-    fn up_from(value: &Atom) -> &Self {
+impl<'a, const N: usize, C: Connective<N> + 'a> UpcastFrom<C> for dyn Connective<N> + 'a {
+    fn up_from(value: &C) -> &Self {
         value
     }
 
-    fn up_from_mut(value: &mut Atom) -> &mut Self {
+    fn up_from_mut(value: &mut C) -> &mut Self {
         value
     }
 }

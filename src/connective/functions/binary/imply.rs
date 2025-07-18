@@ -3,9 +3,12 @@
 //! conditional sentences in natural language.
 //!
 //! <https://en.wikipedia.org/wiki/Material_conditional>
-use std::ops::{BitOr, Not};
+use crate::formula::{Implies, Not};
 
-use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
+use super::super::{
+    super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    neg::Negation,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
 /// Material implication is an operation on two logical values,
@@ -15,11 +18,11 @@ pub struct MaterialImplication;
 
 impl<E> TruthFn<2, E> for MaterialImplication
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Implies + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Ok(antecedent), Ok(consequent)) => Ok(E::terminal(!antecedent || consequent)),
+            (Ok(antecedent), Ok(consequent)) => Ok(E::terminal(antecedent.implies(consequent))),
             (Ok(antecedent), Err(consequent)) => {
                 if antecedent {
                     Ok(E::partial(consequent))
@@ -31,16 +34,15 @@ where
                 if consequent {
                     Ok(E::tautology())
                 } else {
-                    Ok(!E::partial(antecedent))
+                    Ok(Negation.compose([E::partial(antecedent)]))
                 }
             }
             (Err(x), Err(y)) => Err([E::partial(x), E::partial(y)]),
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms)
-            .unwrap_or_else(|[antecedent, consequent]| !antecedent | consequent)
+    fn compose(&self, [antecedent, consequent]: [E; 2]) -> E {
+        antecedent.implies(consequent)
     }
 }
 

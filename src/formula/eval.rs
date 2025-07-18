@@ -1,9 +1,9 @@
 use std::{borrow::Borrow, collections::HashMap as Map, hash::Hash};
 
-use super::atom::Assignment;
+use super::assign::Assignment;
 
 #[derive(Debug)]
-/// Mapping the [`Atoms`][super::atom::Atom]-s of a `Formula`
+/// Mapping the variables of a `Formula`
 /// to one of the [truth values](https://en.wikipedia.org/wiki/Truth_value).
 ///
 /// <https://en.wikipedia.org/wiki/Valuation_(logic)>
@@ -13,13 +13,13 @@ pub struct Valuation<T> {
 
 impl<T> Default for Valuation<T> {
     fn default() -> Self {
-        Self::new()
+        Self::empty()
     }
 }
 
 impl<T> Valuation<T> {
-    /// Construct a new `Valuation`.
-    pub fn new() -> Self {
+    /// Construct an empty `Valuation`.
+    pub fn empty() -> Self {
         Self { values: Map::new() }
     }
 }
@@ -28,7 +28,7 @@ impl<T> Valuation<T>
 where
     T: Eq + Hash,
 {
-    /// Retrieve a truth value of a specific [`Atom`][super::atom::Atom] if any.
+    /// Retrieve a truth value of a specific variable if any.
     pub fn get_assignment<Q>(&self, key: &Q) -> Option<bool>
     where
         T: Borrow<Q>,
@@ -37,7 +37,7 @@ where
         self.values.get(key).and_then(Assignment::get).copied()
     }
 
-    /// Set a truth value to a specific [`Atom`][super::atom::Atom].
+    /// Set a truth value to a specific variable.
     pub fn assign(&mut self, key: T, value: bool) {
         let _previous_value = self.values.insert(key, Assignment::Value(value));
     }

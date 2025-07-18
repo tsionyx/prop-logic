@@ -17,7 +17,7 @@ pub use self::{
     evaluation::Evaluable,
     functions::*,
     notation::FunctionNotation,
-    ops::{Associativity, Commutativity, Converse, Negate},
+    ops::{Associativity, Commutativity, Converse, Negate, Neutrality, Series},
     priority::{Prioritized, Priority},
     properties::{is_basis, is_complete, BoolFnExt},
     storage::{AllFunctions, StoredBoolFn, BINARY_FUNCTIONS, NULLARY_FUNCTIONS, UNARY_FUNCTIONS},
@@ -66,10 +66,12 @@ mod tests {
 
     fn apply_and_compose_is_equivalent<const ARITY: usize, F>(f: F)
     where
-        F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY>,
+        F: TruthFn<ARITY, Formula<()>> + BoolFn<ARITY> + std::fmt::Debug,
         two_powers::D: CheckedArray<ARITY>,
     {
         use crate::truth_table::TruthTabled as _;
+
+        eprintln!("Checking {f:?}");
 
         let truth_table = f.get_truth_table().into_iter();
         let eval_variants = truth_table.map(|(assignment, eval)| {
@@ -77,20 +79,26 @@ mod tests {
                 .into_iter()
                 .map(Formula::<()>::truth)
                 .collect_vec();
-            let formulas = formulas
-                .try_into()
+            let formulas = <[Formula<()>; ARITY]>::try_from(formulas)
                 .expect("Cartesian product ensures the length of the tuple to be equal to ARITY");
 
-            (f.compose(formulas), eval)
+            dbg!(&f, &formulas);
+            (f.compose(formulas.clone()), f.eval(formulas), eval)
         });
 
-        let empty_interpretation: Valuation<()> = Valuation::new();
-        for (fully_interpreted_formula, expected_eval) in eval_variants {
+        let empty_interpretation: Valuation<()> = Valuation::empty();
+        for (composed_formula, fully_interpreted_formula, expected_eval) in eval_variants {
             eprintln!("{fully_interpreted_formula:?} -> {expected_eval:?}");
             if let Formula::TruthValue(val) =
                 fully_interpreted_formula.interpret(&empty_interpretation)
             {
                 assert_eq!(val, expected_eval);
+
+                let composed = composed_formula.interpret(&empty_interpretation);
+                assert!(
+                    matches!(composed, Formula::TruthValue(x) if x == expected_eval),
+                    "{composed_formula:?} -> {composed:?}"
+                );
             } else {
                 panic!("The formula was not fully reduced");
             }
@@ -105,6 +113,7 @@ mod tests {
         apply_and_compose_is_equivalent::<0, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<0, _>(ExclusiveDisjunctionAny);
         apply_and_compose_is_equivalent::<0, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<0, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<0, _>(AllEquivalent);
 
         apply_and_compose_is_equivalent::<0, _>(Truth);
@@ -115,6 +124,7 @@ mod tests {
 
         apply_and_compose_is_equivalent::<1, _>(DisjunctionAny);
         apply_and_compose_is_equivalent::<1, _>(ConjunctionAny);
+        apply_and_compose_is_equivalent::<1, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<1, _>(AllEquivalent);
         apply_and_compose_is_equivalent::<1, _>(ExclusiveDisjunctionAny);
 
@@ -136,6 +146,7 @@ mod tests {
 
         apply_and_compose_is_equivalent::<2, _>(NonDisjunction);
         apply_and_compose_is_equivalent::<2, _>(LogicalBiconditional);
+        apply_and_compose_is_equivalent::<2, _>(EquivalentAny);
         apply_and_compose_is_equivalent::<2, _>(AllEquivalent);
         apply_and_compose_is_equivalent::<2, _>(NotSecond::new());
         apply_and_compose_is_equivalent::<2, _>(ConverseImplication);

@@ -1,6 +1,6 @@
 use std::{borrow::Borrow, hash::Hash};
 
-use crate::connective::{Evaluable, TruthFn as _};
+use crate::connective::Evaluable;
 
 use super::{super::eval::Valuation, connective::AnyConnective, formula::Formula};
 
@@ -38,7 +38,7 @@ where
 {
     #[must_use]
     /// Trying to get the value of [`Formula`]
-    /// by reducing it using available [`Atom`][super::super::Atom]'s [`Valuation`].
+    /// by reducing it using available variables' [`Valuation`].
     ///
     /// If the [`Valuation`] is incomplete,
     /// the reduced [`Formula`] is going to be produced
@@ -62,18 +62,18 @@ where
 
         let conn = self.get_connective();
         match &conn {
-            AnyConnective::Nullary(operator) => operator.connective.compose([]),
+            AnyConnective::Nullary(operator) => operator.connective.eval([]),
             AnyConnective::Unary(conn) => {
                 let operator = &conn.connective;
                 let [operand] = &conn.operands;
                 let reduced = operand.try_reduce(i12n);
-                operator.compose([reduced])
+                operator.eval([reduced])
             }
             AnyConnective::Binary(conn) => {
                 let operator = &conn.connective;
                 let [op1, op2] = &conn.operands;
                 let reduced = [op1.try_reduce(i12n), op2.try_reduce(i12n)];
-                operator.compose(reduced)
+                operator.eval(reduced)
             }
         }
     }
@@ -81,28 +81,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicU64, Ordering};
-
     use super::{
-        super::super::{
-            ops::{And, Equivalent, Implies, Not, Or, Xor},
-            Atom, Variable,
-        },
+        super::super::ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
         *,
     };
 
-    static VAR_ID_COUNTER: AtomicU64 = AtomicU64::new(4);
-
-    fn get_var(name: char) -> Variable<char> {
-        let id = match name {
-            'a' => 0,
-            'b' => 1,
-            'c' => 2,
-            'd' => 3,
-            _ => VAR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
-        };
-
-        Variable::with_data(id, name)
+    const fn get_var(name: char) -> char {
+        name
     }
 
     // emulate std::sync::Arc
@@ -115,8 +100,8 @@ mod tests {
         }
     }
 
-    fn partial_valuation() -> Valuation<Arc<Variable<char>>> {
-        let mut val = Valuation::new();
+    fn partial_valuation() -> Valuation<Arc<char>> {
+        let mut val = Valuation::empty();
         val.assign(Arc::new(get_var('a')), true);
         val.assign(Arc::new(get_var('b')), false);
         val.assign(Arc::new(get_var('c')), false);
@@ -124,22 +109,20 @@ mod tests {
         val
     }
 
-    impl<T> Atom for Arc<Variable<T>> {}
-
     #[test]
     fn tautology() {
-        let f: Formula<Arc<Variable<char>>> = Formula::tautology();
+        let f: Formula<Arc<char>> = Formula::tautology();
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
     fn contradiction() {
-        let f: Formula<Arc<Variable<char>>> = Formula::contradiction();
+        let f: Formula<Arc<char>> = Formula::contradiction();
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
-    fn known_atom() {
+    fn known_var() {
         let f = Formula::atom(Arc::new(get_var('a')));
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
@@ -148,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn unknown_atom() {
+    fn unknown_var() {
         let var = get_var('p');
         let f = Formula::atom(Arc::new(var));
         assert_eq!(
@@ -285,7 +268,7 @@ mod tests {
         let var2 = Arc::new(get_var('b'));
         let var3 = Arc::new(get_var('p'));
         let f = Formula::from(var1).xor(var2).xor(var3.clone());
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var3));
     }
 
     #[test]
@@ -321,7 +304,7 @@ mod tests {
         let var1 = Arc::new(get_var('b'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var1).implies(var2);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -345,7 +328,7 @@ mod tests {
         let var1 = Arc::new(get_var('a'));
         let var2 = Arc::new(get_var('p'));
         let f = Formula::from(var2).implies(var1);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -356,7 +339,7 @@ mod tests {
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
 
         let f = Formula::from(var2).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), true.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(true));
     }
 
     #[test]
@@ -367,7 +350,7 @@ mod tests {
         assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
 
         let f = Formula::from(var2).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), false.into());
+        assert_eq!(f.interpret(&partial_valuation()), Formula::truth(false));
     }
 
     #[test]
@@ -382,7 +365,7 @@ mod tests {
         );
 
         let f = Formula::from(var2.clone()).equivalent(var1);
-        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2),);
+        assert_eq!(f.interpret(&partial_valuation()), !Formula::atom(var2));
     }
 
     #[test]

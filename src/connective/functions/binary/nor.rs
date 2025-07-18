@@ -7,10 +7,13 @@
 //! since it says in effect that both of its operands are `false`.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_NOR>
-use std::ops::{BitOr, Not};
+use crate::formula::{Not, Or};
 
 use super::{
-    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    super::{
+        super::{Connective, Evaluable, FunctionNotation, TruthFn},
+        neg::Negation,
+    },
     or::Disjunction,
 };
 
@@ -22,14 +25,14 @@ pub struct NonDisjunction;
 
 impl<E> TruthFn<2, E> for NonDisjunction
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Or + Not,
 {
-    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
-        Disjunction.fold(terms).map(E::not)
+    fn try_reduce(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        Disjunction.try_reduce(terms).map(Negation::negate)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        !Disjunction.compose(terms)
+        Negation.compose([Disjunction.compose(terms)])
     }
 }
 

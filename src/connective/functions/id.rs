@@ -8,7 +8,7 @@ use super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 pub struct LogicalIdentity;
 
 impl<E: Evaluable> TruthFn<1, E> for LogicalIdentity {
-    fn fold(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
+    fn try_reduce(&self, [value]: [E; 1]) -> Result<E, [E; 1]> {
         Ok(value)
     }
 

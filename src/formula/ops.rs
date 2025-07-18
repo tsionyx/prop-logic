@@ -1,102 +1,98 @@
-use crate::connective::{Evaluable, TruthFn};
+use crate::connective::Evaluable;
 
-/// The logical negation operator.
-pub trait Not {
-    /// Reverse the evaluation.
-    ///
-    /// This should be a
-    ///
-    /// `impl<T: Not<Output = T>, E: Evaluable<T>> Not for E { ... }`
-    ///
-    /// but the latter cannot be defined because of the 'orphan' rule.
+/// The logical negation operation.
+pub trait Not: Sized {
+    /// Produce a negation of a value.
     fn not(self) -> Self;
 }
 
 impl<E> Not for E
 where
-    E: Evaluable + std::ops::Not<Output = E>,
+    Self: Evaluable + std::ops::Not<Output = Self>,
 {
-    fn not(self) -> E {
-        // Be aware the recursion can arise
-        // when `impl Evaluable<T> for T`
-        // if the `impl std::ops::Not for T` defined itself
-        // in terms of `Evaluable<T>`.
-        //
-        // This way you should break the recursion manually:
-        // - either with the manual implementation of this method (`Not::not`)
-        //   (**CANNOT BE USED** without _specialization_ feature because of this _impl_ itself);
-        // - or (better) by providing the `impl std::ops::Not for T` using
-        //   the `T`'s internal structure details rather than relying
-        //   on this `Not::not` implementation.
-        crate::connective::Negation.compose([self])
+    fn not(self) -> Self {
+        !self
     }
 }
 
-/// The logical conjunction operator.
-pub trait And<Rhs: Into<Self>>: Sized {
-    /// Performs the logical conjunction.
+/// The logical conjunction operation.
+pub trait And<Rhs: Into<Self> = Self>: Sized {
+    /// Produce a conjunction of two values.
     fn and(self, rhs: Rhs) -> Self;
 }
 
 impl<E, Rhs> And<Rhs> for E
 where
-    Rhs: Into<E>,
-    E: Evaluable + std::ops::BitAnd<Output = E>,
+    Rhs: Into<Self>,
+    Self: Evaluable + std::ops::BitAnd<Output = Self>,
 {
     fn and(self, rhs: Rhs) -> Self {
-        let f1 = self;
-        let f2 = rhs.into();
-
-        crate::connective::Conjunction.compose([f1, f2])
+        self & rhs.into()
     }
 }
 
-/// The logical disjunction operator.
-pub trait Or<Rhs: Into<Self>>: Sized {
-    /// Performs the logical disjunction.
+/// The logical disjunction operation.
+pub trait Or<Rhs: Into<Self> = Self>: Sized {
+    /// Produce a disjunction of two values.
     fn or(self, rhs: Rhs) -> Self;
 }
 
 impl<E, Rhs> Or<Rhs> for E
 where
-    Rhs: Into<E>,
-    E: Evaluable + std::ops::BitOr<Output = E>,
+    Rhs: Into<Self>,
+    Self: Evaluable + std::ops::BitOr<Output = Self>,
 {
     fn or(self, rhs: Rhs) -> Self {
-        let f1 = self;
-        let f2 = rhs.into();
-
-        crate::connective::Disjunction.compose([f1, f2])
+        self | rhs.into()
     }
 }
 
-/// The logical exclusive disjunction (XOR) operator.
-pub trait Xor<Rhs: Into<Self>>: Sized {
-    /// Performs the logical exclusive disjunction (XOR).
+/// The logical exclusive disjunction (XOR) operation.
+pub trait Xor<Rhs: Into<Self> = Self>: Sized {
+    /// Produce a logical exclusive disjunction (XOR) of two values.
     fn xor(self, rhs: Rhs) -> Self;
 }
 
 impl<E, Rhs> Xor<Rhs> for E
 where
     Rhs: Into<E>,
-    E: Evaluable + std::ops::Not<Output = E> + std::ops::BitXor<Output = E>,
+    E: Evaluable + std::ops::BitXor<Output = E>,
 {
     fn xor(self, rhs: Rhs) -> Self {
-        let f1 = self;
-        let f2 = rhs.into();
-
-        crate::connective::ExclusiveDisjunction.compose([f1, f2])
+        self ^ rhs.into()
     }
 }
 
-/// The logical implication operator.
-pub trait Implies<Rhs: Into<Self>>: Sized {
-    /// Performs the logical implication.
+/// The logical implication operation.
+pub trait Implies<Rhs = Self>: Sized {
+    /// Produce a logical implication (conditional) from the first to second value.
     fn implies(self, rhs: Rhs) -> Self;
 }
 
-/// The logical equivalence operator.
-pub trait Equivalent<Rhs: Into<Self>>: Sized {
-    /// Performs the logical equivalence.
+impl<Rhs> Implies<Rhs> for bool
+where
+    Rhs: Into<Self>,
+{
+    fn implies(self, consequent: Rhs) -> Self {
+        if self {
+            consequent.into()
+        } else {
+            true
+        }
+    }
+}
+
+/// The logical equivalence operation.
+pub trait Equivalent<Rhs = Self>: Sized {
+    /// Produce a logical equivalence of two values.
     fn equivalent(self, rhs: Rhs) -> Self;
+}
+
+impl<Rhs> Equivalent<Rhs> for bool
+where
+    Rhs: Into<Self>,
+{
+    fn equivalent(self, other: Rhs) -> Self {
+        self == other.into()
+    }
 }

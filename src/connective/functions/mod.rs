@@ -16,7 +16,7 @@ pub use self::{
         nor::NonDisjunction,
         or::{Disjunction, DisjunctionAny},
         proj::{First, Last, NotFirst, NotSecond, ProjectAndUnary, Projection},
-        xnor::{AllEquivalent, LogicalBiconditional},
+        xnor::{AllEquivalent, EquivalentAny, LogicalBiconditional},
         xor::{ExclusiveDisjunction, ExclusiveDisjunctionAny},
     },
     falsity::Falsity,

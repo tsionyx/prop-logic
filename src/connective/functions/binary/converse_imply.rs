@@ -4,7 +4,7 @@
 //! _antecedent_ and _consequent_.
 //!
 //! <https://en.wikipedia.org/wiki/Converse_implication>
-use std::ops::{BitOr, Not};
+use crate::formula::{Implies, Not};
 
 use super::{
     super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
@@ -19,10 +19,12 @@ pub struct ConverseImplication;
 
 impl<E> TruthFn<2, E> for ConverseImplication
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Implies + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialImplication.fold([y, x])
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialImplication
+            .try_reduce([y, x])
+            .map_err(|[y, x]| [x, y])
     }
 
     fn compose(&self, [x, y]: [E; 2]) -> E {

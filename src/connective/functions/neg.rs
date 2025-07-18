@@ -2,7 +2,7 @@
 //! is an unary operation that reverse its only argument.
 //!
 //! <https://en.wikipedia.org/wiki/Negation>
-use std::ops::Not;
+use crate::formula::Not;
 
 use super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -15,16 +15,25 @@ pub struct Negation;
 
 impl<E> TruthFn<1, E> for Negation
 where
-    E: Evaluable + Not<Output = E>,
+    E: Evaluable + Not,
 {
-    fn fold(&self, [e]: [E; 1]) -> Result<E, [E; 1]> {
+    fn try_reduce(&self, [e]: [E; 1]) -> Result<E, [E; 1]> {
         e.into_terminal()
-            .map(|value| E::terminal(!value))
+            .map(|value| E::terminal(value.not()))
             .map_err(|partial| [E::partial(partial)])
     }
 
-    fn compose(&self, formula: [E; 1]) -> E {
-        self.fold(formula).unwrap_or_else(|[x]| !x)
+    fn compose(&self, [x]: [E; 1]) -> E {
+        x.not()
+    }
+}
+
+impl Negation {
+    pub(crate) fn negate<E>(e: E) -> E
+    where
+        E: Evaluable + Not,
+    {
+        Self.eval([e])
     }
 }
 

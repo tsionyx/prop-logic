@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use proptest::prelude::*;
 
-use super::formula::Formula;
+use super::{
+    super::ops::{And as _, Equivalent as _, Implies as _, Not as _, Or as _, Xor as _},
+    formula::Formula,
+};
 
 #[derive(Debug, Clone)]
 /// Parameters for generating [`Formula`]-s
@@ -12,7 +15,7 @@ pub struct Parameters<T> {
     /// in the leaves of the generated [`Formula`].
     ///
     /// By default it is set to 2 to uniformly select
-    /// one of constant along with one of the atom provided.
+    /// one of constant along with one of the variables provided.
     ///
     /// Set it to 0 to prevent using boolean constants.
     pub leaf_const_weight: u32,
@@ -21,21 +24,21 @@ pub struct Parameters<T> {
     /// in the leaves of the generated [`Formula`].
     ///
     /// By default it is set to `None` in which case
-    /// it unwraps into `self.atoms.len()` to uniformly select
-    /// one of constant along with one of the atom provided.
+    /// it unwraps into `self.variables.len()` to uniformly select
+    /// one of constant along with one of the variables provided.
     ///
-    /// Set it to 0 to prevent using atoms.
-    pub leaf_atom_weight: Option<u32>,
+    /// Set it to 0 to prevent using variables.
+    pub leaf_var_weight: Option<u32>,
 
-    /// The atomic variables that can be used in the generated [`Formula`].
-    pub atoms: Vec<T>,
+    /// The variables that can be used in the generated [`Formula`].
+    pub variables: Vec<T>,
 
     /// The relative weights of the unary to binary operators
     /// in the recursive case for the generated [`Formula`].
     ///
     /// By default it is set to 1:2.
     ///
-    /// Setting the first to 0 prevents using unary operations (primarily [`Formula::not`]).
+    /// Setting the first to 0 prevents using unary operations (primarily [`crate::formula::Not`]).
     /// Setting the second to 0 prevents using binary operations.
     pub unary_to_binary_ratio: (u32, u32),
 
@@ -45,7 +48,7 @@ pub struct Parameters<T> {
     /// How many levels of depth the generated [`Formula`] can have.
     pub max_depth: u32,
 
-    /// Whether to use [dynamic connectives][Formula::Other] or not.
+    /// Whether to use [dynamic connectives][Formula::Dynamic] or not.
     pub use_dynamic: bool,
 }
 
@@ -53,8 +56,8 @@ impl<T> Default for Parameters<T> {
     fn default() -> Self {
         Self {
             leaf_const_weight: 2,
-            leaf_atom_weight: None,
-            atoms: vec![],
+            leaf_var_weight: None,
+            variables: vec![],
             unary_to_binary_ratio: (1, 2),
             binary_weights: BinaryWeights::default(),
             max_depth: 8,
@@ -179,24 +182,26 @@ where
 
         if use_dynamic {
             use crate::connective::{
-                Conjunction, Disjunction, ExclusiveDisjunction, LogicalBiconditional,
-                MaterialImplication, NonConjunction, NonDisjunction,
+                Conjunction, ConverseImplication, ConverseNonImplication, Disjunction,
+                ExclusiveDisjunction, First, Last, LogicalBiconditional, MaterialImplication,
+                MaterialNonImplication, NonConjunction, NonDisjunction,
             };
 
             let dynamic_binary = (input.clone(), input).prop_flat_map(|(f1, f2)| {
                 let dynamic = vec![
                     Self::binary(Conjunction, f1.clone(), f2.clone()),
-                    // Self::binary(MaterialNonImplication, f1.clone(), f2.clone()),
-                    // Self::binary(First, f1.clone(), f2.clone()),
-                    // Self::binary(ConverseNonImplication, f1.clone(), f2.clone()),
-                    // Self::binary(Last, f1.clone(), f2.clone()),
+                    Self::binary(MaterialNonImplication, f1.clone(), f2.clone()),
+                    Self::binary(First {}, f1.clone(), f2.clone()),
+                    Self::binary(ConverseNonImplication, f1.clone(), f2.clone()),
+                    Self::binary(Last {}, f1.clone(), f2.clone()),
                     Self::binary(ExclusiveDisjunction, f1.clone(), f2.clone()),
                     Self::binary(Disjunction, f1.clone(), f2.clone()),
                     Self::binary(NonDisjunction, f1.clone(), f2.clone()),
                     Self::binary(LogicalBiconditional, f1.clone(), f2.clone()),
-                    // Self::binary(NotSecond, f1.clone(), f2.clone()),
-                    // Self::binary(ConverseImplication, f1.clone(), f2.clone()),
-                    // Self::binary(NotFirst, f1.clone(), f2.clone()),
+                    // TODO: enable after fixing the issues with `ProjectAndUnary::try_reduce`:
+                    // Self::binary(NotSecond::new(), f1.clone(), f2.clone()),
+                    Self::binary(ConverseImplication, f1.clone(), f2.clone()),
+                    // Self::binary(NotFirst::new(), f1.clone(), f2.clone()),
                     Self::binary(MaterialImplication, f1.clone(), f2.clone()),
                     Self::binary(NonConjunction, f1, f2),
                 ];
@@ -220,8 +225,8 @@ where
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
         let Parameters {
             leaf_const_weight,
-            leaf_atom_weight,
-            atoms,
+            leaf_var_weight,
+            variables,
             unary_to_binary_ratio: (unary_weight, binary_weight),
             binary_weights,
             max_depth,
@@ -230,11 +235,11 @@ where
 
         let typed_consts = Self::generate_nullary(use_dynamic);
 
-        let leaf_atom_weight =
-            leaf_atom_weight.unwrap_or_else(|| u32::try_from(atoms.len()).unwrap_or(u32::MAX));
+        let leaf_var_weight =
+            leaf_var_weight.unwrap_or_else(|| u32::try_from(variables.len()).unwrap_or(u32::MAX));
         let leaf = prop_oneof![
             leaf_const_weight => typed_consts,
-            leaf_atom_weight => prop::sample::select(atoms).prop_map(Self::atom),
+            leaf_var_weight => prop::sample::select(variables).prop_map(Self::atom),
         ];
 
         let max_nodes = 1 << max_depth;

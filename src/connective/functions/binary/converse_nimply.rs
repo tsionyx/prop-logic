@@ -6,7 +6,7 @@
 //! of the converse of [implication][super::imply]).
 //!
 //! <https://en.wikipedia.org/wiki/Converse_nonimplication>
-use std::ops::{BitOr, Not};
+use crate::formula::{Implies, Not};
 
 use super::{
     super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
@@ -21,10 +21,12 @@ pub struct ConverseNonImplication;
 
 impl<E> TruthFn<2, E> for ConverseNonImplication
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Implies + Not,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialNonImplication.fold([y, x])
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialNonImplication
+            .try_reduce([y, x])
+            .map_err(|[y, x]| [x, y])
     }
 
     fn compose(&self, [x, y]: [E; 2]) -> E {

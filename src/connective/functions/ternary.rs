@@ -26,16 +26,16 @@ where
     Op1: TruthFn<2, E> + TruthTabled<2> + Associativity,
     Op2: TruthFn<2, E> + TruthTabled<2, TT = <Op1 as TruthTabled<2>>::TT> + Associativity,
 {
-    fn fold(&self, values: [E; 3]) -> Result<E, [E; 3]> {
+    fn try_reduce(&self, values: [E; 3]) -> Result<E, [E; 3]> {
         let try_fold = |left| {
             let [x, y, z] = values.clone();
 
             if left {
-                let intermediate = self.op1.fold([x, y]).ok()?;
-                self.op2.fold([intermediate, z]).ok()
+                let intermediate = self.op1.try_reduce([x, y]).ok()?;
+                self.op2.try_reduce([intermediate, z]).ok()
             } else {
-                let intermediate = self.op2.fold([y, z]).ok()?;
-                self.op1.fold([x, intermediate]).ok()
+                let intermediate = self.op2.try_reduce([y, z]).ok()?;
+                self.op1.try_reduce([x, intermediate]).ok()
             }
         };
 
@@ -60,11 +60,21 @@ where
             self.op1.compose([x, intermediate])
         }
     }
+
+    fn eval(&self, [x, y, z]: [E; 3]) -> E {
+        if LEFT {
+            let intermediate = self.op1.eval([x, y]);
+            self.op2.eval([intermediate, z])
+        } else {
+            let intermediate = self.op2.eval([y, z]);
+            self.op1.eval([x, intermediate])
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Formula, Var};
+    use crate::Formula;
 
     use super::{
         super::super::{
@@ -89,33 +99,37 @@ mod tests {
 
     #[test]
     fn reduce_3_conjunction() {
-        let x = Var::new(1);
-        let y = Var::new(2);
+        let x = 'x';
+        let y = 'y';
         let falsity = Formula::contradiction();
 
         let left = Ternary::<true, Conjunction>::init();
         let right = Ternary::<false, Conjunction>::init();
 
-        let res_left = left.fold([x.into(), y.into(), falsity.clone()]).unwrap();
+        let res_left = left
+            .try_reduce([x.into(), y.into(), falsity.clone()])
+            .unwrap();
         assert!(res_left.is_contradiction());
 
-        let res_right = right.fold([x.into(), y.into(), falsity]).unwrap();
+        let res_right = right.try_reduce([x.into(), y.into(), falsity]).unwrap();
         assert!(res_right.is_contradiction());
     }
 
     #[test]
     fn reduce_3_disjunction() {
-        let x = Var::new(1);
-        let y = Var::new(2);
+        let x = 'x';
+        let y = 'y';
         let truth = Formula::tautology();
 
         let left = Ternary::<true, Disjunction>::init();
         let right = Ternary::<false, Disjunction>::init();
 
-        let res_left = left.fold([x.into(), y.into(), truth.clone()]).unwrap();
+        let res_left = left
+            .try_reduce([x.into(), y.into(), truth.clone()])
+            .unwrap();
         assert!(res_left.is_tautology());
 
-        let res_right = right.fold([x.into(), y.into(), truth]).unwrap();
+        let res_right = right.try_reduce([x.into(), y.into(), truth]).unwrap();
         assert!(res_right.is_tautology());
     }
 }

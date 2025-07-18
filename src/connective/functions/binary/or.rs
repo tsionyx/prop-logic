@@ -2,7 +2,7 @@
 //! is `true` when either or both of its operands are true.
 //!
 //! <https://en.wikipedia.org/wiki/Logical_disjunction>
-use std::ops::BitOr;
+use crate::{connective::Series, formula::Or};
 
 use super::super::super::{Connective, Evaluable, FunctionNotation, TruthFn};
 
@@ -14,11 +14,11 @@ pub struct Disjunction;
 
 impl<E> TruthFn<2, E> for Disjunction
 where
-    E: Evaluable + BitOr<Output = E>,
+    E: Evaluable + Or,
 {
-    fn fold(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
+    fn try_reduce(&self, [x, y]: [E; 2]) -> Result<E, [E; 2]> {
         match (x.into_terminal(), y.into_terminal()) {
-            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1 || disjunct2)),
+            (Ok(disjunct1), Ok(disjunct2)) => Ok(E::terminal(disjunct1.or(disjunct2))),
             // **disjunction** is _commutative_
             (Ok(val), Err(x)) | (Err(x), Ok(val)) => {
                 if val {
@@ -31,8 +31,8 @@ where
         }
     }
 
-    fn compose(&self, terms: [E; 2]) -> E {
-        self.fold(terms).unwrap_or_else(|[x, y]| x | y)
+    fn compose(&self, [x, y]: [E; 2]) -> E {
+        x.or(y)
     }
 }
 
@@ -79,9 +79,9 @@ pub struct DisjunctionAny;
 
 impl<const ARITY: usize, E> TruthFn<ARITY, E> for DisjunctionAny
 where
-    E: Evaluable + BitOr<Output = E>,
+    E: Evaluable + Or,
 {
-    fn fold(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, terms: [E; ARITY]) -> Result<E, [E; ARITY]> {
         if terms.iter().any(E::is_tautology) {
             return Ok(E::tautology());
         }
@@ -111,17 +111,7 @@ where
     }
 
     fn compose(&self, terms: [E; ARITY]) -> E {
-        self.fold(terms).unwrap_or_else(|terms| {
-            terms.into_iter().rfold(E::contradiction(), |acc, t| {
-                if acc.is_contradiction() {
-                    t
-                } else if t.is_contradiction() {
-                    acc
-                } else {
-                    t | acc
-                }
-            })
-        })
+        Series::<_, Disjunction>::new(terms).compose()
     }
 }
 
@@ -144,5 +134,22 @@ mod tests {
         assert!(Disjunction.is_equivalent(&DisjunctionAny::init()));
         assert!(Ternary::<true, Disjunction>::init().is_equivalent(&DisjunctionAny::init()));
         assert!(Ternary::<false, Disjunction>::init().is_equivalent(&DisjunctionAny::init()));
+    }
+
+    #[test]
+    fn any_compose() {
+        use crate::Formula;
+
+        let f: Formula<char> = DisjunctionAny.compose([]);
+        assert_eq!(f, Formula::truth(false));
+
+        let f: Formula<char> = DisjunctionAny.compose([Formula::atom('a')]);
+        assert_eq!(f, Formula::atom('a'));
+
+        let f: Formula<char> = DisjunctionAny.compose(['a'.into(), 'b'.into()]);
+        assert_eq!(f, Formula::atom('a') | 'b');
+
+        let f: Formula<char> = DisjunctionAny.compose(['a'.into(), 'b'.into(), 'c'.into()]);
+        assert_eq!(f, Formula::atom('a') | (Formula::atom('b') | 'c'));
     }
 }

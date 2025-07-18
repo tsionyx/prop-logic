@@ -3,10 +3,13 @@
 //! [negation][super::neg] of [implication][super::imply].
 //!
 //! <https://en.wikipedia.org/wiki/Material_nonimplication>
-use std::ops::{BitOr, Not};
+use crate::formula::{Implies, Not};
 
 use super::{
-    super::super::{Connective, Evaluable, FunctionNotation, TruthFn},
+    super::{
+        super::{Connective, Evaluable, FunctionNotation, TruthFn},
+        neg::Negation,
+    },
     imply::MaterialImplication,
 };
 
@@ -18,14 +21,14 @@ pub struct MaterialNonImplication;
 
 impl<E> TruthFn<2, E> for MaterialNonImplication
 where
-    E: Evaluable + Not<Output = E> + BitOr<Output = E>,
+    E: Evaluable + Implies + Not,
 {
-    fn fold(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
-        MaterialImplication.fold(terms).map(E::not)
+    fn try_reduce(&self, terms: [E; 2]) -> Result<E, [E; 2]> {
+        MaterialImplication.try_reduce(terms).map(Negation::negate)
     }
 
     fn compose(&self, terms: [E; 2]) -> E {
-        !MaterialImplication.compose(terms)
+        Negation.compose([MaterialImplication.compose(terms)])
     }
 }
 

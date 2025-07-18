@@ -13,7 +13,7 @@ impl<const ARITY: usize, E> TruthFn<ARITY, E> for Truth
 where
     E: Evaluable,
 {
-    fn fold(&self, _: [E; ARITY]) -> Result<E, [E; ARITY]> {
+    fn try_reduce(&self, _: [E; ARITY]) -> Result<E, [E; ARITY]> {
         Ok(E::tautology())
     }
 
